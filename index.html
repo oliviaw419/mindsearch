@@ -147,7 +147,7 @@
   .empty-note{ font-size:14px; color:var(--ink-soft); padding:20px; background:var(--paper-raised); backdrop-filter: blur(var(--blur)); -webkit-backdrop-filter: blur(var(--blur)); border-radius:var(--radius-md); text-align:center; }
 
   .entry-row{ position:relative; overflow:hidden; border-radius:var(--radius-md); margin-bottom:10px; }
-  .entry-row .delete-bg{ position:absolute; inset:0; background:var(--danger); display:flex; align-items:center; justify-content:flex-end; padding-right:22px; color:#fff; font-size:13px; font-weight:600; }
+  .entry-row .delete-bg{ position:absolute; inset:0; background:var(--danger); display:flex; align-items:center; justify-content:flex-end; padding-right:22px; color:#fff; font-size:13px; font-weight:600; cursor:pointer; }
   .entry-card{ position:relative; background:var(--entry-bg); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border:1px solid rgba(255,255,255,0.6); border-radius:var(--radius-md); padding:14px 16px; display:flex; flex-direction:column; gap:3px; transition:transform .18s ease; touch-action:pan-y; user-select:none; box-shadow:0 4px 16px -6px rgba(0,0,0,0.14); }
   .entry-card .etitle{ font-family:'Fraunces', serif; font-size:16px; font-weight:500; color:var(--ink); }
   .entry-card .esnippet{ font-size:13px; color:var(--ink-soft); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -617,7 +617,7 @@
       toastAudioDeleted: "已删除录音",
       toastDeleted: "已删除",
       toastSaved: "已保存",
-      toastNeedFields: "标题和内容都需要填写",
+      toastNeedFields: "至少要填个标题",
       toastMicFail: "无法访问麦克风（预览环境可能不支持）",
       toastMaxPhotos: "最多只能加 5 张照片",
       confirmDeleteEntry: "删除这条记录？",
@@ -696,7 +696,7 @@
       toastAudioDeleted: "Recording deleted",
       toastDeleted: "Deleted",
       toastSaved: "Saved",
-      toastNeedFields: "Title and content are both required",
+      toastNeedFields: "At least give it a title",
       toastMicFail: "Couldn't access the microphone (may not work in preview)",
       toastMaxPhotos: "You can add up to 5 photos",
       confirmDeleteEntry: "Delete this entry?",
@@ -885,18 +885,15 @@
         </div>`;
       list.appendChild(row);
       attachSwipe(row, entry.id);
-      row.querySelector('.entry-card').addEventListener('click', ()=>{
-        if(row.dataset.swiping === 'true') return;
-        openDetail(entry.id);
-      });
     });
   }
 
   function attachSwipe(row, id){
     const card = row.querySelector('.entry-card');
-    let startX = 0, currentX = 0, dragging = false;
+    const deleteBg = row.querySelector('.delete-bg');
+    let startX = 0, currentX = 0, dragging = false, revealed = false;
 
-    function onStart(x){ startX = x; dragging = true; row.dataset.swiping = 'false'; }
+    function onStart(x){ startX = x; dragging = true; }
     function onMove(x){
       if(!dragging) return;
       currentX = x - startX;
@@ -905,21 +902,21 @@
         card.style.transform = `translateX(${Math.max(currentX,-90)}px)`;
       }
     }
+    function reveal(){
+      card.style.transform = 'translateX(-90px)';
+      revealed = true;
+    }
+    function close(){
+      card.style.transform = 'translateX(0)';
+      revealed = false;
+      setTimeout(()=> row.dataset.swiping = 'false', 50);
+    }
     function onEnd(){
       dragging = false;
-      if(currentX < -55){
-        card.style.transform = 'translateX(-90px)';
-        setTimeout(()=>{
-          if(confirm(T().confirmDeleteEntry)){
-            deleteEntry(id);
-          } else {
-            card.style.transform = 'translateX(0)';
-            row.dataset.swiping = 'false';
-          }
-        }, 120);
+      if(currentX < -45){
+        reveal();
       } else {
-        card.style.transform = 'translateX(0)';
-        setTimeout(()=> row.dataset.swiping = 'false', 50);
+        close();
       }
       currentX = 0;
     }
@@ -928,10 +925,32 @@
     card.addEventListener('touchmove', (e)=> onMove(e.touches[0].clientX), {passive:true});
     card.addEventListener('touchend', onEnd);
 
-    card.addEventListener('mousedown', (e)=>{ e.preventDefault(); onStart(e.clientX); });
-    card.addEventListener('mousemove', (e)=> onMove(e.clientX));
-    card.addEventListener('mouseup', onEnd);
-    card.addEventListener('mouseleave', ()=>{ if(dragging){ dragging=false; currentX=0; card.style.transform='translateX(0)'; } });
+    card.addEventListener('mousedown', (e)=>{
+      e.preventDefault();
+      onStart(e.clientX);
+      const onDocMove = (e2)=> onMove(e2.clientX);
+      const onDocUp = ()=>{
+        onEnd();
+        document.removeEventListener('mousemove', onDocMove);
+        document.removeEventListener('mouseup', onDocUp);
+      };
+      document.addEventListener('mousemove', onDocMove);
+      document.addEventListener('mouseup', onDocUp);
+    });
+
+    card.addEventListener('click', ()=>{
+      if(revealed){ close(); return; }
+      if(row.dataset.swiping === 'true') return;
+      openDetail(id);
+    });
+
+    deleteBg.addEventListener('click', ()=>{
+      if(confirm(T().confirmDeleteEntry)){
+        deleteEntry(id);
+      } else {
+        close();
+      }
+    });
   }
 
   function pickRandomEntry(){
@@ -1171,23 +1190,63 @@
     $('voiceBtn').classList.remove('active');
   });
 
+  function pickSupportedAudioMime(){
+    const candidates = [
+      'audio/mp4',
+      'audio/webm;codecs=opus',
+      'audio/webm',
+      'audio/aac',
+      'audio/ogg;codecs=opus'
+    ];
+    if(!window.MediaRecorder || !MediaRecorder.isTypeSupported) return '';
+    for(const m of candidates){
+      if(MediaRecorder.isTypeSupported(m)) return m;
+    }
+    return '';
+  }
+
+  function audioFileExtension(mime){
+    if(!mime) return 'webm';
+    if(mime.includes('mp4')) return 'm4a';
+    if(mime.includes('aac')) return 'aac';
+    if(mime.includes('ogg')) return 'ogg';
+    return 'webm';
+  }
+
   $('voiceBtn').addEventListener('click', async ()=>{
     if(isRecording){ mediaRecorder.stop(); return; }
+    if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+      showToast(T().toastMicFail);
+      return;
+    }
     try{
       const stream = await navigator.mediaDevices.getUserMedia({ audio:true });
       audioChunks = [];
-      mediaRecorder = new MediaRecorder(stream);
-      mediaRecorder.ondataavailable = (e)=> audioChunks.push(e.data);
+      const chosenMime = pickSupportedAudioMime();
+      mediaRecorder = chosenMime ? new MediaRecorder(stream, { mimeType: chosenMime }) : new MediaRecorder(stream);
+      mediaRecorder.ondataavailable = (e)=> { if(e.data && e.data.size > 0) audioChunks.push(e.data); };
+      mediaRecorder.onerror = (e) => {
+        console.error('recorder error', e);
+        showToast(T().toastMicFail);
+        stream.getTracks().forEach(t=>t.stop());
+        isRecording = false;
+        $('voiceBtn').classList.remove('recording');
+        $('voiceBtnLabel').textContent = T().addVoice;
+      };
       mediaRecorder.onstop = () => {
-        const blob = new Blob(audioChunks, { type:'audio/webm' });
+        const blobType = mediaRecorder.mimeType || chosenMime || 'audio/webm';
+        const blob = new Blob(audioChunks, { type: blobType });
+        const ext = audioFileExtension(blobType);
         const reader = new FileReader();
         reader.onload = () => {
           pendingAudioData = reader.result;
           $('audioPreview').src = pendingAudioData;
           $('downloadAudioBtn').href = pendingAudioData;
+          $('downloadAudioBtn').setAttribute('download', 'voice-note.' + ext);
           $('audioPreviewWrap').style.display = '';
           $('voiceBtn').classList.add('active');
         };
+        reader.onerror = () => showToast(T().toastMicFail);
         reader.readAsDataURL(blob);
         stream.getTracks().forEach(t=>t.stop());
         isRecording = false;
@@ -1199,45 +1258,58 @@
       $('voiceBtn').classList.add('recording');
       $('voiceBtnLabel').textContent = T().recording;
     }catch(err){
+      console.error('mic error', err);
       showToast(T().toastMicFail);
     }
   });
 
+  let isSavingEntry = false;
+
   $('saveEntryBtn').addEventListener('click', async ()=>{
+    if(isSavingEntry) return;
     const title = $('inputTitle').value.trim();
     const content = $('inputContent').value.trim();
-    if(!title || !content){
+    if(!title){
       showToast(T().toastNeedFields);
       return;
     }
-    let entry;
-    if(editingId){
-      entry = entries.find(e=>e.id === editingId);
-      entry.title = title;
-      entry.content = content;
-      entry.updatedAt = Date.now();
-      entry.isSample = false;
-    } else {
-      entry = {
-        id: cryptoId(), title, content,
-        forgetCount: 0, pinned: false,
-        createdAt: Date.now(), updatedAt: Date.now()
-      };
-      entries.push(entry);
+    isSavingEntry = true;
+    $('saveEntryBtn').style.opacity = '0.6';
+    $('saveEntryBtn').style.pointerEvents = 'none';
+    try{
+      let entry;
+      if(editingId){
+        entry = entries.find(e=>e.id === editingId);
+        entry.title = title;
+        entry.content = content;
+        entry.updatedAt = Date.now();
+        entry.isSample = false;
+      } else {
+        entry = {
+          id: cryptoId(), title, content,
+          forgetCount: 0, pinned: false,
+          createdAt: Date.now(), updatedAt: Date.now()
+        };
+        entries.push(entry);
+      }
+      entry.images = [...pendingPhotos];
+      entry.audio = pendingAudioData;
+      entry.imageCount = pendingPhotos.length;
+      entry.hasAudio = !!pendingAudioData;
+
+      await persistIndex();
+      await persistMediaFor(entry);
+
+      $('addOverlay').classList.remove('open');
+      renderRecent();
+      renderRandom();
+      renderForgotten();
+      showToast(T().toastSaved);
+    } finally {
+      isSavingEntry = false;
+      $('saveEntryBtn').style.opacity = '';
+      $('saveEntryBtn').style.pointerEvents = '';
     }
-    entry.images = [...pendingPhotos];
-    entry.audio = pendingAudioData;
-    entry.imageCount = pendingPhotos.length;
-    entry.hasAudio = !!pendingAudioData;
-
-    await persistIndex();
-    await persistMediaFor(entry);
-
-    $('addOverlay').classList.remove('open');
-    renderRecent();
-    renderRandom();
-    renderForgotten();
-    showToast(T().toastSaved);
   });
 
   function updateStarBtn(entry){
