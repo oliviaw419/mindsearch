@@ -573,7 +573,7 @@
       photosHint: "最多 5 张",
       voiceLabel: "语音",
       addVoice: "添加语音",
-      recording: "录音中… 点击停止",
+      recording: "录音中… 点击保存录音",
       download: "⬇ 下载",
       deleteAudio: "✕ 删除",
       deleteAudioFull: "✕ 删除录音",
@@ -652,7 +652,7 @@
       photosHint: "up to 5",
       voiceLabel: "Voice",
       addVoice: "Add Voice",
-      recording: "Recording… tap to stop",
+      recording: "Recording… tap to save recording",
       download: "⬇ Download",
       deleteAudio: "✕ Delete",
       deleteAudioFull: "✕ Delete recording",
@@ -913,7 +913,7 @@
     }
     function onEnd(){
       dragging = false;
-      if(currentX < -45){
+      if(currentX < -18){
         reveal();
       } else {
         close();
@@ -1213,6 +1213,16 @@
     return 'webm';
   }
 
+  let recordingStopWaiters = [];
+
+  function stopRecordingAndWait(){
+    return new Promise((resolve) => {
+      if(!isRecording){ resolve(); return; }
+      recordingStopWaiters.push(resolve);
+      mediaRecorder.stop();
+    });
+  }
+
   $('voiceBtn').addEventListener('click', async ()=>{
     if(isRecording){ mediaRecorder.stop(); return; }
     if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
@@ -1232,6 +1242,8 @@
         isRecording = false;
         $('voiceBtn').classList.remove('recording');
         $('voiceBtnLabel').textContent = T().addVoice;
+        recordingStopWaiters.forEach(fn => fn());
+        recordingStopWaiters = [];
       };
       mediaRecorder.onstop = () => {
         const blobType = mediaRecorder.mimeType || chosenMime || 'audio/webm';
@@ -1245,8 +1257,14 @@
           $('downloadAudioBtn').setAttribute('download', 'voice-note.' + ext);
           $('audioPreviewWrap').style.display = '';
           $('voiceBtn').classList.add('active');
+          recordingStopWaiters.forEach(fn => fn());
+          recordingStopWaiters = [];
         };
-        reader.onerror = () => showToast(T().toastMicFail);
+        reader.onerror = () => {
+          showToast(T().toastMicFail);
+          recordingStopWaiters.forEach(fn => fn());
+          recordingStopWaiters = [];
+        };
         reader.readAsDataURL(blob);
         stream.getTracks().forEach(t=>t.stop());
         isRecording = false;
@@ -1277,6 +1295,7 @@
     $('saveEntryBtn').style.opacity = '0.6';
     $('saveEntryBtn').style.pointerEvents = 'none';
     try{
+      if(isRecording){ await stopRecordingAndWait(); }
       let entry;
       if(editingId){
         entry = entries.find(e=>e.id === editingId);
