@@ -891,7 +891,7 @@
   function attachSwipe(row, id){
     const card = row.querySelector('.entry-card');
     const deleteBg = row.querySelector('.delete-bg');
-    let startX = 0, currentX = 0, dragging = false, revealed = false;
+    let startX = 0, currentX = 0, dragging = false, revealed = false, justToggled = false;
 
     function onStart(x){ startX = x; dragging = true; }
     function onMove(x){
@@ -905,6 +905,7 @@
     function reveal(){
       card.style.transform = 'translateX(-90px)';
       revealed = true;
+      justToggled = true;
     }
     function close(){
       card.style.transform = 'translateX(0)';
@@ -939,6 +940,9 @@
     });
 
     card.addEventListener('click', ()=>{
+      // the browser fires a click right after mouseup/touchend on the same element —
+      // if that release is the one that just revealed the delete button, ignore this one click
+      if(justToggled){ justToggled = false; return; }
       if(revealed){ close(); return; }
       if(row.dataset.swiping === 'true') return;
       openDetail(id);
