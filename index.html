@@ -723,13 +723,6 @@
     return 'e_' + Math.random().toString(36).slice(2,10) + Date.now().toString(36);
   }
 
-  const sampleEntries = [
-    { id: cryptoId(), title:'Serendipity', content:'The occurrence of events by chance in a happy way.', forgetCount:0, pinned:false, imageCount:0, hasAudio:false, createdAt:Date.now()-1000*60*60*24*40, updatedAt:Date.now()-1000*60*60*24*40 },
-    { id: cryptoId(), title:'21-day habit myth', content:'Habit formation does not always happen in 21 days. It varies wildly by person and behavior — some studies suggest anywhere from 18 to 254 days.', forgetCount:2, pinned:false, imageCount:0, hasAudio:false, createdAt:Date.now()-1000*60*60*24*15, updatedAt:Date.now()-1000*60*60*24*15 },
-    { id: cryptoId(), title:'Movie idea', content:'A world where people can trade memories. What would the black market look like?', forgetCount:0, pinned:false, imageCount:0, hasAudio:false, createdAt:Date.now()-1000*60*60*24*3, updatedAt:Date.now()-1000*60*60*24*3 },
-    { id: cryptoId(), title:'木漏れ日', content:'Japanese word for sunlight filtering through the leaves of trees.', forgetCount:0, pinned:true, imageCount:0, hasAudio:false, createdAt:Date.now()-1000*60*60*24*70, updatedAt:Date.now()-1000*60*60*24*70 },
-  ];
-
   function showToast(msg){
     const t = $('toast');
     t.textContent = msg;
@@ -743,6 +736,7 @@
       id: e.id, title: e.title, content: e.content,
       forgetCount: e.forgetCount||0, pinned: !!e.pinned,
       imageCount: e.imageCount||0, hasAudio: !!e.hasAudio,
+      isSample: !!e.isSample,
       createdAt: e.createdAt, updatedAt: e.updatedAt
     };
   }
@@ -813,7 +807,7 @@
       }
       entries = migrated;
     } else {
-      entries = sampleEntries;
+      entries = [];
     }
     await persistIndex();
   }
@@ -1222,6 +1216,7 @@
       entry.title = title;
       entry.content = content;
       entry.updatedAt = Date.now();
+      entry.isSample = false;
     } else {
       entry = {
         id: cryptoId(), title, content,
@@ -1567,9 +1562,14 @@
       if(existing && existing.value) return; // account already has its own data — don't overwrite
       const guestIndex = await guestImpl.get(INDEX_KEY);
       if(!guestIndex || !guestIndex.value) return; // nothing local to bring over
-      await activeStorageImpl.set(INDEX_KEY, guestIndex.value);
+      const guestEntries = JSON.parse(guestIndex.value).filter(e => !e.isSample);
+      if(guestEntries.length === 0) return; // only demo entries locally — nothing real to migrate
+      await activeStorageImpl.set(INDEX_KEY, JSON.stringify(guestEntries));
+      const idsToKeep = new Set(guestEntries.map(e => e.id));
       const mediaList = await guestImpl.list('entry-media:');
       for(const key of (mediaList && mediaList.keys) || []){
+        const entryId = key.slice('entry-media:'.length);
+        if(!idsToKeep.has(entryId)) continue; // skip media belonging to filtered-out sample entries
         const media = await guestImpl.get(key);
         if(media && media.value){ await activeStorageImpl.set(key, media.value); }
       }
