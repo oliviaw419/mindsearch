@@ -271,10 +271,16 @@
     <div style="position:relative;">
       <button class="more-btn small" id="settingsBtn" title="Settings">⚙️</button>
       <div class="more-menu" id="settingsMenu" style="min-width:200px;">
-        <button type="button" class="lang-choice" data-lang-choice="zh">简体中文</button>
-        <button type="button" class="lang-choice" data-lang-choice="zh-TW">繁體中文</button>
-        <button type="button" class="lang-choice" data-lang-choice="en">English</button>
-        <button type="button" id="openContactsBtn" data-i18n="manageFriends">Manage Friends</button>
+        <div id="settingsMainPanel">
+          <button type="button" id="openLanguagePanelBtn" data-i18n="languageMenuEntry">Language</button>
+          <button type="button" id="openContactsBtn" data-i18n="manageFriends">Manage Friends</button>
+        </div>
+        <div id="settingsLanguagePanel" style="display:none;">
+          <button type="button" id="backToSettingsBtn" data-i18n="backAction">← Back</button>
+          <button type="button" class="lang-choice" data-lang-choice="zh">简体中文</button>
+          <button type="button" class="lang-choice" data-lang-choice="zh-TW">繁體中文</button>
+          <button type="button" class="lang-choice" data-lang-choice="en">English</button>
+        </div>
       </div>
     </div>
     <div style="position:relative;">
@@ -360,6 +366,7 @@
     <input type="file" id="photoInput" accept="image/*" multiple style="display:none;">
 
     <label class="field-label" data-i18n="voiceLabel">Voice</label>
+    <p id="recordingStatusLabel" style="display:none; font-size:13px; font-weight:600; color:var(--danger); margin:4px 2px 8px;" data-i18n="recording">Recording… tap to save recording</p>
     <div class="attach-row" style="margin-top:0;">
       <div class="attach-btn" id="voiceBtn">🎤 <span id="voiceBtnLabel" data-i18n="addVoice">Add Voice</span></div>
     </div>
@@ -459,7 +466,8 @@
       <input class="field" id="newContactNickname" type="text" data-i18n-placeholder="nicknameOptional" placeholder="Nickname (optional)" style="flex:1;">
     </div>
     <button class="primary-btn" id="addContactBtn" style="margin-top:0;" data-i18n="addFriend">Add</button>
-    <div id="contactsList" style="margin-top:18px; display:flex; flex-direction:column; gap:8px;"></div>
+    <button class="text-btn" id="toggleManageListBtn" data-i18n="manageAction">Manage</button>
+    <div id="contactsList" style="display:none; margin-top:8px; flex-direction:column; gap:8px;"></div>
     <button class="text-btn" id="closeContactsBtn" data-i18n="close">Close</button>
   </div>
 </div>
@@ -679,6 +687,7 @@
       voiceLabel: "语音",
       addVoice: "添加语音",
       recording: "录音中… 点击保存录音",
+      recordingShort: "录音中",
       download: "⬇ 下载",
       deleteAudio: "✕ 删除",
       deleteAudioFull: "✕ 删除录音",
@@ -733,8 +742,11 @@
       shareWeChatHint: "微信 / Instagram：复制下面的链接，去那边粘贴分享",
       shareViaLink: "或者复制链接",
       manageFriends: "管理好友",
+      languageMenuEntry: "语言",
+      backAction: "← 返回",
       nicknameOptional: "备注名（选填）",
       addFriend: "添加",
+      manageAction: "管理",
       inboxTitle: "别人分享给你的",
       inboxEmpty: "还没有人分享东西给你",
       saveToLibrary: "存进我的库",
@@ -742,6 +754,9 @@
       inboxMenuLabel: "别人分享给你的",
       shareSentToContact: "已分享",
       shareRecipientNotFound: "这个邮箱还没注册 Mind Search，试试直接复制链接分享给ta",
+      shareOpenedEmail: "已帮你打开邮件 App，写好邀请链接了，确认发送就行",
+      mailtoSubject: (title) => `${title} —— 来自 Mind Search 的分享`,
+      mailtoBody: (fromEmail, url) => `${fromEmail} 用 Mind Search 给你分享了一条笔记：\n\n${url}\n\n打开链接就能看到内容。如果你也想记录和搜索自己的知识，可以顺手注册一个 Mind Search 账号，注册后我们分享的笔记就能直接同步到你自己的账号里啦。`,
       savedFromInbox: "已存进你的库",
       discardedFromInbox: "已丢弃",
       contactAdded: "已添加",
@@ -793,6 +808,7 @@
       voiceLabel: "語音",
       addVoice: "新增語音",
       recording: "錄音中… 點擊儲存錄音",
+      recordingShort: "錄音中",
       download: "⬇ 下載",
       deleteAudio: "✕ 刪除",
       deleteAudioFull: "✕ 刪除錄音",
@@ -847,8 +863,11 @@
       shareWeChatHint: "微信 / Instagram：複製下面的連結，去那邊貼上分享",
       shareViaLink: "或者複製連結",
       manageFriends: "管理好友",
+      languageMenuEntry: "語言",
+      backAction: "← 返回",
       nicknameOptional: "備註名稱（選填）",
       addFriend: "新增",
+      manageAction: "管理",
       inboxTitle: "別人分享給你的",
       inboxEmpty: "還沒有人分享東西給你",
       saveToLibrary: "存進我的庫",
@@ -856,6 +875,9 @@
       inboxMenuLabel: "別人分享給你的",
       shareSentToContact: "已分享",
       shareRecipientNotFound: "這個電子郵件還沒註冊 Mind Search，試試直接複製連結分享給對方",
+      shareOpenedEmail: "已幫你打開郵件 App，寫好邀請連結了，確認傳送就行",
+      mailtoSubject: (title) => `${title} —— 來自 Mind Search 的分享`,
+      mailtoBody: (fromEmail, url) => `${fromEmail} 用 Mind Search 給你分享了一則筆記：\n\n${url}\n\n打開連結就能看到內容。如果你也想記錄和搜尋自己的知識，可以順手註冊一個 Mind Search 帳號，註冊後我們分享的筆記就能直接同步到你自己的帳號裡囉。`,
       savedFromInbox: "已存進你的庫",
       discardedFromInbox: "已丟棄",
       contactAdded: "已新增",
@@ -907,6 +929,7 @@
       voiceLabel: "Voice",
       addVoice: "Add Voice",
       recording: "Recording… tap to save recording",
+      recordingShort: "Recording",
       download: "⬇ Download",
       deleteAudio: "✕ Delete",
       deleteAudioFull: "✕ Delete recording",
@@ -961,8 +984,11 @@
       shareWeChatHint: "For WeChat / Instagram: copy the link below and paste it there",
       shareViaLink: "Or copy link",
       manageFriends: "Manage Friends",
+      languageMenuEntry: "Language",
+      backAction: "← Back",
       nicknameOptional: "Nickname (optional)",
       addFriend: "Add",
+      manageAction: "Manage",
       inboxTitle: "Shared with you",
       inboxEmpty: "Nothing shared with you yet",
       saveToLibrary: "Save to my library",
@@ -970,6 +996,9 @@
       inboxMenuLabel: "Shared with you",
       shareSentToContact: "Shared",
       shareRecipientNotFound: "That email hasn't signed up for Mind Search yet — try copying the link instead",
+      shareOpenedEmail: "Opened your email app with an invite link ready to send",
+      mailtoSubject: (title) => `${title} — shared from Mind Search`,
+      mailtoBody: (fromEmail, url) => `${fromEmail} shared a note with you on Mind Search:\n\n${url}\n\nOpen the link to see it. If you'd like to keep and search your own notes too, sign up for Mind Search — once you do, this note will sync straight into your account.`,
       savedFromInbox: "Saved to your library",
       discardedFromInbox: "Discarded",
       contactAdded: "Added",
@@ -1439,6 +1468,7 @@
     $('addAudioMoreMenu').classList.remove('open');
     $('voiceBtn').classList.remove('active','recording');
     $('voiceBtnLabel').textContent = T().addVoice;
+    $('recordingStatusLabel').style.display = 'none';
     editingId = null;
   }
 
@@ -1544,6 +1574,7 @@
         isRecording = false;
         $('voiceBtn').classList.remove('recording');
         $('voiceBtnLabel').textContent = T().addVoice;
+        $('recordingStatusLabel').style.display = 'none';
         recordingStopWaiters.forEach(fn => fn());
         recordingStopWaiters = [];
       };
@@ -1572,11 +1603,14 @@
         isRecording = false;
         $('voiceBtn').classList.remove('recording');
         $('voiceBtnLabel').textContent = T().addVoice;
+        $('recordingStatusLabel').style.display = 'none';
       };
       mediaRecorder.start();
       isRecording = true;
       $('voiceBtn').classList.add('recording');
-      $('voiceBtnLabel').textContent = T().recording;
+      $('voiceBtnLabel').textContent = T().recordingShort;
+      $('recordingStatusLabel').textContent = T().recording;
+      $('recordingStatusLabel').style.display = 'block';
     }catch(err){
       console.error('mic error', err);
       showToast(T().toastMicFail);
@@ -1770,7 +1804,12 @@
     if(!me) return false;
     const recipientUid = await lookupUidByEmail(email);
     if(!recipientUid){
-      showToast(T().shareRecipientNotFound);
+      if(!$('shareLinkInput').value){ await createShareLink(entry); }
+      const url = $('shareLinkInput').value;
+      const subject = T().mailtoSubject(entry.title);
+      const body = T().mailtoBody(me.email, url);
+      window.open('mailto:' + encodeURIComponent(email) + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body), '_blank');
+      showToast(T().shareOpenedEmail);
       return false;
     }
     const itemId = cryptoId();
@@ -1903,21 +1942,23 @@
     const contacts = await listContacts();
     contacts.forEach(c => {
       const row = document.createElement('div');
-      row.style.cssText = 'display:flex; align-items:center; justify-content:space-between; padding:10px 14px; background:var(--paper-raised); border-radius:12px; border:1px solid var(--line); cursor:pointer;';
+      row.style.cssText = 'display:flex; align-items:center; justify-content:space-between; padding:10px 14px; background:var(--paper-raised); border-radius:12px; border:1px solid var(--line);';
       row.innerHTML = `
         <div>
           <div style="font-size:14px; font-weight:600; color:var(--ink);">${escapeHtml(c.nickname || c.email)}</div>
           ${c.nickname ? `<div style="font-size:12px; color:var(--ink-soft);">${escapeHtml(c.email)}</div>` : ''}
         </div>
-        <button type="button" style="background:none; border:none; color:var(--danger); font-size:15px; cursor:pointer;">✕</button>
+        <div style="display:flex; gap:6px; flex-shrink:0;">
+          <button type="button" class="edit-contact-btn" style="background:none; border:none; color:var(--ink-soft); font-size:14px; cursor:pointer; padding:4px;">✏️</button>
+          <button type="button" class="delete-contact-btn" style="background:none; border:none; color:var(--danger); font-size:15px; cursor:pointer; padding:4px;">✕</button>
+        </div>
       `;
-      row.addEventListener('click', ()=>{
+      row.querySelector('.edit-contact-btn').addEventListener('click', ()=>{
         $('newContactEmail').value = c.email;
         $('newContactNickname').value = c.nickname || '';
         $('newContactEmail').scrollIntoView({ behavior:'smooth', block:'center' });
       });
-      row.querySelector('button').addEventListener('click', async (e)=>{
-        e.stopPropagation();
+      row.querySelector('.delete-contact-btn').addEventListener('click', async ()=>{
         if(!confirm(T().confirmRemoveContact)) return;
         await deleteContact(c.email);
         showToast(T().contactRemoved);
@@ -1935,12 +1976,23 @@
     $('newContactEmail').value = '';
     $('newContactNickname').value = '';
     showToast(T().contactAdded);
-    renderContactsList();
+    if($('contactsList').style.display !== 'none'){ renderContactsList(); }
+  });
+
+  $('toggleManageListBtn').addEventListener('click', ()=>{
+    const list = $('contactsList');
+    const isOpen = list.style.display !== 'none';
+    if(isOpen){
+      list.style.display = 'none';
+    } else {
+      list.style.display = 'flex';
+      renderContactsList();
+    }
   });
 
   $('openContactsBtn').addEventListener('click', ()=>{
     $('settingsMenu').classList.remove('open');
-    renderContactsList();
+    $('contactsList').style.display = 'none';
     $('contactsOverlay').classList.add('open');
   });
   $('closeContactsBtn').addEventListener('click', ()=> $('contactsOverlay').classList.remove('open'));
@@ -2255,7 +2307,8 @@
     document.querySelectorAll('.lang-choice').forEach(btn => {
       btn.style.fontWeight = (btn.dataset.langChoice === lang) ? '700' : '400';
     });
-    $('voiceBtnLabel').textContent = isRecording ? t.recording : t.addVoice;
+    $('voiceBtnLabel').textContent = isRecording ? t.recordingShort : t.addVoice;
+    if(isRecording){ $('recordingStatusLabel').textContent = t.recording; }
     $('addSheetTitle').textContent = editingId ? t.editAction : t.addSheetTitleNew;
     updateAuthModeUI();
     if(window.__firebase && window.__firebase.auth.currentUser){
@@ -2283,17 +2336,31 @@
       const next = btn.dataset.langChoice;
       applyLanguage(next);
       $('settingsMenu').classList.remove('open');
+      resetSettingsPanel();
       try{ await storageAdapter.set(LANG_KEY, next, false); }catch(e){}
     });
   });
 
+  function resetSettingsPanel(){
+    $('settingsLanguagePanel').style.display = 'none';
+    $('settingsMainPanel').style.display = 'block';
+  }
+
   $('settingsBtn').addEventListener('click', (e)=>{
     e.stopPropagation();
+    const willOpen = !$('settingsMenu').classList.contains('open');
     $('settingsMenu').classList.toggle('open');
+    if(willOpen) resetSettingsPanel();
   });
+  $('openLanguagePanelBtn').addEventListener('click', ()=>{
+    $('settingsMainPanel').style.display = 'none';
+    $('settingsLanguagePanel').style.display = 'block';
+  });
+  $('backToSettingsBtn').addEventListener('click', resetSettingsPanel);
   document.addEventListener('click', (e)=>{
     if($('settingsMenu').classList.contains('open') && !$('settingsMenu').contains(e.target) && e.target !== $('settingsBtn')){
       $('settingsMenu').classList.remove('open');
+      resetSettingsPanel();
     }
   });
 
