@@ -454,8 +454,11 @@
   <div class="sheet">
     <div class="detail-header">
       <div style="flex:1; min-width:0;">
-        <p id="sharedNoteBadge" style="display:none; font-size:11.5px; font-weight:600; color:var(--plum-deep); margin:0 0 4px;"></p>
         <div class="detail-title" id="detailTitle"></div>
+        <p id="sharedNoteBadge" style="display:none; align-items:center; gap:5px; font-size:11.5px; font-weight:600; color:var(--plum-deep); margin:5px 0 0;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+          <span id="sharedNoteBadgeText"></span>
+        </p>
       </div>
       <div class="detail-header-actions">
         <button class="star-btn" id="starBtn" title="Review often">☆</button>
@@ -499,16 +502,17 @@
   <div class="sheet" style="max-width:400px;">
     <h2 data-i18n="shareLinkTitle">Share this note</h2>
 
-    <label class="field-label" data-i18n="shareToContacts">Share with</label>
-    <div style="display:flex; gap:8px; margin:8px 0 4px;">
-      <input class="field" id="shareEmailInput" type="email" placeholder="friend@email.com" style="flex:1;">
-      <button class="primary-btn" id="shareToEmailBtn" style="margin-top:0; width:auto; padding:0 16px; white-space:nowrap;" data-i18n="sendAction">Send</button>
-    </div>
-    <label style="display:flex; align-items:center; gap:8px; margin:8px 2px 4px; font-size:13px; color:var(--ink); cursor:pointer;">
+    <label style="display:flex; align-items:center; gap:8px; margin:4px 2px 12px; font-size:13px; color:var(--ink); cursor:pointer;">
       <input type="checkbox" id="allowEditCheckbox" style="width:16px; height:16px; margin:0;">
       <span data-i18n="allowEditLabel">Allow them to edit this note too</span>
     </label>
-    <div id="contactChipRow" style="display:flex; gap:8px; flex-wrap:wrap; margin:10px 0 4px;"></div>
+
+    <label class="field-label" data-i18n="shareToContacts">Share with</label>
+    <div id="contactChipRow" style="display:flex; gap:8px; flex-wrap:wrap; margin:8px 0 10px;"></div>
+    <div style="display:flex; gap:8px; margin:0 0 4px;">
+      <input class="field" id="shareEmailInput" type="email" placeholder="friend@email.com" style="flex:1;">
+      <button class="primary-btn" id="shareToEmailBtn" style="margin-top:0; width:auto; padding:0 16px; white-space:nowrap;" data-i18n="sendAction">Send</button>
+    </div>
 
     <label class="field-label" data-i18n="shareExternal">Share to</label>
     <div style="display:flex; gap:10px; margin:10px 0 4px; flex-wrap:wrap;">
@@ -825,8 +829,8 @@
       lastEdited: "最后编辑",
       sharedByLabel: "分享自：",
       allowEditLabel: "允许对方也能编辑这条笔记",
-      sharedOwnerBadge: "👥 共同编辑中，对方改动会同步给你",
-      sharedCollabBadge: (who) => `👥 ${who ? who + ' ' : ''}和你共同编辑这条笔记`,
+      sharedOwnerBadge: "共同编辑中，对方改动会同步给你",
+      sharedCollabBadge: (who) => who ? `与 ${who} 共同编辑` : `共同编辑中`,
       close: "关闭",
       starTitle: "常复习",
       decideLaterTitle: "稍后处理",
@@ -908,6 +912,7 @@
       toastMaxPhotos: "最多只能加 10 张照片",
       confirmDeleteEntry: "删除这条记录？",
       confirmDeleteEntryFull: "确定要删除这条记忆吗？此操作无法撤销。",
+      confirmDeleteFile: "删除这个文件？",
       confirmDeleteAudio: "删除这段录音？",
       emptyRecent: "还没有任何记录。点击右下角的 + 开始记录你的第一个想法。",
       emptySearch: "没有找到相关的记忆。换个词试试？",
@@ -968,8 +973,8 @@
       close: "關閉",
       starTitle: "常復習",
       allowEditLabel: "允許對方也能編輯這則筆記",
-      sharedOwnerBadge: "👥 共同編輯中，對方改動會同步給你",
-      sharedCollabBadge: (who) => `👥 ${who ? who + ' ' : ''}和你共同編輯這則筆記`,
+      sharedOwnerBadge: "共同編輯中，對方改動會同步給你",
+      sharedCollabBadge: (who) => who ? `與 ${who} 共同編輯` : `共同編輯中`,
       decideLaterTitle: "稍後處理",
       themeBtnTitle: "換主題",
       langBtnTitle: "切換語言",
@@ -1050,6 +1055,7 @@
       confirmDeleteEntry: "刪除這則記錄？",
       confirmDeleteEntryFull: "確定要刪除這則記憶嗎？此操作無法復原。",
       confirmDeleteAudio: "刪除這段錄音？",
+      confirmDeleteFile: "刪除這個檔案？",
       emptyRecent: "還沒有任何記錄。點擊右下角的 + 開始記錄你的第一個想法。",
       emptySearch: "沒有找到相關的記憶。換個詞試試？",
       emptyRandomTitle: "還沒有記憶可以打開",
@@ -1111,8 +1117,8 @@
       decideLaterTitle: "Decide later",
       themeBtnTitle: "Switch theme",
       allowEditLabel: "Allow them to edit this note too",
-      sharedOwnerBadge: "👥 Shared for co-editing — their changes will sync to you",
-      sharedCollabBadge: (who) => `👥 Co-editing this note${who ? ' with ' + who : ''}`,
+      sharedOwnerBadge: "Shared for co-editing — their changes will sync to you",
+      sharedCollabBadge: (who) => who ? `Shared with ${who} for co-editing` : `Shared for co-editing`,
       langBtnTitle: "Switch language",
       languageMenuLabelZh: "Language: 中文",
       languageMenuLabelEn: "Language: English",
@@ -1192,6 +1198,7 @@
       confirmDeleteEntryFull: "Delete this memory? This can't be undone.",
       confirmDeleteAudio: "Delete this recording?",
       emptyRecent: "Nothing saved yet. Tap + to record your first thought.",
+      confirmDeleteFile: "Delete this file?",
       emptySearch: "No memories found. Try a different word?",
       emptyRandomTitle: "No memories to open yet",
       emptyRandomBody: "Save a few thoughts, then come back to shuffle through them.",
@@ -2080,6 +2087,34 @@
     btn.classList.toggle('active', entry.pinned);
   }
 
+  function renderDetailFilesList(entry){
+    const filesList = $('detailFilesList');
+    filesList.innerHTML = '';
+    (entry.files || []).forEach((f, idx) => {
+      const row = document.createElement('div');
+      row.className = 'file-chip-row';
+      row.innerHTML = `
+        <span>📎</span>
+        <span class="file-chip-name">${escapeHtml(f.name)}</span>
+        <a href="${f.url}" target="_blank" rel="noopener" style="color:var(--plum-deep); font-weight:600; text-decoration:none; font-size:12.5px; flex-shrink:0;">${T().openFile}</a>
+        <button type="button" class="detail-file-delete-btn" style="color:var(--danger); font-weight:600; font-size:12.5px; flex-shrink:0; background:none; border:none; cursor:pointer;">${T().deleteAction}</button>
+      `;
+      row.querySelector('.detail-file-delete-btn').addEventListener('click', ()=>{
+        if(!confirm(T().confirmDeleteFile)) return;
+        const removedFile = entry.files[idx];
+        entry.files = entry.files.filter((_, i) => i !== idx);
+        renderDetailFilesList(entry); // re-render locally, don't re-fetch (avoids a race with the server write below)
+        showToast(T().toastDeleted);
+        persistIndex();
+        if(entry.sharedId){
+          updateSharedEntry(entry.sharedId, { files: entry.files });
+        }
+        deleteFileFromStorage(removedFile.path);
+      });
+      filesList.appendChild(row);
+    });
+  }
+
   async function openDetail(id){
     const entry = entries.find(e=>e.id === id);
     if(!entry) return;
@@ -2098,9 +2133,23 @@
         entry.hasAudio = !!entry.audio;
         persistIndex();
       }
-      const otherParty = entry.isSharedOwner ? null : (entry.sharedBy || (shared && shared.ownerEmail));
-      $('sharedNoteBadge').textContent = entry.isSharedOwner ? T().sharedOwnerBadge : T().sharedCollabBadge(otherParty || '');
-      $('sharedNoteBadge').style.display = 'block';
+      let otherPartyName = '';
+      if(entry.isSharedOwner){
+        const collaborators = await listSharedCollaborators(entry.sharedId);
+        const first = collaborators[0];
+        if(first && first.email){
+          const nickname = await getContactNickname(first.email);
+          otherPartyName = nickname || first.email;
+        }
+      } else {
+        const email = entry.sharedBy || (shared && shared.ownerEmail) || '';
+        if(email){
+          const nickname = await getContactNickname(email);
+          otherPartyName = nickname || email;
+        }
+      }
+      $('sharedNoteBadgeText').textContent = T().sharedCollabBadge(otherPartyName);
+      $('sharedNoteBadge').style.display = 'flex';
     } else {
       $('sharedNoteBadge').style.display = 'none';
     }
@@ -2120,18 +2169,7 @@
     } else {
       $('detailPhotos').style.display = 'none';
     }
-    const filesList = $('detailFilesList');
-    filesList.innerHTML = '';
-    (entry.files || []).forEach(f => {
-      const row = document.createElement('div');
-      row.className = 'file-chip-row';
-      row.innerHTML = `
-        <span>📎</span>
-        <span class="file-chip-name">${escapeHtml(f.name)}</span>
-        <a href="${f.url}" target="_blank" rel="noopener" style="color:var(--plum-deep); font-weight:600; text-decoration:none; font-size:12.5px; flex-shrink:0;">${T().openFile}</a>
-      `;
-      filesList.appendChild(row);
-    });
+    renderDetailFilesList(entry);
     if(entry.audio){
       $('detailAudio').src = entry.audio;
       $('detailDownloadAudioBtn').href = entry.audio;
@@ -2287,9 +2325,17 @@
 
   async function joinSharedEntry(sharedId){
     const fb = window.__firebase;
-    const uid = fb.auth.currentUser.uid;
-    try{ await fb.setDoc(fb.doc(fb.db, 'sharedEntries', sharedId, 'collaborators', uid), { joinedAt: Date.now() }); }
+    const me = fb.auth.currentUser;
+    try{ await fb.setDoc(fb.doc(fb.db, 'sharedEntries', sharedId, 'collaborators', me.uid), { joinedAt: Date.now(), email: me.email || '' }); }
     catch(e){ console.error('join shared entry failed', e); }
+  }
+
+  async function listSharedCollaborators(sharedId){
+    const fb = window.__firebase;
+    try{
+      const snap = await fb.getDocs(fb.collection(fb.db, 'sharedEntries', sharedId, 'collaborators'));
+      return snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+    }catch(e){ console.error('list collaborators failed', e); return []; }
   }
 
   async function leaveSharedEntry(sharedId){
@@ -2775,7 +2821,11 @@
     $('detailAudioRow').style.display = 'none';
     showToast(T().toastAudioDeleted);
     persistIndex();
-    persistMediaFor(entry);
+    if(entry.sharedId){
+      updateSharedEntry(entry.sharedId, { audio: null });
+    } else {
+      persistMediaFor(entry);
+    }
   });
 
   function deleteEntry(id){
