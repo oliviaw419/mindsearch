@@ -242,6 +242,8 @@
   .photo-tile{ position:relative; width:72px; height:72px; border-radius:12px; overflow:hidden; background:var(--paper-raised); backdrop-filter: blur(var(--blur)); -webkit-backdrop-filter: blur(var(--blur)); border:1px solid var(--line); flex-shrink:0; }
   .photo-tile img{ width:100%; height:100%; object-fit:cover; display:block; }
   .photo-tile.add-tile{ display:flex; align-items:center; justify-content:center; font-size:24px; color:var(--ink-soft); cursor:pointer; border-style:dashed; }
+  .photo-tile.processing{ background:var(--paper-raised); border-style:dashed; animation: photoProcessingPulse 1.1s ease-in-out infinite; }
+  @keyframes photoProcessingPulse{ 0%,100%{ opacity:0.4; } 50%{ opacity:0.9; } }
   .photo-tile .remove-attach{ position:absolute; top:2px; right:2px; width:20px; height:20px; font-size:10px; border-radius:50%; background:rgba(0,0,0,0.55); color:#fff; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0; }
   .hint-text{ font-size:11.5px; color:var(--ink-soft); font-weight:400; text-transform:none; letter-spacing:0; }
 
@@ -438,6 +440,10 @@
     <input type="file" id="photoInput" accept="image/*" multiple style="display:none;">
     <input type="file" id="fileInput" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.rtf,.txt" multiple style="display:none;">
 
+    <div id="uploadProgressWrap" style="display:none; margin-top:14px; height:6px; border-radius:999px; background:var(--line); overflow:hidden;">
+      <div id="uploadProgressFill" style="width:0%; height:100%; background:var(--plum); border-radius:999px; transition:width .15s ease;"></div>
+    </div>
+
     <button class="primary-btn" id="saveEntryBtn" data-i18n="save">Save</button>
     <button class="text-btn" id="cancelAddBtn" data-i18n="cancel">Cancel</button>
   </div>
@@ -447,7 +453,10 @@
 <div class="sheet-overlay" id="detailOverlay">
   <div class="sheet">
     <div class="detail-header">
-      <div class="detail-title" id="detailTitle"></div>
+      <div style="flex:1; min-width:0;">
+        <p id="sharedNoteBadge" style="display:none; font-size:11.5px; font-weight:600; color:var(--plum-deep); margin:0 0 4px;"></p>
+        <div class="detail-title" id="detailTitle"></div>
+      </div>
       <div class="detail-header-actions">
         <button class="star-btn" id="starBtn" title="Review often">☆</button>
         <div style="position:relative;">
@@ -495,6 +504,10 @@
       <input class="field" id="shareEmailInput" type="email" placeholder="friend@email.com" style="flex:1;">
       <button class="primary-btn" id="shareToEmailBtn" style="margin-top:0; width:auto; padding:0 16px; white-space:nowrap;" data-i18n="sendAction">Send</button>
     </div>
+    <label style="display:flex; align-items:center; gap:8px; margin:8px 2px 4px; font-size:13px; color:var(--ink); cursor:pointer;">
+      <input type="checkbox" id="allowEditCheckbox" style="width:16px; height:16px; margin:0;">
+      <span data-i18n="allowEditLabel">Allow them to edit this note too</span>
+    </label>
     <div id="contactChipRow" style="display:flex; gap:8px; flex-wrap:wrap; margin:10px 0 4px;"></div>
 
     <label class="field-label" data-i18n="shareExternal">Share to</label>
@@ -650,7 +663,7 @@
     collection, getDocs, query, orderBy, limit
   } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
   import {
-    getStorage, ref, uploadBytes, getDownloadURL, deleteObject
+    getStorage, ref, uploadBytes, uploadBytesResumable, getDownloadURL, deleteObject
   } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-storage.js";
 
   const firebaseConfig = {
@@ -673,7 +686,7 @@
     sendPasswordResetEmail, onAuthStateChanged, signOut,
     doc, getDoc, setDoc, deleteDoc,
     collection, getDocs, query, orderBy, limit,
-    ref, uploadBytes, getDownloadURL, deleteObject
+    ref, uploadBytes, uploadBytesResumable, getDownloadURL, deleteObject
   };
   window.dispatchEvent(new Event('firebaseReady'));
 </script>
@@ -695,9 +708,11 @@
   let pendingAudioData = null;
   let pendingFiles = []; // each: {isNew:true, file:File, name} or {isNew:false, name,url,type,size,path}
   let filesToDeleteOnSave = []; // storage paths to clean up after a successful save
-  const MAX_FILES = 8;
-  const MAX_PHOTOS = 8;
-  const PHOTO_MAX_BYTES = 10 * 1024 * 1024;
+  const MAX_FILES = 10;
+  const MAX_PHOTOS = 10;
+  const PHOTO_MAX_BYTES = 30 * 1024 * 1024; // sanity cap on the original before compression
+  const PHOTO_MAX_DIMENSION = 2400;
+  const PHOTO_JPEG_QUALITY = 0.88;
   const FILE_MAX_BYTES = 10 * 1024 * 1024; // 10MB, generous since these go to Storage now
   const ALLOWED_FILE_EXT = ['.pdf','.doc','.docx','.xls','.xlsx','.ppt','.pptx','.rtf','.txt'];
   let isRecording = false;
@@ -782,7 +797,7 @@
       photosHint: "最多 5 张",
       attachmentsLabel: "附件",
       toastFileNeedsAccount: "需要登录才能添加文件",
-      toastMaxFiles: "最多只能加 8 个文件",
+      toastMaxFiles: "最多只能加 10 个文件",
       toastFileWrongType: "支持 PDF、Word、Excel、PPT、RTF、TXT 格式",
       toastFileTooLarge: "文件不能超过 10MB",
       toastFileUploadFail: "文件上传失败，请重试",
@@ -809,6 +824,9 @@
       created: "创建于",
       lastEdited: "最后编辑",
       sharedByLabel: "分享自：",
+      allowEditLabel: "允许对方也能编辑这条笔记",
+      sharedOwnerBadge: "👥 共同编辑中，对方改动会同步给你",
+      sharedCollabBadge: (who) => `👥 ${who ? who + ' ' : ''}和你共同编辑这条笔记`,
       close: "关闭",
       starTitle: "常复习",
       decideLaterTitle: "稍后处理",
@@ -887,7 +905,7 @@
       toastSaved: "已保存",
       toastNeedFields: "至少要填个标题",
       toastMicFail: "无法访问麦克风（预览环境可能不支持）",
-      toastMaxPhotos: "最多只能加 8 张照片",
+      toastMaxPhotos: "最多只能加 10 张照片",
       confirmDeleteEntry: "删除这条记录？",
       confirmDeleteEntryFull: "确定要删除这条记忆吗？此操作无法撤销。",
       confirmDeleteAudio: "删除这段录音？",
@@ -920,7 +938,7 @@
       photosHint: "最多 5 張",
       attachmentsLabel: "附件",
       toastFileNeedsAccount: "需要登入才能新增檔案",
-      toastMaxFiles: "最多只能加 8 個檔案",
+      toastMaxFiles: "最多只能加 10 個檔案",
       toastFileWrongType: "支援 PDF、Word、Excel、PPT、RTF、TXT 格式",
       toastFileTooLarge: "檔案不能超過 10MB",
       toastFileUploadFail: "檔案上傳失敗，請重試",
@@ -949,6 +967,9 @@
       sharedByLabel: "分享自：",
       close: "關閉",
       starTitle: "常復習",
+      allowEditLabel: "允許對方也能編輯這則筆記",
+      sharedOwnerBadge: "👥 共同編輯中，對方改動會同步給你",
+      sharedCollabBadge: (who) => `👥 ${who ? who + ' ' : ''}和你共同編輯這則筆記`,
       decideLaterTitle: "稍後處理",
       themeBtnTitle: "換主題",
       langBtnTitle: "切換語言",
@@ -1025,7 +1046,7 @@
       toastSaved: "已儲存",
       toastNeedFields: "至少要填個標題",
       toastMicFail: "無法存取麥克風（預覽環境可能不支援）",
-      toastMaxPhotos: "最多只能加 8 張照片",
+      toastMaxPhotos: "最多只能加 10 張照片",
       confirmDeleteEntry: "刪除這則記錄？",
       confirmDeleteEntryFull: "確定要刪除這則記憶嗎？此操作無法復原。",
       confirmDeleteAudio: "刪除這段錄音？",
@@ -1058,7 +1079,7 @@
       photosHint: "up to 5",
       attachmentsLabel: "Attachments",
       toastFileNeedsAccount: "Sign in to attach files",
-      toastMaxFiles: "You can add up to 8 files",
+      toastMaxFiles: "You can add up to 10 files",
       toastFileWrongType: "Supported: PDF, Word, Excel, PPT, RTF, TXT",
       toastFileTooLarge: "File can't be larger than 10MB",
       toastFileUploadFail: "File upload failed, please try again",
@@ -1089,6 +1110,9 @@
       starTitle: "Review often",
       decideLaterTitle: "Decide later",
       themeBtnTitle: "Switch theme",
+      allowEditLabel: "Allow them to edit this note too",
+      sharedOwnerBadge: "👥 Shared for co-editing — their changes will sync to you",
+      sharedCollabBadge: (who) => `👥 Co-editing this note${who ? ' with ' + who : ''}`,
       langBtnTitle: "Switch language",
       languageMenuLabelZh: "Language: 中文",
       languageMenuLabelEn: "Language: English",
@@ -1163,7 +1187,7 @@
       toastSaved: "Saved",
       toastNeedFields: "At least give it a title",
       toastMicFail: "Couldn't access the microphone (may not work in preview)",
-      toastMaxPhotos: "You can add up to 8 photos",
+      toastMaxPhotos: "You can add up to 10 photos",
       confirmDeleteEntry: "Delete this entry?",
       confirmDeleteEntryFull: "Delete this memory? This can't be undone.",
       confirmDeleteAudio: "Delete this recording?",
@@ -1205,6 +1229,7 @@
       files: e.files || [],
       isSample: !!e.isSample,
       sharedBy: e.sharedBy || null, sharedAt: e.sharedAt || null,
+      sharedId: e.sharedId || null, isSharedOwner: !!e.isSharedOwner,
       createdAt: e.createdAt, updatedAt: e.updatedAt
     };
   }
@@ -1218,13 +1243,37 @@
     }
   }
 
-  async function uploadFileToStorage(entryId, file){
+  function uploadWithProgress(storageRef, file, onProgress){
+    const fb = window.__firebase;
+    return new Promise((resolve, reject) => {
+      const task = fb.uploadBytesResumable(storageRef, file);
+      task.on('state_changed',
+        (snapshot) => { if(onProgress) onProgress(snapshot.bytesTransferred, snapshot.totalBytes); },
+        (err) => reject(err),
+        async () => {
+          try{
+            const url = await fb.getDownloadURL(storageRef);
+            resolve(url);
+          }catch(e){ reject(e); }
+        }
+      );
+    });
+  }
+
+  async function uploadFileToStorage(entryId, file, onProgress){
     const fb = window.__firebase;
     const uid = fb.auth.currentUser.uid;
     const path = `users/${uid}/files/${entryId}/${Date.now()}_${file.name}`;
     const storageRef = fb.ref(fb.storage, path);
-    await fb.uploadBytes(storageRef, file);
-    const url = await fb.getDownloadURL(storageRef);
+    const url = await uploadWithProgress(storageRef, file, onProgress);
+    return { name: file.name, url, type: file.type, size: file.size, path };
+  }
+
+  async function uploadFileToSharedStorage(sharedId, file, onProgress){
+    const fb = window.__firebase;
+    const path = `sharedFiles/${sharedId}/${Date.now()}_${file.name}`;
+    const storageRef = fb.ref(fb.storage, path);
+    const url = await uploadWithProgress(storageRef, file, onProgress);
     return { name: file.name, url, type: file.type, size: file.size, path };
   }
 
@@ -1367,12 +1416,13 @@
       const photoBadge = entry.imageCount ? `<span class="badge">📷${entry.imageCount>1 ? '×'+entry.imageCount : ''}</span>` : '';
       const audioBadge = entry.hasAudio ? '<span class="badge">🎤</span>' : '';
       const pdfBadge = (entry.files && entry.files.length) ? '<span class="badge">📎</span>' : '';
+      const sharedBadge = entry.sharedId ? '<span class="badge">👥</span>' : '';
       row.innerHTML = `
         <div class="delete-bg">${T().deleteSwipeLabel}</div>
         <div class="entry-card" data-id="${entry.id}">
           <div class="etitle">${escapeHtml(entry.title)}</div>
           <div class="esnippet">${escapeHtml(snippet(entry))}</div>
-          <div class="ebadges">${photoBadge}${audioBadge}${pdfBadge}</div>
+          <div class="ebadges">${photoBadge}${audioBadge}${pdfBadge}${sharedBadge}</div>
         </div>`;
       list.appendChild(row);
       attachSwipe(row, entry.id);
@@ -1618,6 +1668,11 @@
       });
       strip.appendChild(tile);
     });
+    for(let i=0; i<pendingPhotoProcessingCount; i++){
+      const tile = document.createElement('div');
+      tile.className = 'photo-tile processing';
+      strip.appendChild(tile);
+    }
   }
 
   function updateVoiceBtnTitle(){
@@ -1629,6 +1684,7 @@
     $('inputContent').value = '';
     pendingPhotos.forEach(p => { if(p.isNew && p.previewUrl){ URL.revokeObjectURL(p.previewUrl); } });
     pendingPhotos = [];
+    pendingPhotoProcessingCount = 0;
     pendingAudioData = null;
     pendingFiles = [];
     filesToDeleteOnSave = [];
@@ -1639,6 +1695,8 @@
     $('voiceBtn').classList.remove('active','recording');
     updateVoiceBtnTitle();
     $('recordingStatusLine').style.display = 'none';
+    $('uploadProgressWrap').style.display = 'none';
+    $('uploadProgressFill').style.width = '0%';
     editingId = null;
   }
 
@@ -1672,6 +1730,39 @@
   $('fabAdd').addEventListener('click', openAddSheet);
   $('cancelAddBtn').addEventListener('click', ()=> $('addOverlay').classList.remove('open'));
 
+  function compressImage(file, maxDim, quality){
+    return new Promise((resolve, reject) => {
+      if(!file.type || !file.type.startsWith('image/')){ resolve(file); return; }
+      const objectUrl = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        let { width, height } = img;
+        if(width > maxDim || height > maxDim){
+          if(width > height){
+            height = Math.round(height * (maxDim / width));
+            width = maxDim;
+          } else {
+            width = Math.round(width * (maxDim / height));
+            height = maxDim;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(blob => {
+          URL.revokeObjectURL(objectUrl);
+          if(!blob){ resolve(file); return; }
+          const newName = file.name.replace(/\.[^.]+$/, '') + '.jpg';
+          resolve(new File([blob], newName, { type:'image/jpeg' }));
+        }, 'image/jpeg', quality);
+      };
+      img.onerror = () => { URL.revokeObjectURL(objectUrl); resolve(file); };
+      img.src = objectUrl;
+    });
+  }
+
   $('photoToolbarBtn').addEventListener('click', ()=>{
     if(!isSignedIn){
       showToast(T().toastFileNeedsAccount);
@@ -1682,16 +1773,27 @@
     $('photoInput').click();
   });
 
-  $('photoInput').addEventListener('change', (e)=>{
+  let pendingPhotoProcessingCount = 0;
+
+  $('photoInput').addEventListener('change', async (e)=>{
     const allFiles = Array.from(e.target.files);
     const remainingSlots = MAX_PHOTOS - pendingPhotos.length;
     const files = allFiles.slice(0, remainingSlots);
     if(allFiles.length > files.length){ showToast(T().toastMaxPhotos); }
-    files.forEach(file => {
-      if(file.size > PHOTO_MAX_BYTES){ showToast(T().toastFileTooLarge); return; }
-      pendingPhotos.push({ isNew:true, file, previewUrl: URL.createObjectURL(file) });
-    });
+    pendingPhotoProcessingCount = files.length;
     renderPhotoStrip();
+    for(const file of files){
+      if(file.size > PHOTO_MAX_BYTES){
+        showToast(T().toastFileTooLarge);
+        pendingPhotoProcessingCount--;
+        renderPhotoStrip();
+        continue;
+      }
+      const compressed = await compressImage(file, PHOTO_MAX_DIMENSION, PHOTO_JPEG_QUALITY);
+      pendingPhotos.push({ isNew:true, file: compressed, previewUrl: URL.createObjectURL(compressed) });
+      pendingPhotoProcessingCount--;
+      renderPhotoStrip();
+    }
     e.target.value = '';
   });
 
@@ -1880,44 +1982,78 @@
       entry.audio = pendingAudioData;
       entry.hasAudio = !!pendingAudioData;
 
-      // Upload any newly-selected photos/files to Storage before we can persist their URLs
-      const hasNewUploads = pendingPhotos.some(p => p.isNew) || pendingFiles.some(f => f.isNew);
-      if(hasNewUploads){
+      const isShared = !!entry.sharedId;
+
+      // Upload any newly-selected photos/files to Storage in parallel, tracking real byte-level progress
+      const newPhotoItems = pendingPhotos.filter(p => p.isNew);
+      const newFileItems = pendingFiles.filter(f => f.isNew);
+      const totalNewUploads = newPhotoItems.length + newFileItems.length;
+      const progressState = new Map(); // key -> { transferred, total }
+
+      function updateProgressBar(){
+        let transferred = 0, total = 0;
+        progressState.forEach(v => { transferred += v.transferred; total += v.total; });
+        const pct = total > 0 ? Math.min(100, Math.round((transferred / total) * 100)) : 0;
+        $('uploadProgressFill').style.width = pct + '%';
+      }
+
+      if(totalNewUploads > 0){
+        $('uploadProgressWrap').style.display = 'block';
+        $('uploadProgressFill').style.width = '0%';
         $('saveEntryBtn').textContent = T().uploadingFiles;
       }
-      const resolvedPhotos = [];
-      for(const p of pendingPhotos){
-        if(p.isNew){
-          try{
-            const meta = await uploadFileToStorage(entry.id, p.file);
-            resolvedPhotos.push({ url: meta.url, path: meta.path });
-          }catch(e){
-            console.error('photo upload failed', e);
-            showToast(T().toastFileUploadFail);
-          }
-        } else {
-          resolvedPhotos.push({ url:p.url, path:p.path });
-        }
+
+      function trackProgress(key){
+        progressState.set(key, { transferred: 0, total: 1 });
+        return (transferred, total) => {
+          progressState.set(key, { transferred, total });
+          updateProgressBar();
+        };
       }
+
+      const photoResults = await Promise.all(pendingPhotos.map(async (p, idx) => {
+        if(!p.isNew) return { url:p.url, path:p.path };
+        try{
+          const onProgress = trackProgress('photo'+idx);
+          const meta = isShared
+            ? await uploadFileToSharedStorage(entry.sharedId, p.file, onProgress)
+            : await uploadFileToStorage(entry.id, p.file, onProgress);
+          return { url: meta.url, path: meta.path };
+        }catch(e){
+          console.error('photo upload failed', e);
+          showToast(T().toastFileUploadFail);
+          return null;
+        }
+      }));
+      const resolvedPhotos = photoResults.filter(Boolean);
       entry.images = resolvedPhotos;
       entry.imageCount = resolvedPhotos.length;
 
-      const resolvedFiles = [];
-      for(const f of pendingFiles){
-        if(f.isNew){
-          try{
-            const meta = await uploadFileToStorage(entry.id, f.file);
-            resolvedFiles.push(meta);
-          }catch(e){
-            console.error('file upload failed', e);
-            showToast(T().toastFileUploadFail);
-          }
-        } else {
-          resolvedFiles.push({ name:f.name, url:f.url, type:f.type, size:f.size, path:f.path });
+      const fileResults = await Promise.all(pendingFiles.map(async (f, idx) => {
+        if(!f.isNew) return { name:f.name, url:f.url, type:f.type, size:f.size, path:f.path };
+        try{
+          const onProgress = trackProgress('file'+idx);
+          const meta = isShared
+            ? await uploadFileToSharedStorage(entry.sharedId, f.file, onProgress)
+            : await uploadFileToStorage(entry.id, f.file, onProgress);
+          return meta;
+        }catch(e){
+          console.error('file upload failed', e);
+          showToast(T().toastFileUploadFail);
+          return null;
         }
-      }
+      }));
+      const resolvedFiles = fileResults.filter(Boolean);
       entry.files = resolvedFiles;
       $('saveEntryBtn').textContent = T().save;
+      $('uploadProgressWrap').style.display = 'none';
+
+      if(isShared){
+        updateSharedEntry(entry.sharedId, {
+          title: entry.title, content: entry.content,
+          images: entry.images, audio: entry.audio, files: entry.files
+        });
+      }
 
       // Best-effort cleanup of anything the user removed during this edit
       filesToDeleteOnSave.forEach(path => deleteFileFromStorage(path));
@@ -1948,9 +2084,29 @@
     const entry = entries.find(e=>e.id === id);
     if(!entry) return;
     currentDetailId = id;
+    await ensureMedia(entry);
+
+    if(entry.sharedId){
+      const shared = await fetchSharedEntry(entry.sharedId);
+      if(shared){
+        entry.title = shared.title;
+        entry.content = shared.content;
+        entry.images = shared.images || [];
+        entry.audio = shared.audio || null;
+        entry.files = shared.files || [];
+        entry.imageCount = entry.images.length;
+        entry.hasAudio = !!entry.audio;
+        persistIndex();
+      }
+      const otherParty = entry.isSharedOwner ? null : (entry.sharedBy || (shared && shared.ownerEmail));
+      $('sharedNoteBadge').textContent = entry.isSharedOwner ? T().sharedOwnerBadge : T().sharedCollabBadge(otherParty || '');
+      $('sharedNoteBadge').style.display = 'block';
+    } else {
+      $('sharedNoteBadge').style.display = 'none';
+    }
+
     $('detailTitle').textContent = entry.title;
     $('detailContent').textContent = entry.content;
-    await ensureMedia(entry);
 
     if(entry.images && entry.images.length){
       $('detailPhotos').innerHTML = entry.images.map(img => `<img src="${img.url}">`).join('');
@@ -2097,7 +2253,53 @@
     try{ await fb.deleteDoc(fb.doc(fb.db, 'users', fb.auth.currentUser.uid, 'contacts', sanitizeEmailKey(email))); }catch(e){}
   }
 
-  async function shareEntryToEmail(entry, email){
+  async function createSharedEntry(entry){
+    const fb = window.__firebase;
+    const me = fb.auth.currentUser;
+    const sharedId = cryptoId();
+    await fb.setDoc(fb.doc(fb.db, 'sharedEntries', sharedId), {
+      title: entry.title, content: entry.content,
+      images: entry.images || [], audio: entry.audio || null, files: entry.files || [],
+      ownerUid: me.uid, ownerEmail: me.email,
+      updatedAt: Date.now(), updatedBy: me.email
+    });
+    return sharedId;
+  }
+
+  async function fetchSharedEntry(sharedId){
+    const fb = window.__firebase;
+    try{
+      const snap = await fb.getDoc(fb.doc(fb.db, 'sharedEntries', sharedId));
+      if(!snap.exists()) return null;
+      return snap.data();
+    }catch(e){ console.error('fetch shared entry failed', e); return null; }
+  }
+
+  async function updateSharedEntry(sharedId, fields){
+    const fb = window.__firebase;
+    const me = fb.auth.currentUser;
+    try{
+      await fb.setDoc(fb.doc(fb.db, 'sharedEntries', sharedId), {
+        ...fields, updatedAt: Date.now(), updatedBy: me.email
+      }, { merge: true });
+    }catch(e){ console.error('update shared entry failed', e); showToast(T().toastMediaFail); }
+  }
+
+  async function joinSharedEntry(sharedId){
+    const fb = window.__firebase;
+    const uid = fb.auth.currentUser.uid;
+    try{ await fb.setDoc(fb.doc(fb.db, 'sharedEntries', sharedId, 'collaborators', uid), { joinedAt: Date.now() }); }
+    catch(e){ console.error('join shared entry failed', e); }
+  }
+
+  async function leaveSharedEntry(sharedId){
+    const fb = window.__firebase;
+    const uid = fb.auth.currentUser.uid;
+    try{ await fb.deleteDoc(fb.doc(fb.db, 'sharedEntries', sharedId, 'collaborators', uid)); }
+    catch(e){ /* best effort */ }
+  }
+
+  async function shareEntryToEmail(entry, email, allowEdit){
     const fb = window.__firebase;
     const me = fb.auth.currentUser;
     if(!me) return false;
@@ -2113,12 +2315,22 @@
     }
     const itemId = cryptoId();
     try{
+      let sharedId = entry.sharedId || null;
+      if(allowEdit && !sharedId){
+        sharedId = await createSharedEntry(entry);
+        entry.sharedId = sharedId;
+        entry.isSharedOwner = true;
+        persistIndex();
+      }
       await fb.setDoc(fb.doc(fb.db, 'users', recipientUid, 'inbox', itemId), {
         fromEmail: me.email,
         title: entry.title,
         content: entry.content,
         images: entry.images || [],
         audio: entry.audio || null,
+        files: entry.files || [],
+        editable: !!allowEdit,
+        sharedId: allowEdit ? sharedId : null,
         createdAt: Date.now()
       });
       touchContactSharedAt(email);
@@ -2141,6 +2353,7 @@
         content: entry.content,
         images: entry.images || [],
         audio: entry.audio || null,
+        files: entry.files || [],
         createdAt: Date.now()
       });
       $('shareLinkInput').value = location.origin + location.pathname + '?share=' + shareId;
@@ -2164,7 +2377,7 @@
       chip.textContent = c.nickname || c.email;
       chip.addEventListener('click', async ()=>{
         if(!currentShareEntry) return;
-        const ok = await shareEntryToEmail(currentShareEntry, c.email);
+        const ok = await shareEntryToEmail(currentShareEntry, c.email, $('allowEditCheckbox').checked);
         if(ok) $('shareOverlay').classList.remove('open');
       });
       row.appendChild(chip);
@@ -2175,6 +2388,7 @@
     currentShareEntry = entry;
     $('shareEmailInput').value = '';
     $('shareLinkInput').value = '';
+    $('allowEditCheckbox').checked = false;
     renderContactChips();
     $('shareOverlay').classList.add('open');
     createShareLink(entry);
@@ -2191,7 +2405,7 @@
   $('shareToEmailBtn').addEventListener('click', async ()=>{
     const email = $('shareEmailInput').value.trim();
     if(!email || !currentShareEntry) return;
-    const ok = await shareEntryToEmail(currentShareEntry, email);
+    const ok = await shareEntryToEmail(currentShareEntry, email, $('allowEditCheckbox').checked);
     if(ok){
       $('shareEmailInput').value = '';
       renderContactChips();
@@ -2411,12 +2625,17 @@
     const newEntry = {
       id: cryptoId(), title: item.title, content: item.content || '',
       forgetCount:0, pinned:false,
-      images: item.images||[], audio: item.audio||null,
+      images: item.images||[], audio: item.audio||null, files: item.files||[],
       imageCount: (item.images||[]).length, hasAudio: !!item.audio,
       sharedBy: item.fromEmail || null,
       sharedAt: item.createdAt || Date.now(),
       createdAt: Date.now(), updatedAt: Date.now()
     };
+    if(item.editable && item.sharedId){
+      newEntry.sharedId = item.sharedId;
+      newEntry.isSharedOwner = false;
+      await joinSharedEntry(item.sharedId);
+    }
     entries.push(newEntry);
     renderRecent(); renderRandom(); renderForgotten();
     persistIndex();
@@ -2570,6 +2789,11 @@
     showToast(T().toastDeleted);
     persistIndex();
     storageAdapter.delete(mediaKey(id), false).catch(()=>{});
+    if(entry && entry.sharedId){
+      // Collaborative note: just leave it, don't touch the shared content — the other party still needs it
+      if(!entry.isSharedOwner){ leaveSharedEntry(entry.sharedId); }
+      return;
+    }
     if(entry && entry.files){
       entry.files.forEach(f => deleteFileFromStorage(f.path));
     }
