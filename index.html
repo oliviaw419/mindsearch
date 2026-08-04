@@ -366,10 +366,6 @@
     <input type="file" id="photoInput" accept="image/*" multiple style="display:none;">
 
     <label class="field-label" data-i18n="voiceLabel">Voice</label>
-    <p id="recordingStatusLabel" style="display:none; font-size:13px; font-weight:600; color:var(--danger); margin:4px 2px 8px;" data-i18n="recording">Recording… tap to save recording</p>
-    <div class="attach-row" style="margin-top:0;">
-      <div class="attach-btn" id="voiceBtn">🎤 <span id="voiceBtnLabel" data-i18n="addVoice">Add Voice</span></div>
-    </div>
     <div class="audio-row" id="audioPreviewWrap" style="display:none;">
       <audio class="preview-audio" id="audioPreview" controls controlslist="nodownload noplaybackrate"></audio>
       <div style="position:relative;">
@@ -379,6 +375,9 @@
           <button type="button" id="removeAudioBtn" data-i18n="deleteAudio">✕ Delete</button>
         </div>
       </div>
+    </div>
+    <div class="attach-row" style="margin-top:10px;">
+      <div class="attach-btn" id="voiceBtn">🎤 <span id="voiceBtnLabel" data-i18n="addVoice">Add Voice</span></div>
     </div>
 
     <button class="primary-btn" id="saveEntryBtn" data-i18n="save">Save</button>
@@ -461,13 +460,30 @@
 <div class="sheet-overlay" id="contactsOverlay" style="z-index:450;">
   <div class="sheet" style="max-width:400px;">
     <h2 data-i18n="manageFriends">Manage Friends</h2>
-    <div style="display:flex; gap:8px; margin-bottom:14px;">
-      <input class="field" id="newContactEmail" type="email" placeholder="friend@email.com" style="flex:1;">
-      <input class="field" id="newContactNickname" type="text" data-i18n-placeholder="nicknameOptional" placeholder="Nickname (optional)" style="flex:1;">
+
+    <div id="contactsAddPanel">
+      <div style="display:flex; gap:8px; margin-bottom:14px;">
+        <input class="field" id="newContactEmail" type="email" placeholder="friend@email.com" style="flex:1;">
+        <input class="field" id="newContactNickname" type="text" data-i18n-placeholder="nicknameOptional" placeholder="Nickname (optional)" style="flex:1;">
+      </div>
+      <button class="primary-btn" id="addContactBtn" style="margin-top:0;" data-i18n="addFriend">Add</button>
+      <button class="text-btn" id="goToManagePanelBtn" style="color:var(--plum-deep); font-weight:600;" data-i18n="manageAction">Manage</button>
     </div>
-    <button class="primary-btn" id="addContactBtn" style="margin-top:0;" data-i18n="addFriend">Add</button>
-    <button class="text-btn" id="toggleManageListBtn" data-i18n="manageAction">Manage</button>
-    <div id="contactsList" style="display:none; margin-top:8px; flex-direction:column; gap:8px;"></div>
+
+    <div id="contactsManagePanel" style="display:none;">
+      <div id="contactsList" style="display:flex; flex-direction:column; gap:8px;"></div>
+      <button class="text-btn" id="goToAddPanelBtn" style="color:var(--plum-deep); font-weight:600;" data-i18n="addNewAction">+ Add a friend</button>
+    </div>
+
+    <div id="contactsEditPanel" style="display:none;">
+      <label class="field-label" data-i18n="emailLabel">Email</label>
+      <input class="field" id="editContactEmail" type="email" disabled style="opacity:0.6;">
+      <label class="field-label" data-i18n="nicknameOptional">Nickname (optional)</label>
+      <input class="field" id="editContactNickname" type="text">
+      <button class="primary-btn" id="saveContactEditBtn" style="margin-top:14px;" data-i18n="save">Save</button>
+      <button class="text-btn" id="cancelContactEditBtn" data-i18n="cancel">Cancel</button>
+    </div>
+
     <button class="text-btn" id="closeContactsBtn" data-i18n="close">Close</button>
   </div>
 </div>
@@ -686,7 +702,8 @@
       photosHint: "最多 5 张",
       voiceLabel: "语音",
       addVoice: "添加语音",
-      recording: "录音中… 点击保存录音",
+      replaceVoice: "替换语音",
+      recording: "录音中… 点这里保存",
       recordingShort: "录音中",
       download: "⬇ 下载",
       deleteAudio: "✕ 删除",
@@ -698,6 +715,7 @@
       infoToggle: "ⓘ 详情",
       created: "创建于",
       lastEdited: "最后编辑",
+      sharedByLabel: "分享自：",
       close: "关闭",
       starTitle: "常复习",
       themeBtnTitle: "换主题",
@@ -747,6 +765,7 @@
       nicknameOptional: "备注名（选填）",
       addFriend: "添加",
       manageAction: "管理",
+      addNewAction: "+ 添加好友",
       inboxTitle: "别人分享给你的",
       inboxEmpty: "还没有人分享东西给你",
       saveToLibrary: "存进我的库",
@@ -807,7 +826,8 @@
       photosHint: "最多 5 張",
       voiceLabel: "語音",
       addVoice: "新增語音",
-      recording: "錄音中… 點擊儲存錄音",
+      replaceVoice: "取代語音",
+      recording: "錄音中… 點這裡儲存",
       recordingShort: "錄音中",
       download: "⬇ 下載",
       deleteAudio: "✕ 刪除",
@@ -819,6 +839,7 @@
       infoToggle: "ⓘ 詳情",
       created: "建立於",
       lastEdited: "最後編輯",
+      sharedByLabel: "分享自：",
       close: "關閉",
       starTitle: "常復習",
       themeBtnTitle: "換主題",
@@ -868,6 +889,7 @@
       nicknameOptional: "備註名稱（選填）",
       addFriend: "新增",
       manageAction: "管理",
+      addNewAction: "+ 新增好友",
       inboxTitle: "別人分享給你的",
       inboxEmpty: "還沒有人分享東西給你",
       saveToLibrary: "存進我的庫",
@@ -928,7 +950,8 @@
       photosHint: "up to 5",
       voiceLabel: "Voice",
       addVoice: "Add Voice",
-      recording: "Recording… tap to save recording",
+      replaceVoice: "Replace Voice",
+      recording: "Recording… tap here to save",
       recordingShort: "Recording",
       download: "⬇ Download",
       deleteAudio: "✕ Delete",
@@ -940,6 +963,7 @@
       infoToggle: "ⓘ Details",
       created: "Created",
       lastEdited: "Last edited",
+      sharedByLabel: "Shared by:",
       close: "Close",
       starTitle: "Review often",
       themeBtnTitle: "Switch theme",
@@ -989,6 +1013,7 @@
       nicknameOptional: "Nickname (optional)",
       addFriend: "Add",
       manageAction: "Manage",
+      addNewAction: "+ Add a friend",
       inboxTitle: "Shared with you",
       inboxEmpty: "Nothing shared with you yet",
       saveToLibrary: "Save to my library",
@@ -1055,6 +1080,7 @@
       forgetCount: e.forgetCount||0, pinned: !!e.pinned,
       imageCount: e.imageCount||0, hasAudio: !!e.hasAudio,
       isSample: !!e.isSample,
+      sharedBy: e.sharedBy || null, sharedAt: e.sharedAt || null,
       createdAt: e.createdAt, updatedAt: e.updatedAt
     };
   }
@@ -1467,8 +1493,7 @@
     $('audioPreviewWrap').style.display = 'none';
     $('addAudioMoreMenu').classList.remove('open');
     $('voiceBtn').classList.remove('active','recording');
-    $('voiceBtnLabel').textContent = T().addVoice;
-    $('recordingStatusLabel').style.display = 'none';
+    updateVoiceIdleLabel();
     editingId = null;
   }
 
@@ -1492,6 +1517,7 @@
       $('downloadAudioBtn').href = entry.audio;
       $('audioPreviewWrap').style.display = '';
       $('voiceBtn').classList.add('active');
+      updateVoiceIdleLabel();
     }
     $('addOverlay').classList.add('open');
   }
@@ -1520,7 +1546,12 @@
     pendingAudioData = null;
     $('audioPreviewWrap').style.display = 'none';
     $('voiceBtn').classList.remove('active');
+    updateVoiceIdleLabel();
   });
+
+  function updateVoiceIdleLabel(){
+    $('voiceBtnLabel').textContent = pendingAudioData ? T().replaceVoice : T().addVoice;
+  }
 
   function pickSupportedAudioMime(){
     const candidates = [
@@ -1573,8 +1604,7 @@
         stream.getTracks().forEach(t=>t.stop());
         isRecording = false;
         $('voiceBtn').classList.remove('recording');
-        $('voiceBtnLabel').textContent = T().addVoice;
-        $('recordingStatusLabel').style.display = 'none';
+        updateVoiceIdleLabel();
         recordingStopWaiters.forEach(fn => fn());
         recordingStopWaiters = [];
       };
@@ -1590,6 +1620,7 @@
           $('downloadAudioBtn').setAttribute('download', 'voice-note.' + ext);
           $('audioPreviewWrap').style.display = '';
           $('voiceBtn').classList.add('active');
+          updateVoiceIdleLabel();
           recordingStopWaiters.forEach(fn => fn());
           recordingStopWaiters = [];
         };
@@ -1602,15 +1633,11 @@
         stream.getTracks().forEach(t=>t.stop());
         isRecording = false;
         $('voiceBtn').classList.remove('recording');
-        $('voiceBtnLabel').textContent = T().addVoice;
-        $('recordingStatusLabel').style.display = 'none';
       };
       mediaRecorder.start();
       isRecording = true;
       $('voiceBtn').classList.add('recording');
-      $('voiceBtnLabel').textContent = T().recordingShort;
-      $('recordingStatusLabel').textContent = T().recording;
-      $('recordingStatusLabel').style.display = 'block';
+      $('voiceBtnLabel').textContent = T().recording;
     }catch(err){
       console.error('mic error', err);
       showToast(T().toastMicFail);
@@ -1704,7 +1731,8 @@
     $('moreMenu').classList.remove('open');
     $('audioMoreMenu').classList.remove('open');
     $('infoBox').classList.remove('open');
-    $('infoBox').innerHTML = `${T().created}:<br>${formatDate(entry.createdAt)}<br><br>${T().lastEdited}:<br>${formatDate(entry.updatedAt)}`;
+    const sharedLine = entry.sharedBy ? `<br><br>${T().sharedByLabel} ${escapeHtml(entry.sharedBy)}<br>${formatDate(entry.sharedAt || entry.createdAt)}` : '';
+    $('infoBox').innerHTML = `${T().created}:<br>${formatDate(entry.createdAt)}<br><br>${T().lastEdited}:<br>${formatDate(entry.updatedAt)}${sharedLine}`;
     $('detailOverlay').classList.add('open');
   }
 
@@ -1936,6 +1964,12 @@
   });
 
   // ---------- Manage Friends ----------
+  function showContactsPanel(panel){
+    $('contactsAddPanel').style.display = panel === 'add' ? 'block' : 'none';
+    $('contactsManagePanel').style.display = panel === 'manage' ? 'block' : 'none';
+    $('contactsEditPanel').style.display = panel === 'edit' ? 'block' : 'none';
+  }
+
   async function renderContactsList(){
     const list = $('contactsList');
     list.innerHTML = '';
@@ -1954,9 +1988,9 @@
         </div>
       `;
       row.querySelector('.edit-contact-btn').addEventListener('click', ()=>{
-        $('newContactEmail').value = c.email;
-        $('newContactNickname').value = c.nickname || '';
-        $('newContactEmail').scrollIntoView({ behavior:'smooth', block:'center' });
+        $('editContactEmail').value = c.email;
+        $('editContactNickname').value = c.nickname || '';
+        showContactsPanel('edit');
       });
       row.querySelector('.delete-contact-btn').addEventListener('click', async ()=>{
         if(!confirm(T().confirmRemoveContact)) return;
@@ -1976,23 +2010,31 @@
     $('newContactEmail').value = '';
     $('newContactNickname').value = '';
     showToast(T().contactAdded);
-    if($('contactsList').style.display !== 'none'){ renderContactsList(); }
   });
 
-  $('toggleManageListBtn').addEventListener('click', ()=>{
-    const list = $('contactsList');
-    const isOpen = list.style.display !== 'none';
-    if(isOpen){
-      list.style.display = 'none';
-    } else {
-      list.style.display = 'flex';
-      renderContactsList();
-    }
+  $('goToManagePanelBtn').addEventListener('click', ()=>{
+    showContactsPanel('manage');
+    renderContactsList();
+  });
+  $('goToAddPanelBtn').addEventListener('click', ()=> showContactsPanel('add'));
+
+  $('saveContactEditBtn').addEventListener('click', async ()=>{
+    const email = $('editContactEmail').value;
+    const nickname = $('editContactNickname').value.trim();
+    await setContactNickname(email, nickname);
+    showToast(T().contactAdded);
+    showContactsPanel('manage');
+    renderContactsList();
+  });
+  $('cancelContactEditBtn').addEventListener('click', ()=>{
+    showContactsPanel('manage');
   });
 
   $('openContactsBtn').addEventListener('click', ()=>{
     $('settingsMenu').classList.remove('open');
-    $('contactsList').style.display = 'none';
+    $('newContactEmail').value = '';
+    $('newContactNickname').value = '';
+    showContactsPanel('add');
     $('contactsOverlay').classList.add('open');
   });
   $('closeContactsBtn').addEventListener('click', ()=> $('contactsOverlay').classList.remove('open'));
@@ -2084,6 +2126,8 @@
       forgetCount:0, pinned:false,
       images: item.images||[], audio: item.audio||null,
       imageCount: (item.images||[]).length, hasAudio: !!item.audio,
+      sharedBy: item.fromEmail || null,
+      sharedAt: item.createdAt || Date.now(),
       createdAt: Date.now(), updatedAt: Date.now()
     };
     entries.push(newEntry);
@@ -2307,8 +2351,7 @@
     document.querySelectorAll('.lang-choice').forEach(btn => {
       btn.style.fontWeight = (btn.dataset.langChoice === lang) ? '700' : '400';
     });
-    $('voiceBtnLabel').textContent = isRecording ? t.recordingShort : t.addVoice;
-    if(isRecording){ $('recordingStatusLabel').textContent = t.recording; }
+    $('voiceBtnLabel').textContent = isRecording ? t.recording : (pendingAudioData ? t.replaceVoice : t.addVoice);
     $('addSheetTitle').textContent = editingId ? t.editAction : t.addSheetTitleNew;
     updateAuthModeUI();
     if(window.__firebase && window.__firebase.auth.currentUser){
