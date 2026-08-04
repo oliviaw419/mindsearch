@@ -268,7 +268,15 @@
       <p class="wordmark">Mind Search</p>
     </div>
     <div style="display:flex; gap:8px; align-items:center;">
-    <button class="more-btn small" id="langBtn" title="Switch language">中</button>
+    <div style="position:relative;">
+      <button class="more-btn small" id="settingsBtn" title="Settings">⚙️</button>
+      <div class="more-menu" id="settingsMenu" style="min-width:200px;">
+        <button type="button" class="lang-choice" data-lang-choice="zh">简体中文</button>
+        <button type="button" class="lang-choice" data-lang-choice="zh-TW">繁體中文</button>
+        <button type="button" class="lang-choice" data-lang-choice="en">English</button>
+        <button type="button" id="openContactsBtn" data-i18n="manageFriends">Manage Friends</button>
+      </div>
+    </div>
     <div style="position:relative;">
       <button class="more-btn small" id="themeBtn" title="Switch theme">🎨</button>
       <div class="more-menu" id="themeMenu">
@@ -279,9 +287,10 @@
       </div>
     </div>
     <div style="position:relative;">
-      <button class="more-btn small" id="accountBtn" title="Account">👤</button>
+      <button class="more-btn small" id="accountBtn" title="Account" style="position:relative;">👤<span id="accountBadge" style="display:none; position:absolute; top:-2px; right:-2px; width:9px; height:9px; border-radius:50%; background:var(--danger); border:1.5px solid var(--paper);"></span></button>
       <div class="more-menu" id="accountMenu" style="min-width:200px;">
         <div id="accountEmailLabel" style="padding:12px 16px; font-size:12px; color:var(--ink-soft); border-bottom:1px solid var(--line);"></div>
+        <button type="button" id="openInboxBtn" style="position:relative;" data-i18n="inboxMenuLabel">Shared with you<span id="accountMenuBadge" style="display:none; position:absolute; top:10px; right:14px; width:8px; height:8px; border-radius:50%; background:var(--danger);"></span></button>
         <button type="button" id="signOutBtn" class="danger" data-i18n="signOut">Sign out</button>
       </div>
     </div>
@@ -413,14 +422,70 @@
 
 <!-- Share link modal -->
 <div class="sheet-overlay" id="shareOverlay" style="z-index:450;">
-  <div class="sheet" style="max-width:380px;">
+  <div class="sheet" style="max-width:400px;">
     <h2 data-i18n="shareLinkTitle">Share this note</h2>
-    <p style="font-size:13px; color:var(--ink-soft); margin:0 0 14px;" data-i18n="shareLinkDesc">Anyone with this link can view a read-only copy — no account needed.</p>
-    <div style="display:flex; gap:8px;">
+
+    <label class="field-label" data-i18n="shareToContacts">Share with</label>
+    <div style="display:flex; gap:8px; margin:8px 0 4px;">
+      <input class="field" id="shareEmailInput" type="email" placeholder="friend@email.com" style="flex:1;">
+      <button class="primary-btn" id="shareToEmailBtn" style="margin-top:0; width:auto; padding:0 16px; white-space:nowrap;" data-i18n="sendAction">Send</button>
+    </div>
+    <div id="contactChipRow" style="display:flex; gap:8px; flex-wrap:wrap; margin:10px 0 4px;"></div>
+
+    <label class="field-label" data-i18n="shareExternal">Share to</label>
+    <div style="display:flex; gap:10px; margin:10px 0 4px; flex-wrap:wrap;">
+      <button class="attach-btn" id="shareWhatsappBtn" style="flex:1; min-width:80px;">WhatsApp</button>
+      <button class="attach-btn" id="shareLineBtn" style="flex:1; min-width:80px;">Line</button>
+      <button class="attach-btn" id="shareMoreBtn" style="flex:1; min-width:80px;" data-i18n="moreApps">More…</button>
+    </div>
+    <p style="font-size:11.5px; color:var(--ink-soft); margin:6px 2px 0;" data-i18n="shareWeChatHint">For WeChat / Instagram: copy the link below and paste it there.</p>
+
+    <label class="field-label" data-i18n="shareViaLink">Or copy link</label>
+    <div style="display:flex; gap:8px; margin-top:8px;">
       <input class="field" id="shareLinkInput" type="text" readonly style="flex:1;">
       <button class="primary-btn" id="copyShareLinkBtn" style="margin-top:0; width:auto; padding:0 18px; white-space:nowrap;" data-i18n="copyLink">Copy</button>
     </div>
+
     <button class="text-btn" id="closeShareBtn" data-i18n="close">Close</button>
+  </div>
+</div>
+
+<!-- Manage Friends -->
+<div class="sheet-overlay" id="contactsOverlay" style="z-index:450;">
+  <div class="sheet" style="max-width:400px;">
+    <h2 data-i18n="manageFriends">Manage Friends</h2>
+    <div style="display:flex; gap:8px; margin-bottom:14px;">
+      <input class="field" id="newContactEmail" type="email" placeholder="friend@email.com" style="flex:1;">
+      <input class="field" id="newContactNickname" type="text" data-i18n-placeholder="nicknameOptional" placeholder="Nickname (optional)" style="flex:1;">
+    </div>
+    <button class="primary-btn" id="addContactBtn" style="margin-top:0;" data-i18n="addFriend">Add</button>
+    <div id="contactsList" style="margin-top:18px; display:flex; flex-direction:column; gap:8px;"></div>
+    <button class="text-btn" id="closeContactsBtn" data-i18n="close">Close</button>
+  </div>
+</div>
+
+<!-- Inbox -->
+<div class="sheet-overlay" id="inboxOverlay" style="z-index:450;">
+  <div class="sheet" style="max-width:420px;">
+    <h2 data-i18n="inboxTitle">Shared with you</h2>
+    <div id="inboxList" style="display:flex; flex-direction:column; gap:10px;"></div>
+    <div id="inboxEmpty" class="empty-note" style="display:none;" data-i18n="inboxEmpty">Nothing shared with you yet.</div>
+    <button class="text-btn" id="closeInboxBtn" data-i18n="close">Close</button>
+  </div>
+</div>
+
+<!-- Single shared-item popup (shown on login for 1-2 pending items) -->
+<div class="sheet-overlay" id="inboxItemOverlay" style="z-index:470;">
+  <div class="sheet" style="max-width:400px;">
+    <p style="font-size:12px; color:var(--ink-soft); margin:0 0 4px;" id="inboxItemFrom"></p>
+    <div class="detail-title" id="inboxItemTitle" style="margin-bottom:10px;"></div>
+    <div class="detail-photos" id="inboxItemPhotos" style="display:none;"></div>
+    <div class="detail-content" id="inboxItemContent"></div>
+    <audio class="preview-audio" id="inboxItemAudio" controls style="display:none; margin-top:12px;"></audio>
+    <div class="detail-actions" style="display:flex; gap:10px; margin-top:20px;">
+      <button class="primary-btn" id="inboxItemSaveBtn" style="margin-top:0; flex:1;" data-i18n="saveToLibrary">Save to my library</button>
+      <button class="text-btn" id="inboxItemDiscardBtn" style="margin-top:0; flex:1;" data-i18n="discardAction">Discard</button>
+    </div>
   </div>
 </div>
 
@@ -475,6 +540,12 @@
 
 <div class="toast" id="toast"></div>
 
+<div id="pendingSharesBanner" style="display:none; position:fixed; bottom:100px; left:50%; transform:translateX(-50%); background:var(--ink); color:#fff; padding:12px 14px 12px 18px; border-radius:999px; z-index:250; align-items:center; gap:12px; max-width:88%; box-shadow:0 8px 24px -8px rgba(0,0,0,0.35);">
+  <span id="pendingSharesBannerText" style="font-size:13px;"></span>
+  <button id="pendingSharesBannerBtn" style="background:#fff; color:var(--ink); border:none; border-radius:999px; padding:6px 14px; font-size:12.5px; font-weight:600; cursor:pointer;"></button>
+  <button id="pendingSharesBannerClose" style="background:none; border:none; color:rgba(255,255,255,0.7); font-size:14px; cursor:pointer; padding:0 2px;">✕</button>
+</div>
+
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
   import {
@@ -483,7 +554,8 @@
     sendPasswordResetEmail, onAuthStateChanged, signOut
   } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
   import {
-    getFirestore, doc, getDoc, setDoc, deleteDoc
+    getFirestore, doc, getDoc, setDoc, deleteDoc,
+    collection, getDocs, query, orderBy, limit
   } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -503,7 +575,8 @@
     auth, db, GoogleAuthProvider, signInWithPopup,
     createUserWithEmailAndPassword, signInWithEmailAndPassword,
     sendPasswordResetEmail, onAuthStateChanged, signOut,
-    doc, getDoc, setDoc, deleteDoc
+    doc, getDoc, setDoc, deleteDoc,
+    collection, getDocs, query, orderBy, limit
   };
   window.dispatchEvent(new Event('firebaseReady'));
 </script>
@@ -620,6 +693,8 @@
       starTitle: "常复习",
       themeBtnTitle: "换主题",
       langBtnTitle: "切换语言",
+      languageMenuLabelZh: "语言：中文",
+      languageMenuLabelEn: "语言：English",
       themeDiagonal: "薄荷珊瑚",
       themeGlass: "暖调玻璃",
       themePastel: "糖果渐变",
@@ -651,6 +726,30 @@
       shareCtaBtn: "去试试 Mind Search",
       shareCreateFail: "分享链接生成失败，请重试",
       shareNotFound: "这个分享链接不存在，或者已经失效",
+      shareToContacts: "分享给",
+      sendAction: "发送",
+      shareExternal: "分享到",
+      moreApps: "更多…",
+      shareWeChatHint: "微信 / Instagram：复制下面的链接，去那边粘贴分享",
+      shareViaLink: "或者复制链接",
+      manageFriends: "管理好友",
+      nicknameOptional: "备注名（选填）",
+      addFriend: "添加",
+      inboxTitle: "别人分享给你的",
+      inboxEmpty: "还没有人分享东西给你",
+      saveToLibrary: "存进我的库",
+      discardAction: "不要了",
+      inboxMenuLabel: "别人分享给你的",
+      shareSentToContact: "已分享",
+      shareRecipientNotFound: "这个邮箱还没注册 Mind Search，试试直接复制链接分享给ta",
+      savedFromInbox: "已存进你的库",
+      discardedFromInbox: "已丢弃",
+      contactAdded: "已添加",
+      contactRemoved: "已移除",
+      confirmDiscardInboxItem: "确定不要这条分享的笔记吗？",
+      confirmRemoveContact: "移除这个好友备注？",
+      pendingSharesSummary: (n) => `你有 ${n} 条分享笔记待处理`,
+      goToInbox: "去看看",
       toastSaveFail: "保存失败，请重试",
       toastMediaFail: "附件保存失败，请重试",
       toastPinned: "已加入「常复习」",
@@ -675,6 +774,120 @@
       savedAgo: (t) => `保存于 ${t}`,
       deleteSwipeLabel: "删除",
       dateLocale: "zh-CN"
+    },
+    'zh-TW': {
+      tagline: "搜尋你不想忘記的一切",
+      searchPlaceholder: "搜尋你儲存過的一切…",
+      searchResultsLabel: "搜尋結果",
+      frequentlyForgottenLabel: "常忘",
+      randomLabel: "隨機",
+      recentlyAddedLabel: "最近新增",
+      shuffleBtn: "⟳ 再來一個",
+      addSheetTitleNew: "記一筆",
+      titleLabel: "標題",
+      contentLabel: "內容",
+      titlePlaceholder: "給它起個名字",
+      contentPlaceholder: "寫下你想記住的東西…",
+      photosLabel: "照片",
+      photosHint: "最多 5 張",
+      voiceLabel: "語音",
+      addVoice: "新增語音",
+      recording: "錄音中… 點擊儲存錄音",
+      download: "⬇ 下載",
+      deleteAudio: "✕ 刪除",
+      deleteAudioFull: "✕ 刪除錄音",
+      save: "儲存",
+      cancel: "取消",
+      editAction: "編輯",
+      deleteAction: "刪除",
+      infoToggle: "ⓘ 詳情",
+      created: "建立於",
+      lastEdited: "最後編輯",
+      close: "關閉",
+      starTitle: "常復習",
+      themeBtnTitle: "換主題",
+      langBtnTitle: "切換語言",
+      languageMenuLabelZh: "語言：簡體中文",
+      languageMenuLabelEn: "語言：English",
+      themeDiagonal: "薄荷珊瑚",
+      themeGlass: "暖調玻璃",
+      themePastel: "糖果漸變",
+      themeButter: "黃油奶霜",
+      continueWithGoogle: "使用 Google 繼續",
+      orDivider: "或",
+      emailLabel: "電子郵件",
+      passwordLabel: "密碼",
+      signIn: "登入",
+      signUp: "註冊",
+      needAccount: "還沒有帳號？去註冊",
+      haveAccount: "已經有帳號？去登入",
+      forgotPassword: "忘記密碼？",
+      resetEmailSent: "重設密碼郵件已傳送，請查收",
+      signOut: "登出",
+      signedInAs: "已登入：",
+      authErrorGeneric: "出了點問題，請重試",
+      authErrorWeakPassword: "密碼至少需要 6 位",
+      authErrorEmailInUse: "這個電子郵件已經註冊過了，試試直接登入？",
+      authErrorInvalidCredential: "電子郵件或密碼不對，請再試一次",
+      authErrorMissingEmail: "請先輸入電子郵件地址",
+      migratedGuestData: "已把本機資料同步到你的帳號",
+      shareAction: "分享",
+      shareLinkTitle: "分享這則筆記",
+      shareLinkDesc: "任何人拿到這個連結都能查看唯讀版本，不需要帳號",
+      copyLink: "複製",
+      linkCopied: "連結已複製",
+      shareCta: "也想擁有自己的 Mind Search 嗎？",
+      shareCtaBtn: "去試試 Mind Search",
+      shareCreateFail: "分享連結產生失敗，請重試",
+      shareNotFound: "這個分享連結不存在，或者已經失效",
+      shareToContacts: "分享給",
+      sendAction: "傳送",
+      shareExternal: "分享到",
+      moreApps: "更多…",
+      shareWeChatHint: "微信 / Instagram：複製下面的連結，去那邊貼上分享",
+      shareViaLink: "或者複製連結",
+      manageFriends: "管理好友",
+      nicknameOptional: "備註名稱（選填）",
+      addFriend: "新增",
+      inboxTitle: "別人分享給你的",
+      inboxEmpty: "還沒有人分享東西給你",
+      saveToLibrary: "存進我的庫",
+      discardAction: "不要了",
+      inboxMenuLabel: "別人分享給你的",
+      shareSentToContact: "已分享",
+      shareRecipientNotFound: "這個電子郵件還沒註冊 Mind Search，試試直接複製連結分享給對方",
+      savedFromInbox: "已存進你的庫",
+      discardedFromInbox: "已丟棄",
+      contactAdded: "已新增",
+      contactRemoved: "已移除",
+      confirmDiscardInboxItem: "確定不要這則分享的筆記嗎？",
+      confirmRemoveContact: "移除這個好友備註？",
+      pendingSharesSummary: (n) => `你有 ${n} 則分享筆記待處理`,
+      goToInbox: "去看看",
+      toastSaveFail: "儲存失敗，請重試",
+      toastMediaFail: "附件儲存失敗，請重試",
+      toastPinned: "已加入「常復習」",
+      toastUnpinned: "已移出「常復習」",
+      toastAudioDeleted: "已刪除錄音",
+      toastDeleted: "已刪除",
+      toastSaved: "已儲存",
+      toastNeedFields: "至少要填個標題",
+      toastMicFail: "無法存取麥克風（預覽環境可能不支援）",
+      toastMaxPhotos: "最多只能加 5 張照片",
+      confirmDeleteEntry: "刪除這則記錄？",
+      confirmDeleteEntryFull: "確定要刪除這則記憶嗎？此操作無法復原。",
+      confirmDeleteAudio: "刪除這段錄音？",
+      emptyRecent: "還沒有任何記錄。點擊右下角的 + 開始記錄你的第一個想法。",
+      emptySearch: "沒有找到相關的記憶。換個詞試試？",
+      emptyRandomTitle: "還沒有記憶可以打開",
+      emptyRandomBody: "先記錄一些想法，再回來這裡隨機翻看。",
+      emptyForgottenTitle: "還沒有需要鞏固的內容",
+      emptyForgottenBody: "搜尋一則記憶並點開它，或者在任意詞條裡點 ☆ 標記「常復習」，它就會出現在這裡。",
+      pinnedMeta: "⭐ 常復習",
+      forgottenMeta: (n) => `搜尋找回過 ${n} 次`,
+      savedAgo: (t) => `儲存於 ${t}`,
+      deleteSwipeLabel: "刪除",
+      dateLocale: "zh-TW"
     },
     en: {
       tagline: "search everything you don't want to forget",
@@ -708,6 +921,8 @@
       starTitle: "Review often",
       themeBtnTitle: "Switch theme",
       langBtnTitle: "Switch language",
+      languageMenuLabelZh: "Language: 中文",
+      languageMenuLabelEn: "Language: English",
       themeDiagonal: "Mint & Coral",
       themeGlass: "Warm Glass",
       themePastel: "Candy Gradient",
@@ -739,6 +954,30 @@
       shareCtaBtn: "Try Mind Search",
       shareCreateFail: "Couldn't create the share link, please try again",
       shareNotFound: "This share link doesn't exist, or it's expired",
+      shareToContacts: "Share with",
+      sendAction: "Send",
+      shareExternal: "Share to",
+      moreApps: "More…",
+      shareWeChatHint: "For WeChat / Instagram: copy the link below and paste it there",
+      shareViaLink: "Or copy link",
+      manageFriends: "Manage Friends",
+      nicknameOptional: "Nickname (optional)",
+      addFriend: "Add",
+      inboxTitle: "Shared with you",
+      inboxEmpty: "Nothing shared with you yet",
+      saveToLibrary: "Save to my library",
+      discardAction: "Discard",
+      inboxMenuLabel: "Shared with you",
+      shareSentToContact: "Shared",
+      shareRecipientNotFound: "That email hasn't signed up for Mind Search yet — try copying the link instead",
+      savedFromInbox: "Saved to your library",
+      discardedFromInbox: "Discarded",
+      contactAdded: "Added",
+      contactRemoved: "Removed",
+      confirmDiscardInboxItem: "Discard this shared note?",
+      confirmRemoveContact: "Remove this friend?",
+      pendingSharesSummary: (n) => `You have ${n} shared notes waiting`,
+      goToInbox: "Take a look",
       toastSaveFail: "Save failed, please try again",
       toastMediaFail: "Attachment failed to save, please try again",
       toastPinned: "Added to Frequently Forgotten",
@@ -901,6 +1140,15 @@
       if(days < 30) return days + ' 天前';
       const months = Math.floor(days/30);
       if(months < 12) return months + ' 个月前';
+      const years = Math.floor(months/12);
+      return years + ' 年前';
+    }
+    if(currentLang === 'zh-TW'){
+      if(days < 1) return '今天';
+      if(days === 1) return '昨天';
+      if(days < 30) return days + ' 天前';
+      const months = Math.floor(days/30);
+      if(months < 12) return months + ' 個月前';
       const years = Math.floor(months/12);
       return years + ' 年前';
     }
@@ -1463,9 +1711,91 @@
     }
   });
 
+  function sanitizeEmailKey(email){ return email.trim().toLowerCase(); }
+
+  async function registerEmailIndex(user){
+    if(!user || !user.email) return;
+    const fb = window.__firebase;
+    try{
+      await fb.setDoc(fb.doc(fb.db, 'emailIndex', sanitizeEmailKey(user.email)), { uid: user.uid, email: user.email.toLowerCase() });
+    }catch(e){ console.error('email index register failed', e); }
+  }
+
+  async function lookupUidByEmail(email){
+    const fb = window.__firebase;
+    try{
+      const snap = await fb.getDoc(fb.doc(fb.db, 'emailIndex', sanitizeEmailKey(email)));
+      if(!snap.exists()) return null;
+      return snap.data().uid;
+    }catch(e){ console.error('email lookup failed', e); return null; }
+  }
+
+  async function touchContactSharedAt(email){
+    const fb = window.__firebase;
+    if(!fb.auth.currentUser) return;
+    try{
+      await fb.setDoc(fb.doc(fb.db, 'users', fb.auth.currentUser.uid, 'contacts', sanitizeEmailKey(email)), {
+        email: email.toLowerCase(), lastSharedAt: Date.now()
+      }, { merge: true });
+    }catch(e){ console.error('touch contact failed', e); }
+  }
+
+  async function setContactNickname(email, nickname){
+    const fb = window.__firebase;
+    if(!fb.auth.currentUser) return;
+    await fb.setDoc(fb.doc(fb.db, 'users', fb.auth.currentUser.uid, 'contacts', sanitizeEmailKey(email)), {
+      email: email.toLowerCase(), nickname: nickname || '', lastSharedAt: Date.now()
+    }, { merge: true });
+  }
+
+  async function listContacts(){
+    const fb = window.__firebase;
+    if(!fb.auth.currentUser) return [];
+    try{
+      const q = fb.query(fb.collection(fb.db, 'users', fb.auth.currentUser.uid, 'contacts'), fb.orderBy('lastSharedAt', 'desc'), fb.limit(20));
+      const snap = await fb.getDocs(q);
+      return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    }catch(e){ console.error('list contacts failed', e); return []; }
+  }
+
+  async function deleteContact(email){
+    const fb = window.__firebase;
+    if(!fb.auth.currentUser) return;
+    try{ await fb.deleteDoc(fb.doc(fb.db, 'users', fb.auth.currentUser.uid, 'contacts', sanitizeEmailKey(email))); }catch(e){}
+  }
+
+  async function shareEntryToEmail(entry, email){
+    const fb = window.__firebase;
+    const me = fb.auth.currentUser;
+    if(!me) return false;
+    const recipientUid = await lookupUidByEmail(email);
+    if(!recipientUid){
+      showToast(T().shareRecipientNotFound);
+      return false;
+    }
+    const itemId = cryptoId();
+    try{
+      await fb.setDoc(fb.doc(fb.db, 'users', recipientUid, 'inbox', itemId), {
+        fromEmail: me.email,
+        title: entry.title,
+        content: entry.content,
+        images: entry.images || [],
+        audio: entry.audio || null,
+        createdAt: Date.now()
+      });
+      touchContactSharedAt(email);
+      showToast(T().shareSentToContact);
+      return true;
+    }catch(e){
+      console.error('share to email failed', e);
+      showToast(T().shareCreateFail);
+      return false;
+    }
+  }
+
   async function createShareLink(entry){
     const fb = window.__firebase;
-    if(!fb){ showToast(T().shareCreateFail); return; }
+    if(!fb) return;
     const shareId = cryptoId();
     try{
       await fb.setDoc(fb.doc(fb.db, 'publicShares', shareId), {
@@ -1475,14 +1805,41 @@
         audio: entry.audio || null,
         createdAt: Date.now()
       });
-      const url = location.origin + location.pathname + '?share=' + shareId;
-      $('shareLinkInput').value = url;
-      $('shareOverlay').classList.add('open');
-      $('shareLinkInput').select();
+      $('shareLinkInput').value = location.origin + location.pathname + '?share=' + shareId;
     }catch(e){
       console.error('share create failed', e);
       showToast(T().shareCreateFail);
     }
+  }
+
+  let currentShareEntry = null;
+
+  async function renderContactChips(){
+    const row = $('contactChipRow');
+    row.innerHTML = '';
+    if(!isSignedIn) return;
+    const contacts = await listContacts();
+    contacts.forEach(c => {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.style.cssText = 'padding:8px 14px; font-size:13px; cursor:pointer; border:1px solid var(--line); background:var(--paper-raised); border-radius:999px; color:var(--ink);';
+      chip.textContent = c.nickname || c.email;
+      chip.addEventListener('click', async ()=>{
+        if(!currentShareEntry) return;
+        const ok = await shareEntryToEmail(currentShareEntry, c.email);
+        if(ok) $('shareOverlay').classList.remove('open');
+      });
+      row.appendChild(chip);
+    });
+  }
+
+  async function openShareSheet(entry){
+    currentShareEntry = entry;
+    $('shareEmailInput').value = '';
+    $('shareLinkInput').value = '';
+    renderContactChips();
+    $('shareOverlay').classList.add('open');
+    createShareLink(entry);
   }
 
   $('shareEntryBtn').addEventListener('click', async ()=>{
@@ -1490,7 +1847,37 @@
     const entry = entries.find(e=>e.id === currentDetailId);
     if(!entry) return;
     await ensureMedia(entry);
-    createShareLink(entry);
+    openShareSheet(entry);
+  });
+
+  $('shareToEmailBtn').addEventListener('click', async ()=>{
+    const email = $('shareEmailInput').value.trim();
+    if(!email || !currentShareEntry) return;
+    const ok = await shareEntryToEmail(currentShareEntry, email);
+    if(ok){
+      $('shareEmailInput').value = '';
+      renderContactChips();
+    }
+  });
+
+  $('shareWhatsappBtn').addEventListener('click', ()=>{
+    const url = $('shareLinkInput').value;
+    if(!url) return;
+    window.open('https://wa.me/?text=' + encodeURIComponent(url), '_blank');
+  });
+  $('shareLineBtn').addEventListener('click', ()=>{
+    const url = $('shareLinkInput').value;
+    if(!url) return;
+    window.open('https://social-plugins.line.me/lineit/share?url=' + encodeURIComponent(url), '_blank');
+  });
+  $('shareMoreBtn').addEventListener('click', async ()=>{
+    const url = $('shareLinkInput').value;
+    if(!url) return;
+    if(navigator.share){
+      try{ await navigator.share({ title: currentShareEntry ? currentShareEntry.title : 'Mind Search', url }); }catch(e){}
+    } else {
+      try{ await navigator.clipboard.writeText(url); showToast(T().linkCopied); }catch(e){}
+    }
   });
 
   $('closeShareBtn').addEventListener('click', ()=> $('shareOverlay').classList.remove('open'));
@@ -1508,6 +1895,208 @@
     }
     showToast(T().linkCopied);
   });
+
+  // ---------- Manage Friends ----------
+  async function renderContactsList(){
+    const list = $('contactsList');
+    list.innerHTML = '';
+    const contacts = await listContacts();
+    contacts.forEach(c => {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex; align-items:center; justify-content:space-between; padding:10px 14px; background:var(--paper-raised); border-radius:12px; border:1px solid var(--line); cursor:pointer;';
+      row.innerHTML = `
+        <div>
+          <div style="font-size:14px; font-weight:600; color:var(--ink);">${escapeHtml(c.nickname || c.email)}</div>
+          ${c.nickname ? `<div style="font-size:12px; color:var(--ink-soft);">${escapeHtml(c.email)}</div>` : ''}
+        </div>
+        <button type="button" style="background:none; border:none; color:var(--danger); font-size:15px; cursor:pointer;">✕</button>
+      `;
+      row.addEventListener('click', ()=>{
+        $('newContactEmail').value = c.email;
+        $('newContactNickname').value = c.nickname || '';
+        $('newContactEmail').scrollIntoView({ behavior:'smooth', block:'center' });
+      });
+      row.querySelector('button').addEventListener('click', async (e)=>{
+        e.stopPropagation();
+        if(!confirm(T().confirmRemoveContact)) return;
+        await deleteContact(c.email);
+        showToast(T().contactRemoved);
+        renderContactsList();
+      });
+      list.appendChild(row);
+    });
+  }
+
+  $('addContactBtn').addEventListener('click', async ()=>{
+    const email = $('newContactEmail').value.trim();
+    const nickname = $('newContactNickname').value.trim();
+    if(!email) return;
+    await setContactNickname(email, nickname);
+    $('newContactEmail').value = '';
+    $('newContactNickname').value = '';
+    showToast(T().contactAdded);
+    renderContactsList();
+  });
+
+  $('openContactsBtn').addEventListener('click', ()=>{
+    $('settingsMenu').classList.remove('open');
+    renderContactsList();
+    $('contactsOverlay').classList.add('open');
+  });
+  $('closeContactsBtn').addEventListener('click', ()=> $('contactsOverlay').classList.remove('open'));
+  $('contactsOverlay').addEventListener('click', (e)=>{ if(e.target.id==='contactsOverlay') $('contactsOverlay').classList.remove('open'); });
+
+  // ---------- Inbox ----------
+  async function listInbox(){
+    const fb = window.__firebase;
+    if(!fb.auth.currentUser) return [];
+    try{
+      const q = fb.query(fb.collection(fb.db, 'users', fb.auth.currentUser.uid, 'inbox'), fb.orderBy('createdAt', 'desc'));
+      const snap = await fb.getDocs(q);
+      return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    }catch(e){ console.error('list inbox failed', e); return []; }
+  }
+
+  function refreshInboxBadgeFromCount(n){
+    const has = n > 0;
+    $('accountBadge').style.display = has ? 'block' : 'none';
+    $('accountMenuBadge').style.display = has ? 'block' : 'none';
+  }
+
+  async function refreshInboxBadge(){
+    if(!isSignedIn){ refreshInboxBadgeFromCount(0); return; }
+    const items = await listInbox();
+    refreshInboxBadgeFromCount(items.length);
+  }
+
+  async function renderInboxList(){
+    const list = $('inboxList');
+    list.innerHTML = '';
+    const items = await listInbox();
+    $('inboxEmpty').style.display = items.length === 0 ? 'block' : 'none';
+    items.forEach(item => {
+      const row = document.createElement('div');
+      row.style.cssText = 'padding:12px 14px; background:var(--paper-raised); border-radius:12px; border:1px solid var(--line); cursor:pointer;';
+      row.innerHTML = `
+        <div style="font-size:12px; color:var(--ink-soft); margin-bottom:2px;">${escapeHtml(item.fromEmail || '')}</div>
+        <div style="font-family:'Fraunces',serif; font-size:15px; font-weight:500; color:var(--ink);">${escapeHtml(item.title)}</div>
+      `;
+      row.addEventListener('click', ()=> openInboxItemDetail(item));
+      list.appendChild(row);
+    });
+  }
+
+  $('openInboxBtn').addEventListener('click', ()=>{
+    $('accountMenu').classList.remove('open');
+    renderInboxList();
+    $('inboxOverlay').classList.add('open');
+  });
+  $('closeInboxBtn').addEventListener('click', ()=> $('inboxOverlay').classList.remove('open'));
+  $('inboxOverlay').addEventListener('click', (e)=>{ if(e.target.id==='inboxOverlay') $('inboxOverlay').classList.remove('open'); });
+
+  let currentInboxItem = null;
+  let pendingPopupQueue = [];
+
+  function openInboxItemDetail(item){
+    currentInboxItem = item;
+    $('inboxItemFrom').textContent = item.fromEmail || '';
+    $('inboxItemTitle').textContent = item.title || '';
+    $('inboxItemContent').textContent = item.content || '';
+    if(item.images && item.images.length){
+      $('inboxItemPhotos').innerHTML = item.images.map(src => `<img src="${src}">`).join('');
+      $('inboxItemPhotos').style.display = 'grid';
+    } else {
+      $('inboxItemPhotos').style.display = 'none';
+    }
+    if(item.audio){
+      $('inboxItemAudio').src = item.audio;
+      $('inboxItemAudio').style.display = '';
+    } else {
+      $('inboxItemAudio').style.display = 'none';
+    }
+    $('inboxItemOverlay').classList.add('open');
+  }
+
+  function afterInboxItemHandled(){
+    if(pendingPopupQueue.length > 0){
+      const next = pendingPopupQueue.shift();
+      openInboxItemDetail(next);
+    } else {
+      $('inboxItemOverlay').classList.remove('open');
+    }
+  }
+
+  async function saveInboxItemToLibrary(item){
+    const newEntry = {
+      id: cryptoId(), title: item.title, content: item.content || '',
+      forgetCount:0, pinned:false,
+      images: item.images||[], audio: item.audio||null,
+      imageCount: (item.images||[]).length, hasAudio: !!item.audio,
+      createdAt: Date.now(), updatedAt: Date.now()
+    };
+    entries.push(newEntry);
+    renderRecent(); renderRandom(); renderForgotten();
+    persistIndex();
+    persistMediaFor(newEntry);
+    await removeInboxItem(item.id);
+    showToast(T().savedFromInbox);
+  }
+
+  async function removeInboxItem(itemId){
+    const fb = window.__firebase;
+    if(!fb.auth.currentUser) return;
+    try{ await fb.deleteDoc(fb.doc(fb.db, 'users', fb.auth.currentUser.uid, 'inbox', itemId)); }catch(e){}
+    refreshInboxBadge();
+  }
+
+  $('inboxItemSaveBtn').addEventListener('click', async ()=>{
+    if(!currentInboxItem) return;
+    const item = currentInboxItem;
+    await saveInboxItemToLibrary(item);
+    renderInboxList();
+    afterInboxItemHandled();
+  });
+
+  $('inboxItemDiscardBtn').addEventListener('click', async ()=>{
+    if(!currentInboxItem) return;
+    if(!confirm(T().confirmDiscardInboxItem)) return;
+    await removeInboxItem(currentInboxItem.id);
+    showToast(T().discardedFromInbox);
+    renderInboxList();
+    afterInboxItemHandled();
+  });
+
+  function showSequentialInboxPopups(queue){
+    if(queue.length === 0) return;
+    const item = queue.shift();
+    pendingPopupQueue = queue;
+    openInboxItemDetail(item);
+  }
+
+  function showPendingSharesBanner(count){
+    $('pendingSharesBannerText').textContent = T().pendingSharesSummary(count);
+    $('pendingSharesBannerBtn').textContent = T().goToInbox;
+    $('pendingSharesBanner').style.display = 'flex';
+  }
+  $('pendingSharesBannerBtn').addEventListener('click', ()=>{
+    $('pendingSharesBanner').style.display = 'none';
+    renderInboxList();
+    $('inboxOverlay').classList.add('open');
+  });
+  $('pendingSharesBannerClose').addEventListener('click', ()=>{
+    $('pendingSharesBanner').style.display = 'none';
+  });
+
+  async function checkInboxOnLogin(){
+    const items = await listInbox();
+    refreshInboxBadgeFromCount(items.length);
+    if(items.length === 0) return;
+    if(items.length <= 2){
+      showSequentialInboxPopups(items.slice());
+    } else {
+      showPendingSharesBanner(items.length);
+    }
+  }
 
   // ---------- Public shared (read-only) view ----------
   async function renderSharedView(shareId){
@@ -1654,13 +2243,18 @@
       const key = el.getAttribute('data-i18n');
       if(t[key] !== undefined) el.textContent = t[key];
     });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+      const key = el.getAttribute('data-i18n-placeholder');
+      if(t[key] !== undefined) el.placeholder = t[key];
+    });
     $('searchInput').placeholder = t.searchPlaceholder;
     $('inputTitle').placeholder = t.titlePlaceholder;
     $('inputContent').placeholder = t.contentPlaceholder;
     $('starBtn').title = t.starTitle;
     $('themeBtn').title = t.themeBtnTitle;
-    $('langBtn').title = t.langBtnTitle;
-    $('langBtn').textContent = (lang === 'zh') ? 'EN' : '中';
+    document.querySelectorAll('.lang-choice').forEach(btn => {
+      btn.style.fontWeight = (btn.dataset.langChoice === lang) ? '700' : '400';
+    });
     $('voiceBtnLabel').textContent = isRecording ? t.recording : t.addVoice;
     $('addSheetTitle').textContent = editingId ? t.editAction : t.addSheetTitleNew;
     updateAuthModeUI();
@@ -1684,10 +2278,23 @@
     applyLanguage(lang);
   }
 
-  $('langBtn').addEventListener('click', async ()=>{
-    const next = (currentLang === 'zh') ? 'en' : 'zh';
-    applyLanguage(next);
-    try{ await storageAdapter.set(LANG_KEY, next, false); }catch(e){}
+  document.querySelectorAll('.lang-choice').forEach(btn => {
+    btn.addEventListener('click', async ()=>{
+      const next = btn.dataset.langChoice;
+      applyLanguage(next);
+      $('settingsMenu').classList.remove('open');
+      try{ await storageAdapter.set(LANG_KEY, next, false); }catch(e){}
+    });
+  });
+
+  $('settingsBtn').addEventListener('click', (e)=>{
+    e.stopPropagation();
+    $('settingsMenu').classList.toggle('open');
+  });
+  document.addEventListener('click', (e)=>{
+    if($('settingsMenu').classList.contains('open') && !$('settingsMenu').contains(e.target) && e.target !== $('settingsBtn')){
+      $('settingsMenu').classList.remove('open');
+    }
   });
 
   // ---------- Auth ----------
@@ -1828,13 +2435,15 @@
         isSignedIn = true;
         activeStorageImpl = firestoreImplFor(user.uid);
         $('accountEmailLabel').textContent = T().signedInAs + (user.email || '');
-        $('accountBtn').textContent = '👤';
         hideAuthOverlay();
         clearAuthError();
         if(wasGuest){ await migrateGuestDataToAccount(localStorageImpl); }
+        registerEmailIndex(user);
+        checkInboxOnLogin();
       } else {
         isSignedIn = false;
         activeStorageImpl = localStorageImpl;
+        refreshInboxBadgeFromCount(0);
         if(!hasDoneInitialAuthCheck){
           let seen = null;
           try{ seen = localStorage.getItem(SEEN_AUTH_PROMPT_KEY); }catch(e){}
