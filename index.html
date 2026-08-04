@@ -380,6 +380,7 @@
         <div style="position:relative;">
           <button class="more-btn" id="moreBtn">⋯</button>
           <div class="more-menu" id="moreMenu">
+            <button id="shareEntryBtn" data-i18n="shareAction">Share</button>
             <button id="editEntryBtn" data-i18n="editAction">Edit</button>
             <button id="deleteEntryBtn" class="danger" data-i18n="deleteAction">Delete</button>
           </div>
@@ -408,6 +409,37 @@
 
 <div class="lightbox-overlay" id="lightboxOverlay">
   <img id="lightboxImg" src="">
+</div>
+
+<!-- Share link modal -->
+<div class="sheet-overlay" id="shareOverlay" style="z-index:450;">
+  <div class="sheet" style="max-width:380px;">
+    <h2 data-i18n="shareLinkTitle">Share this note</h2>
+    <p style="font-size:13px; color:var(--ink-soft); margin:0 0 14px;" data-i18n="shareLinkDesc">Anyone with this link can view a read-only copy — no account needed.</p>
+    <div style="display:flex; gap:8px;">
+      <input class="field" id="shareLinkInput" type="text" readonly style="flex:1;">
+      <button class="primary-btn" id="copyShareLinkBtn" style="margin-top:0; width:auto; padding:0 18px; white-space:nowrap;" data-i18n="copyLink">Copy</button>
+    </div>
+    <button class="text-btn" id="closeShareBtn" data-i18n="close">Close</button>
+  </div>
+</div>
+
+<!-- Public read-only shared view (shown instead of the app when opening a ?share= link) -->
+<div class="sheet-overlay open" id="sharedViewOverlay" style="z-index:600; display:none;">
+  <div class="sheet" style="max-width:420px;">
+    <p class="wordmark" style="text-align:center; font-size:22px;">Mind Search</p>
+    <div class="detail-header" style="margin-top:16px;">
+      <div class="detail-title" id="sharedTitle"></div>
+    </div>
+    <div class="detail-content" id="sharedContent"></div>
+    <div class="detail-photos" id="sharedPhotos" style="display:none;"></div>
+    <audio class="preview-audio" id="sharedAudio" controls style="display:none; margin-top:12px;"></audio>
+
+    <div style="margin-top:24px; padding:16px; background:var(--header-tint); border-radius:16px; text-align:center;">
+      <p style="font-size:13px; margin:0 0 10px; color:var(--ink);" data-i18n="shareCta">Want to keep your own notes like this?</p>
+      <button class="primary-btn" id="sharedSignUpBtn" style="margin-top:0;" data-i18n="shareCtaBtn">Try Mind Search</button>
+    </div>
+  </div>
 </div>
 
 <!-- Sign-in gate -->
@@ -610,6 +642,15 @@
       authErrorInvalidCredential: "邮箱或密码不对，请再试一次",
       authErrorMissingEmail: "请先输入邮箱地址",
       migratedGuestData: "已把本地数据同步到你的账号",
+      shareAction: "分享",
+      shareLinkTitle: "分享这条笔记",
+      shareLinkDesc: "任何人拿到这个链接都能查看只读版本，不需要账号",
+      copyLink: "复制",
+      linkCopied: "链接已复制",
+      shareCta: "也想拥有自己的 Mind Search 吗？",
+      shareCtaBtn: "去试试 Mind Search",
+      shareCreateFail: "分享链接生成失败，请重试",
+      shareNotFound: "这个分享链接不存在，或者已经失效",
       toastSaveFail: "保存失败，请重试",
       toastMediaFail: "附件保存失败，请重试",
       toastPinned: "已加入「常复习」",
@@ -689,6 +730,15 @@
       authErrorInvalidCredential: "Email or password is incorrect, please try again",
       authErrorMissingEmail: "Please enter your email first",
       migratedGuestData: "Synced your local entries to your account",
+      shareAction: "Share",
+      shareLinkTitle: "Share this note",
+      shareLinkDesc: "Anyone with this link can view a read-only copy — no account needed",
+      copyLink: "Copy",
+      linkCopied: "Link copied",
+      shareCta: "Want to keep your own notes like this?",
+      shareCtaBtn: "Try Mind Search",
+      shareCreateFail: "Couldn't create the share link, please try again",
+      shareNotFound: "This share link doesn't exist, or it's expired",
       toastSaveFail: "Save failed, please try again",
       toastMediaFail: "Attachment failed to save, please try again",
       toastPinned: "Added to Frequently Forgotten",
@@ -1092,9 +1142,9 @@
         <div class="etitle">${escapeHtml(entry.title)}</div>
         <div class="esnippet">${escapeHtml(snippet(entry))}</div>
       </div>`;
-      card.querySelector('.entry-card').addEventListener('click', async ()=>{
+      card.querySelector('.entry-card').addEventListener('click', ()=>{
         entry.forgetCount = (entry.forgetCount || 0) + 1;
-        await persistIndex();
+        persistIndex();
         renderForgotten();
         openDetail(entry.id);
       });
@@ -1320,14 +1370,14 @@
       entry.imageCount = pendingPhotos.length;
       entry.hasAudio = !!pendingAudioData;
 
-      await persistIndex();
-      await persistMediaFor(entry);
-
       $('addOverlay').classList.remove('open');
       renderRecent();
       renderRandom();
       renderForgotten();
       showToast(T().toastSaved);
+
+      persistIndex();
+      persistMediaFor(entry);
     } finally {
       isSavingEntry = false;
       $('saveEntryBtn').style.opacity = '';
@@ -1379,14 +1429,14 @@
   $('closeDetailBtn').addEventListener('click', ()=> $('detailOverlay').classList.remove('open'));
   $('infoToggle').addEventListener('click', ()=> $('infoBox').classList.toggle('open'));
 
-  $('starBtn').addEventListener('click', async ()=>{
+  $('starBtn').addEventListener('click', ()=>{
     const entry = entries.find(e=>e.id === currentDetailId);
     if(!entry) return;
     entry.pinned = !entry.pinned;
-    await persistIndex();
     updateStarBtn(entry);
     renderForgotten();
     showToast(entry.pinned ? T().toastPinned : T().toastUnpinned);
+    persistIndex();
   });
 
   $('moreBtn').addEventListener('click', (e)=>{
@@ -1413,6 +1463,98 @@
     }
   });
 
+  async function createShareLink(entry){
+    const fb = window.__firebase;
+    if(!fb){ showToast(T().shareCreateFail); return; }
+    const shareId = cryptoId();
+    try{
+      await fb.setDoc(fb.doc(fb.db, 'publicShares', shareId), {
+        title: entry.title,
+        content: entry.content,
+        images: entry.images || [],
+        audio: entry.audio || null,
+        createdAt: Date.now()
+      });
+      const url = location.origin + location.pathname + '?share=' + shareId;
+      $('shareLinkInput').value = url;
+      $('shareOverlay').classList.add('open');
+      $('shareLinkInput').select();
+    }catch(e){
+      console.error('share create failed', e);
+      showToast(T().shareCreateFail);
+    }
+  }
+
+  $('shareEntryBtn').addEventListener('click', async ()=>{
+    $('moreMenu').classList.remove('open');
+    const entry = entries.find(e=>e.id === currentDetailId);
+    if(!entry) return;
+    await ensureMedia(entry);
+    createShareLink(entry);
+  });
+
+  $('closeShareBtn').addEventListener('click', ()=> $('shareOverlay').classList.remove('open'));
+  $('shareOverlay').addEventListener('click', (e)=>{
+    if(e.target.id === 'shareOverlay') $('shareOverlay').classList.remove('open');
+  });
+
+  $('copyShareLinkBtn').addEventListener('click', async ()=>{
+    const input = $('shareLinkInput');
+    input.select();
+    try{
+      await navigator.clipboard.writeText(input.value);
+    }catch(e){
+      try{ document.execCommand('copy'); }catch(e2){}
+    }
+    showToast(T().linkCopied);
+  });
+
+  // ---------- Public shared (read-only) view ----------
+  async function renderSharedView(shareId){
+    const fb = window.__firebase;
+    try{
+      const snap = await fb.getDoc(fb.doc(fb.db, 'publicShares', shareId));
+      if(!snap.exists()){
+        $('sharedTitle').textContent = '';
+        $('sharedContent').textContent = T().shareNotFound;
+        $('sharedViewOverlay').style.display = 'flex';
+        return;
+      }
+      const data = snap.data();
+      $('sharedTitle').textContent = data.title || '';
+      $('sharedContent').textContent = data.content || '';
+      if(data.images && data.images.length){
+        $('sharedPhotos').innerHTML = data.images.map(src => `<img src="${src}">`).join('');
+        $('sharedPhotos').style.display = 'grid';
+        $('sharedPhotos').querySelectorAll('img').forEach(img => {
+          img.addEventListener('click', () => {
+            $('lightboxImg').src = img.src;
+            $('lightboxOverlay').classList.add('open');
+          });
+        });
+      }
+      if(data.audio){
+        $('sharedAudio').src = data.audio;
+        $('sharedAudio').style.display = '';
+      }
+      $('sharedViewOverlay').style.display = 'flex';
+    }catch(e){
+      console.error('load shared view failed', e);
+      $('sharedContent').textContent = T().shareNotFound;
+      $('sharedViewOverlay').style.display = 'flex';
+    }
+  }
+
+  $('sharedSignUpBtn').addEventListener('click', ()=>{
+    location.href = location.origin + location.pathname;
+  });
+
+  const sharedId = new URLSearchParams(location.search).get('share');
+  if(sharedId){
+    if(window.__firebase){ renderSharedView(sharedId); }
+    else { window.addEventListener('firebaseReady', ()=> renderSharedView(sharedId), { once:true }); }
+  }
+
   $('editEntryBtn').addEventListener('click', async ()=>{
     $('moreMenu').classList.remove('open');
     const entry = entries.find(e=>e.id === currentDetailId);
@@ -1430,29 +1572,29 @@
     }
   });
 
-  $('detailDeleteAudioBtn').addEventListener('click', async ()=>{
+  $('detailDeleteAudioBtn').addEventListener('click', ()=>{
     $('audioMoreMenu').classList.remove('open');
     const entry = entries.find(e=>e.id === currentDetailId);
     if(!entry) return;
     if(!confirm(T().confirmDeleteAudio)) return;
     entry.audio = null;
     entry.hasAudio = false;
-    await persistIndex();
-    await persistMediaFor(entry);
     $('detailAudioRow').style.display = 'none';
     showToast(T().toastAudioDeleted);
+    persistIndex();
+    persistMediaFor(entry);
   });
 
-  async function deleteEntry(id){
+  function deleteEntry(id){
     entries = entries.filter(e => e.id !== id);
     recentRandomIds = recentRandomIds.filter(rid => rid !== id);
     recentForgottenIds = recentForgottenIds.filter(rid => rid !== id);
-    await persistIndex();
-    try{ await storageAdapter.delete(mediaKey(id), false); }catch(e){}
     renderRecent();
     renderRandom();
     renderForgotten();
     showToast(T().toastDeleted);
+    persistIndex();
+    storageAdapter.delete(mediaKey(id), false).catch(()=>{});
   }
 
   $('lightboxOverlay').addEventListener('click', ()=> $('lightboxOverlay').classList.remove('open'));
