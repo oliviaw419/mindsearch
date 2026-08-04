@@ -105,6 +105,7 @@
     letter-spacing:-0.01em; color:var(--ink); margin:0;
   }
   .tagline{ font-size:13px; color:var(--ink-soft); margin:4px 0 0; font-style:italic; font-family:'Fraunces', serif; }
+  body.lang-cjk .tagline{ font-style:normal; font-family:'Inter', -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; }
   .search-wrap{ margin:20px 24px 0; position:relative; }
   .search-wrap input{
     width:100%; padding:14px 44px 14px 18px; border-radius: 999px; border:1px solid var(--line);
@@ -210,6 +211,29 @@
   textarea.field{ min-height:110px; line-height:1.5; }
 
   .attach-row{ display:flex; gap:10px; margin-top:12px; }
+  .attach-toolbar{ display:flex; gap:10px; margin-top:12px; }
+  .toolbar-icon-btn{
+    width:42px; height:42px; border-radius:50%; border:1px solid var(--line);
+    background:var(--paper-raised); font-size:18px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; color:var(--ink);
+  }
+  .toolbar-icon-btn.active{ border-color:var(--plum); background:var(--plum-tint); }
+  .toolbar-icon-btn.recording{ border-color:var(--danger); background:#FBEAE6; color:var(--danger); animation: recordPulse 1.6s ease-out infinite; }
+  @keyframes recordPulse{
+    0% { box-shadow: 0 0 0 0 rgba(192,80,59,0.45); }
+    70% { box-shadow: 0 0 0 10px rgba(192,80,59,0); }
+    100% { box-shadow: 0 0 0 0 rgba(192,80,59,0); }
+  }
+  .toolbar-icon-btn .mic-icon, .toolbar-icon-btn .stop-icon{ display:inline-flex; align-items:center; justify-content:center; }
+  .toolbar-icon-btn .stop-icon{ display:none; }
+  .toolbar-icon-btn.recording .mic-icon{ display:none; }
+  .toolbar-icon-btn.recording .stop-icon{ display:inline-flex; }
+  .file-chip-row{
+    display:flex; align-items:center; gap:10px; padding:9px 12px;
+    background:var(--paper-raised); border-radius:12px; border:1px solid var(--line);
+  }
+  .file-chip-row .file-chip-name{ font-size:13px; color:var(--ink); flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .file-chip-row button{ background:none; border:none; color:var(--danger); font-size:13px; cursor:pointer; padding:2px; flex-shrink:0; }
   .attach-btn{ flex:1; display:flex; align-items:center; justify-content:center; gap:6px; padding:11px; border-radius:var(--radius-sm); border:1px dashed var(--line); background:var(--paper-raised); backdrop-filter: blur(var(--blur)); -webkit-backdrop-filter: blur(var(--blur)); font-size:13px; color:var(--ink-soft); cursor:pointer; }
   .attach-btn.active{ border:1px solid var(--plum); color:var(--plum-deep); background:var(--plum-tint); }
   .attach-btn.recording{ border:1px solid var(--danger); color:var(--danger); background:#FBEAE6; }
@@ -384,12 +408,10 @@
     <label class="field-label" data-i18n="contentLabel">Content</label>
     <textarea class="field" id="inputContent" placeholder="Write down what you want to remember…"></textarea>
 
-    <label class="field-label"><span data-i18n="photosLabel">Photos</span> <span class="hint-text" data-i18n="photosHint">up to 5</span></label>
+    <label class="field-label" data-i18n="attachmentsLabel">Attachments</label>
     <div class="photo-strip" id="photoStrip"></div>
-    <input type="file" id="photoInput" accept="image/*" multiple style="display:none;">
-
-    <label class="field-label" data-i18n="voiceLabel">Voice</label>
-    <div class="audio-row" id="audioPreviewWrap" style="display:none;">
+    <div id="filesListPreview" style="display:flex; flex-direction:column; gap:6px; margin-top:8px;"></div>
+    <div class="audio-row" id="audioPreviewWrap" style="display:none; margin-top:8px;">
       <audio class="preview-audio" id="audioPreview" controls controlslist="nodownload noplaybackrate"></audio>
       <div style="position:relative;">
         <button class="more-btn small" id="addAudioMoreBtn">⋯</button>
@@ -399,9 +421,22 @@
         </div>
       </div>
     </div>
-    <div class="attach-row" style="margin-top:10px;">
-      <div class="attach-btn" id="voiceBtn">🎤 <span id="voiceBtnLabel" data-i18n="addVoice">Add Voice</span></div>
+
+    <div class="attach-toolbar">
+      <button type="button" class="toolbar-icon-btn" id="photoToolbarBtn" title="Add Photo">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="15" rx="2.5"/><circle cx="8.5" cy="10.5" r="1.7"/><path d="M21 16.5l-5-5-9 9"/></svg>
+      </button>
+      <button type="button" class="toolbar-icon-btn" id="fileToolbarBtn" title="Add File">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 12.5l-8.4 8.4a5 5 0 01-7.1-7.1l9-9a3.5 3.5 0 015 5l-9 9a2 2 0 01-2.8-2.8l8-8"/></svg>
+      </button>
+      <button type="button" class="toolbar-icon-btn" id="voiceBtn" title="Add Voice">
+        <span class="mic-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v4"/></svg></span>
+        <span class="stop-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="3"/></svg></span>
+      </button>
     </div>
+    <p id="recordingStatusLine" style="display:none; font-size:11.5px; font-weight:600; color:var(--danger); margin:6px 2px 0;" data-i18n="recording"></p>
+    <input type="file" id="photoInput" accept="image/*" multiple style="display:none;">
+    <input type="file" id="fileInput" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.rtf,.txt" multiple style="display:none;">
 
     <button class="primary-btn" id="saveEntryBtn" data-i18n="save">Save</button>
     <button class="text-btn" id="cancelAddBtn" data-i18n="cancel">Cancel</button>
@@ -437,6 +472,7 @@
       </div>
     </div>
     <div class="detail-photos" id="detailPhotos" style="display:none;"></div>
+    <div id="detailFilesList" style="display:flex; flex-direction:column; gap:8px; margin-top:12px;"></div>
 
     <button class="info-toggle" id="infoToggle" data-i18n="infoToggle">ⓘ Details</button>
     <div class="info-box" id="infoBox"></div>
@@ -613,6 +649,9 @@
     getFirestore, doc, getDoc, setDoc, deleteDoc,
     collection, getDocs, query, orderBy, limit
   } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+  import {
+    getStorage, ref, uploadBytes, getDownloadURL, deleteObject
+  } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-storage.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyC4eqza9CzCrAJzcuGUZd-Lr4KbR-BAVac",
@@ -626,13 +665,15 @@
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getFirestore(app);
+  const storage = getStorage(app);
 
   window.__firebase = {
-    auth, db, GoogleAuthProvider, signInWithPopup,
+    auth, db, storage, GoogleAuthProvider, signInWithPopup,
     createUserWithEmailAndPassword, signInWithEmailAndPassword,
     sendPasswordResetEmail, onAuthStateChanged, signOut,
     doc, getDoc, setDoc, deleteDoc,
-    collection, getDocs, query, orderBy, limit
+    collection, getDocs, query, orderBy, limit,
+    ref, uploadBytes, getDownloadURL, deleteObject
   };
   window.dispatchEvent(new Event('firebaseReady'));
 </script>
@@ -652,6 +693,13 @@
   let audioChunks = [];
   let pendingPhotos = [];
   let pendingAudioData = null;
+  let pendingFiles = []; // each: {isNew:true, file:File, name} or {isNew:false, name,url,type,size,path}
+  let filesToDeleteOnSave = []; // storage paths to clean up after a successful save
+  const MAX_FILES = 8;
+  const MAX_PHOTOS = 8;
+  const PHOTO_MAX_BYTES = 10 * 1024 * 1024;
+  const FILE_MAX_BYTES = 10 * 1024 * 1024; // 10MB, generous since these go to Storage now
+  const ALLOWED_FILE_EXT = ['.pdf','.doc','.docx','.xls','.xlsx','.ppt','.pptx','.rtf','.txt'];
   let isRecording = false;
 
   const $ = (id) => document.getElementById(id);
@@ -718,7 +766,7 @@
 
   const translations = {
     zh: {
-      tagline: "搜索你不想忘记的一切",
+      tagline: "搜索你不想忘记的一切 💭",
       searchPlaceholder: "搜索你保存过的一切…",
       searchResultsLabel: "搜索结果",
       frequentlyForgottenLabel: "常忘",
@@ -732,10 +780,23 @@
       contentPlaceholder: "写下你想记住的东西…",
       photosLabel: "照片",
       photosHint: "最多 5 张",
+      attachmentsLabel: "附件",
+      toastFileNeedsAccount: "需要登录才能添加文件",
+      toastMaxFiles: "最多只能加 8 个文件",
+      toastFileWrongType: "支持 PDF、Word、Excel、PPT、RTF、TXT 格式",
+      toastFileTooLarge: "文件不能超过 10MB",
+      toastFileUploadFail: "文件上传失败，请重试",
+      uploadingFiles: "上传中…",
       voiceLabel: "语音",
       addVoice: "添加语音",
       replaceVoice: "替换语音",
-      recording: "录音中… 点这里保存",
+      fileLabel: "文件",
+      addFile: "添加 PDF",
+      replaceFile: "更换 PDF",
+      openFile: "打开",
+      toastPdfWrongType: "只能添加 PDF 文件",
+      toastPdfTooLarge: "PDF 不能超过 800KB，试试压缩一下",
+      recording: "录音中… 点击停止保存",
       recordingShort: "录音中",
       download: "⬇ 下载",
       deleteAudio: "✕ 删除",
@@ -826,7 +887,7 @@
       toastSaved: "已保存",
       toastNeedFields: "至少要填个标题",
       toastMicFail: "无法访问麦克风（预览环境可能不支持）",
-      toastMaxPhotos: "最多只能加 5 张照片",
+      toastMaxPhotos: "最多只能加 8 张照片",
       confirmDeleteEntry: "删除这条记录？",
       confirmDeleteEntryFull: "确定要删除这条记忆吗？此操作无法撤销。",
       confirmDeleteAudio: "删除这段录音？",
@@ -843,7 +904,7 @@
       dateLocale: "zh-CN"
     },
     'zh-TW': {
-      tagline: "搜尋你不想忘記的一切",
+      tagline: "搜尋你不想忘記的一切 💭",
       searchPlaceholder: "搜尋你儲存過的一切…",
       searchResultsLabel: "搜尋結果",
       frequentlyForgottenLabel: "常忘",
@@ -857,14 +918,27 @@
       contentPlaceholder: "寫下你想記住的東西…",
       photosLabel: "照片",
       photosHint: "最多 5 張",
+      attachmentsLabel: "附件",
+      toastFileNeedsAccount: "需要登入才能新增檔案",
+      toastMaxFiles: "最多只能加 8 個檔案",
+      toastFileWrongType: "支援 PDF、Word、Excel、PPT、RTF、TXT 格式",
+      toastFileTooLarge: "檔案不能超過 10MB",
+      toastFileUploadFail: "檔案上傳失敗，請重試",
+      uploadingFiles: "上傳中…",
       voiceLabel: "語音",
       addVoice: "新增語音",
       replaceVoice: "取代語音",
-      recording: "錄音中… 點這裡儲存",
+      recording: "錄音中… 點擊停止儲存",
       recordingShort: "錄音中",
       download: "⬇ 下載",
       deleteAudio: "✕ 刪除",
       deleteAudioFull: "✕ 刪除錄音",
+      fileLabel: "檔案",
+      addFile: "新增 PDF",
+      replaceFile: "更換 PDF",
+      openFile: "開啟",
+      toastPdfWrongType: "只能新增 PDF 檔案",
+      toastPdfTooLarge: "PDF 不能超過 800KB，試試壓縮一下",
       save: "儲存",
       cancel: "取消",
       editAction: "編輯",
@@ -951,7 +1025,7 @@
       toastSaved: "已儲存",
       toastNeedFields: "至少要填個標題",
       toastMicFail: "無法存取麥克風（預覽環境可能不支援）",
-      toastMaxPhotos: "最多只能加 5 張照片",
+      toastMaxPhotos: "最多只能加 8 張照片",
       confirmDeleteEntry: "刪除這則記錄？",
       confirmDeleteEntryFull: "確定要刪除這則記憶嗎？此操作無法復原。",
       confirmDeleteAudio: "刪除這段錄音？",
@@ -982,10 +1056,17 @@
       contentPlaceholder: "Write down what you want to remember…",
       photosLabel: "Photos",
       photosHint: "up to 5",
+      attachmentsLabel: "Attachments",
+      toastFileNeedsAccount: "Sign in to attach files",
+      toastMaxFiles: "You can add up to 8 files",
+      toastFileWrongType: "Supported: PDF, Word, Excel, PPT, RTF, TXT",
+      toastFileTooLarge: "File can't be larger than 10MB",
+      toastFileUploadFail: "File upload failed, please try again",
+      uploadingFiles: "Uploading…",
       voiceLabel: "Voice",
       addVoice: "Add Voice",
       replaceVoice: "Replace Voice",
-      recording: "Recording… tap here to save",
+      recording: "Recording… tap to stop & save",
       recordingShort: "Recording",
       download: "⬇ Download",
       deleteAudio: "✕ Delete",
@@ -995,6 +1076,12 @@
       editAction: "Edit",
       deleteAction: "Delete",
       infoToggle: "ⓘ Details",
+      fileLabel: "File",
+      addFile: "Add PDF",
+      replaceFile: "Replace PDF",
+      openFile: "Open",
+      toastPdfWrongType: "Only PDF files can be added",
+      toastPdfTooLarge: "PDF can't be larger than 800KB — try compressing it",
       created: "Created",
       lastEdited: "Last edited",
       sharedByLabel: "Shared by:",
@@ -1076,7 +1163,7 @@
       toastSaved: "Saved",
       toastNeedFields: "At least give it a title",
       toastMicFail: "Couldn't access the microphone (may not work in preview)",
-      toastMaxPhotos: "You can add up to 5 photos",
+      toastMaxPhotos: "You can add up to 8 photos",
       confirmDeleteEntry: "Delete this entry?",
       confirmDeleteEntryFull: "Delete this memory? This can't be undone.",
       confirmDeleteAudio: "Delete this recording?",
@@ -1110,10 +1197,12 @@
   }
 
   function toIndexObj(e){
+    const images = e.images || [];
     return {
       id: e.id, title: e.title, content: e.content,
       forgetCount: e.forgetCount||0, pinned: !!e.pinned,
-      imageCount: e.imageCount||0, hasAudio: !!e.hasAudio,
+      images, imageCount: images.length, hasAudio: !!e.hasAudio,
+      files: e.files || [],
       isSample: !!e.isSample,
       sharedBy: e.sharedBy || null, sharedAt: e.sharedAt || null,
       createdAt: e.createdAt, updatedAt: e.updatedAt
@@ -1129,28 +1218,41 @@
     }
   }
 
+  async function uploadFileToStorage(entryId, file){
+    const fb = window.__firebase;
+    const uid = fb.auth.currentUser.uid;
+    const path = `users/${uid}/files/${entryId}/${Date.now()}_${file.name}`;
+    const storageRef = fb.ref(fb.storage, path);
+    await fb.uploadBytes(storageRef, file);
+    const url = await fb.getDownloadURL(storageRef);
+    return { name: file.name, url, type: file.type, size: file.size, path };
+  }
+
+  async function deleteFileFromStorage(path){
+    if(!path) return;
+    const fb = window.__firebase;
+    try{ await fb.deleteObject(fb.ref(fb.storage, path)); }catch(e){ /* already gone, ignore */ }
+  }
+
   async function ensureMedia(entry){
-    if(entry.images !== undefined) return;
-    if(!entry.imageCount && !entry.hasAudio){
-      entry.images = [];
+    if(entry.audio !== undefined) return;
+    if(!entry.hasAudio){
       entry.audio = null;
       return;
     }
     try{
       const res = await storageAdapter.get(mediaKey(entry.id), false);
-      const data = res && res.value ? JSON.parse(res.value) : { images:[], audio:null };
-      entry.images = data.images || [];
+      const data = res && res.value ? JSON.parse(res.value) : { audio:null };
       entry.audio = data.audio || null;
     }catch(e){
-      entry.images = [];
       entry.audio = null;
     }
   }
 
   async function persistMediaFor(entry){
-    if(entry.imageCount > 0 || entry.hasAudio){
+    if(entry.hasAudio){
       try{
-        await storageAdapter.set(mediaKey(entry.id), JSON.stringify({ images: entry.images||[], audio: entry.audio||null }), false);
+        await storageAdapter.set(mediaKey(entry.id), JSON.stringify({ audio: entry.audio||null }), false);
       }catch(e){
         console.error('media save failed', e);
         showToast(T().toastMediaFail);
@@ -1264,12 +1366,13 @@
       row.className = 'entry-row';
       const photoBadge = entry.imageCount ? `<span class="badge">📷${entry.imageCount>1 ? '×'+entry.imageCount : ''}</span>` : '';
       const audioBadge = entry.hasAudio ? '<span class="badge">🎤</span>' : '';
+      const pdfBadge = (entry.files && entry.files.length) ? '<span class="badge">📎</span>' : '';
       row.innerHTML = `
         <div class="delete-bg">${T().deleteSwipeLabel}</div>
         <div class="entry-card" data-id="${entry.id}">
           <div class="etitle">${escapeHtml(entry.title)}</div>
           <div class="esnippet">${escapeHtml(snippet(entry))}</div>
-          <div class="ebadges">${photoBadge}${audioBadge}</div>
+          <div class="ebadges">${photoBadge}${audioBadge}${pdfBadge}</div>
         </div>`;
       list.appendChild(row);
       attachSwipe(row, entry.id);
@@ -1500,35 +1603,42 @@
   function renderPhotoStrip(){
     const strip = $('photoStrip');
     strip.innerHTML = '';
-    pendingPhotos.forEach((src, idx) => {
+    pendingPhotos.forEach((p, idx) => {
+      const src = p.isNew ? p.previewUrl : p.url;
       const tile = document.createElement('div');
       tile.className = 'photo-tile';
       tile.innerHTML = `<img src="${src}"><button type="button" class="remove-attach">✕</button>`;
       tile.querySelector('.remove-attach').addEventListener('click', ()=>{
-        pendingPhotos.splice(idx, 1);
+        const removed = pendingPhotos.splice(idx, 1)[0];
+        if(removed){
+          if(removed.isNew && removed.previewUrl){ URL.revokeObjectURL(removed.previewUrl); }
+          if(!removed.isNew && removed.path){ filesToDeleteOnSave.push(removed.path); }
+        }
         renderPhotoStrip();
       });
       strip.appendChild(tile);
     });
-    if(pendingPhotos.length < 5){
-      const addTile = document.createElement('div');
-      addTile.className = 'photo-tile add-tile';
-      addTile.textContent = '+';
-      addTile.addEventListener('click', ()=> $('photoInput').click());
-      strip.appendChild(addTile);
-    }
+  }
+
+  function updateVoiceBtnTitle(){
+    $('voiceBtn').title = pendingAudioData ? T().replaceVoice : T().addVoice;
   }
 
   function resetAddForm(){
     $('inputTitle').value = '';
     $('inputContent').value = '';
+    pendingPhotos.forEach(p => { if(p.isNew && p.previewUrl){ URL.revokeObjectURL(p.previewUrl); } });
     pendingPhotos = [];
     pendingAudioData = null;
+    pendingFiles = [];
+    filesToDeleteOnSave = [];
     renderPhotoStrip();
+    renderFileChips();
     $('audioPreviewWrap').style.display = 'none';
     $('addAudioMoreMenu').classList.remove('open');
     $('voiceBtn').classList.remove('active','recording');
-    updateVoiceIdleLabel();
+    updateVoiceBtnTitle();
+    $('recordingStatusLine').style.display = 'none';
     editingId = null;
   }
 
@@ -1544,7 +1654,7 @@
     $('addSheetTitle').textContent = T().editAction;
     $('inputTitle').value = entry.title;
     $('inputContent').value = entry.content;
-    pendingPhotos = entry.images ? [...entry.images] : [];
+    pendingPhotos = (entry.images || []).map(img => ({ isNew:false, url: img.url, path: img.path }));
     renderPhotoStrip();
     if(entry.audio){
       pendingAudioData = entry.audio;
@@ -1552,27 +1662,36 @@
       $('downloadAudioBtn').href = entry.audio;
       $('audioPreviewWrap').style.display = '';
       $('voiceBtn').classList.add('active');
-      updateVoiceIdleLabel();
+      updateVoiceBtnTitle();
     }
+    pendingFiles = (entry.files || []).map(f => ({ isNew:false, name:f.name, url:f.url, type:f.type, size:f.size, path:f.path }));
+    renderFileChips();
     $('addOverlay').classList.add('open');
   }
 
   $('fabAdd').addEventListener('click', openAddSheet);
   $('cancelAddBtn').addEventListener('click', ()=> $('addOverlay').classList.remove('open'));
 
+  $('photoToolbarBtn').addEventListener('click', ()=>{
+    if(!isSignedIn){
+      showToast(T().toastFileNeedsAccount);
+      showAuthOverlay();
+      return;
+    }
+    if(pendingPhotos.length >= MAX_PHOTOS){ showToast(T().toastMaxPhotos); return; }
+    $('photoInput').click();
+  });
+
   $('photoInput').addEventListener('change', (e)=>{
     const allFiles = Array.from(e.target.files);
-    const remainingSlots = 5 - pendingPhotos.length;
+    const remainingSlots = MAX_PHOTOS - pendingPhotos.length;
     const files = allFiles.slice(0, remainingSlots);
     if(allFiles.length > files.length){ showToast(T().toastMaxPhotos); }
     files.forEach(file => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        pendingPhotos.push(reader.result);
-        renderPhotoStrip();
-      };
-      reader.readAsDataURL(file);
+      if(file.size > PHOTO_MAX_BYTES){ showToast(T().toastFileTooLarge); return; }
+      pendingPhotos.push({ isNew:true, file, previewUrl: URL.createObjectURL(file) });
     });
+    renderPhotoStrip();
     e.target.value = '';
   });
 
@@ -1581,12 +1700,59 @@
     pendingAudioData = null;
     $('audioPreviewWrap').style.display = 'none';
     $('voiceBtn').classList.remove('active');
-    updateVoiceIdleLabel();
+    updateVoiceBtnTitle();
   });
 
-  function updateVoiceIdleLabel(){
-    $('voiceBtnLabel').textContent = pendingAudioData ? T().replaceVoice : T().addVoice;
+  function renderFileChips(){
+    const wrap = $('filesListPreview');
+    wrap.innerHTML = '';
+    pendingFiles.forEach((f, idx) => {
+      const row = document.createElement('div');
+      row.className = 'file-chip-row';
+      row.innerHTML = `
+        <span>📎</span>
+        <span class="file-chip-name">${escapeHtml(f.name)}</span>
+        <button type="button">✕</button>
+      `;
+      row.querySelector('button').addEventListener('click', ()=>{
+        const removed = pendingFiles.splice(idx, 1)[0];
+        if(removed && !removed.isNew && removed.path){ filesToDeleteOnSave.push(removed.path); }
+        renderFileChips();
+      });
+      wrap.appendChild(row);
+    });
   }
+
+  $('fileToolbarBtn').addEventListener('click', ()=>{
+    if(!isSignedIn){
+      showToast(T().toastFileNeedsAccount);
+      showAuthOverlay();
+      return;
+    }
+    if(pendingFiles.length >= MAX_FILES){ showToast(T().toastMaxFiles); return; }
+    $('fileInput').click();
+  });
+
+  $('fileInput').addEventListener('change', (e)=>{
+    const allFiles = Array.from(e.target.files);
+    const remainingSlots = MAX_FILES - pendingFiles.length;
+    const candidates = allFiles.slice(0, remainingSlots);
+    if(allFiles.length > candidates.length){ showToast(T().toastMaxFiles); }
+    candidates.forEach(file => {
+      const ext = '.' + file.name.split('.').pop().toLowerCase();
+      if(!ALLOWED_FILE_EXT.includes(ext)){
+        showToast(T().toastFileWrongType);
+        return;
+      }
+      if(file.size > FILE_MAX_BYTES){
+        showToast(T().toastFileTooLarge);
+        return;
+      }
+      pendingFiles.push({ isNew:true, file, name:file.name, size:file.size });
+    });
+    renderFileChips();
+    e.target.value = '';
+  });
 
   function pickSupportedAudioMime(){
     const candidates = [
@@ -1639,7 +1805,7 @@
         stream.getTracks().forEach(t=>t.stop());
         isRecording = false;
         $('voiceBtn').classList.remove('recording');
-        updateVoiceIdleLabel();
+        $('recordingStatusLine').style.display = 'none';
         recordingStopWaiters.forEach(fn => fn());
         recordingStopWaiters = [];
       };
@@ -1655,7 +1821,7 @@
           $('downloadAudioBtn').setAttribute('download', 'voice-note.' + ext);
           $('audioPreviewWrap').style.display = '';
           $('voiceBtn').classList.add('active');
-          updateVoiceIdleLabel();
+          updateVoiceBtnTitle();
           recordingStopWaiters.forEach(fn => fn());
           recordingStopWaiters = [];
         };
@@ -1668,11 +1834,13 @@
         stream.getTracks().forEach(t=>t.stop());
         isRecording = false;
         $('voiceBtn').classList.remove('recording');
+        $('recordingStatusLine').style.display = 'none';
       };
       mediaRecorder.start();
       isRecording = true;
       $('voiceBtn').classList.add('recording');
-      $('voiceBtnLabel').textContent = T().recording;
+      $('recordingStatusLine').textContent = T().recording;
+      $('recordingStatusLine').style.display = 'block';
     }catch(err){
       console.error('mic error', err);
       showToast(T().toastMicFail);
@@ -1709,10 +1877,51 @@
         };
         entries.push(entry);
       }
-      entry.images = [...pendingPhotos];
       entry.audio = pendingAudioData;
-      entry.imageCount = pendingPhotos.length;
       entry.hasAudio = !!pendingAudioData;
+
+      // Upload any newly-selected photos/files to Storage before we can persist their URLs
+      const hasNewUploads = pendingPhotos.some(p => p.isNew) || pendingFiles.some(f => f.isNew);
+      if(hasNewUploads){
+        $('saveEntryBtn').textContent = T().uploadingFiles;
+      }
+      const resolvedPhotos = [];
+      for(const p of pendingPhotos){
+        if(p.isNew){
+          try{
+            const meta = await uploadFileToStorage(entry.id, p.file);
+            resolvedPhotos.push({ url: meta.url, path: meta.path });
+          }catch(e){
+            console.error('photo upload failed', e);
+            showToast(T().toastFileUploadFail);
+          }
+        } else {
+          resolvedPhotos.push({ url:p.url, path:p.path });
+        }
+      }
+      entry.images = resolvedPhotos;
+      entry.imageCount = resolvedPhotos.length;
+
+      const resolvedFiles = [];
+      for(const f of pendingFiles){
+        if(f.isNew){
+          try{
+            const meta = await uploadFileToStorage(entry.id, f.file);
+            resolvedFiles.push(meta);
+          }catch(e){
+            console.error('file upload failed', e);
+            showToast(T().toastFileUploadFail);
+          }
+        } else {
+          resolvedFiles.push({ name:f.name, url:f.url, type:f.type, size:f.size, path:f.path });
+        }
+      }
+      entry.files = resolvedFiles;
+      $('saveEntryBtn').textContent = T().save;
+
+      // Best-effort cleanup of anything the user removed during this edit
+      filesToDeleteOnSave.forEach(path => deleteFileFromStorage(path));
+      filesToDeleteOnSave = [];
 
       $('addOverlay').classList.remove('open');
       renderRecent();
@@ -1744,7 +1953,7 @@
     await ensureMedia(entry);
 
     if(entry.images && entry.images.length){
-      $('detailPhotos').innerHTML = entry.images.map(src => `<img src="${src}">`).join('');
+      $('detailPhotos').innerHTML = entry.images.map(img => `<img src="${img.url}">`).join('');
       $('detailPhotos').style.display = 'grid';
       $('detailPhotos').querySelectorAll('img').forEach(img => {
         img.addEventListener('click', () => {
@@ -1755,6 +1964,18 @@
     } else {
       $('detailPhotos').style.display = 'none';
     }
+    const filesList = $('detailFilesList');
+    filesList.innerHTML = '';
+    (entry.files || []).forEach(f => {
+      const row = document.createElement('div');
+      row.className = 'file-chip-row';
+      row.innerHTML = `
+        <span>📎</span>
+        <span class="file-chip-name">${escapeHtml(f.name)}</span>
+        <a href="${f.url}" target="_blank" rel="noopener" style="color:var(--plum-deep); font-weight:600; text-decoration:none; font-size:12.5px; flex-shrink:0;">${T().openFile}</a>
+      `;
+      filesList.appendChild(row);
+    });
     if(entry.audio){
       $('detailAudio').src = entry.audio;
       $('detailDownloadAudioBtn').href = entry.audio;
@@ -2158,7 +2379,7 @@
       $('inboxItemAudioRow').style.display = 'none';
     }
     if(item.images && item.images.length){
-      $('inboxItemPhotos').innerHTML = item.images.map(src => `<img src="${src}">`).join('');
+      $('inboxItemPhotos').innerHTML = item.images.map(img => `<img src="${img.url}">`).join('');
       $('inboxItemPhotos').style.display = 'grid';
     } else {
       $('inboxItemPhotos').style.display = 'none';
@@ -2277,7 +2498,7 @@
       $('sharedTitle').textContent = data.title || '';
       $('sharedContent').textContent = data.content || '';
       if(data.images && data.images.length){
-        $('sharedPhotos').innerHTML = data.images.map(src => `<img src="${src}">`).join('');
+        $('sharedPhotos').innerHTML = data.images.map(img => `<img src="${img.url}">`).join('');
         $('sharedPhotos').style.display = 'grid';
         $('sharedPhotos').querySelectorAll('img').forEach(img => {
           img.addEventListener('click', () => {
@@ -2339,6 +2560,7 @@
   });
 
   function deleteEntry(id){
+    const entry = entries.find(e => e.id === id);
     entries = entries.filter(e => e.id !== id);
     recentRandomIds = recentRandomIds.filter(rid => rid !== id);
     recentForgottenIds = recentForgottenIds.filter(rid => rid !== id);
@@ -2348,6 +2570,12 @@
     showToast(T().toastDeleted);
     persistIndex();
     storageAdapter.delete(mediaKey(id), false).catch(()=>{});
+    if(entry && entry.files){
+      entry.files.forEach(f => deleteFileFromStorage(f.path));
+    }
+    if(entry && entry.images){
+      entry.images.forEach(img => deleteFileFromStorage(img.path));
+    }
   }
 
   $('lightboxOverlay').addEventListener('click', ()=> $('lightboxOverlay').classList.remove('open'));
@@ -2403,6 +2631,7 @@
   function applyLanguage(lang){
     currentLang = lang;
     const t = T();
+    document.body.classList.toggle('lang-cjk', lang === 'zh' || lang === 'zh-TW');
     document.querySelectorAll('[data-i18n]').forEach(el => {
       const key = el.getAttribute('data-i18n');
       if(t[key] !== undefined) el.textContent = t[key];
@@ -2420,7 +2649,8 @@
     document.querySelectorAll('.lang-choice').forEach(btn => {
       btn.style.fontWeight = (btn.dataset.langChoice === lang) ? '700' : '400';
     });
-    $('voiceBtnLabel').textContent = isRecording ? t.recording : (pendingAudioData ? t.replaceVoice : t.addVoice);
+    if(isRecording){ $('recordingStatusLine').textContent = t.recording; }
+    updateVoiceBtnTitle();
     $('addSheetTitle').textContent = editingId ? t.editAction : t.addSheetTitleNew;
     updateAuthModeUI();
     if(window.__firebase && window.__firebase.auth.currentUser){
