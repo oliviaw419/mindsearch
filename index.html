@@ -151,6 +151,14 @@
   .entry-row .delete-bg{ position:absolute; inset:0; background:var(--danger); display:flex; align-items:center; justify-content:flex-end; padding-right:22px; color:#fff; font-size:13px; font-weight:600; cursor:pointer; }
   .entry-card{ position:relative; background:var(--entry-bg); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border:1px solid rgba(255,255,255,0.6); border-radius:var(--radius-md); padding:14px 16px; display:flex; flex-direction:column; gap:3px; transition:transform .18s ease; touch-action:pan-y; user-select:none; box-shadow:0 4px 16px -6px rgba(0,0,0,0.14); }
 
+  .feedback-msg{ max-width:80%; padding:9px 13px; border-radius:16px; font-size:13.5px; line-height:1.45; }
+  .feedback-msg.theirs{ align-self:flex-start; background:var(--paper-raised); color:var(--ink); border:1px solid var(--line); border-bottom-left-radius:4px; }
+  .feedback-msg.mine{ align-self:flex-end; background:var(--plum); color:#fff; border-bottom-right-radius:4px; }
+  .feedback-msg-time{ font-size:10px; opacity:0.65; margin-top:3px; }
+  .feedback-thread-row{
+    display:flex; align-items:center; justify-content:space-between; gap:10px; padding:12px 14px;
+    background:var(--paper-raised); border-radius:12px; border:1px solid var(--line); cursor:pointer;
+  }
   .contact-row{
     display:flex; align-items:center; gap:12px; padding:10px 12px 10px 10px;
     background:var(--entry-bg); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
@@ -318,11 +326,12 @@
     </div>
     <div style="display:flex; gap:8px; align-items:center;">
     <div style="position:relative;">
-      <button class="more-btn small" id="settingsBtn" title="Settings">⚙️</button>
+      <button class="more-btn small" id="settingsBtn" title="Settings" style="position:relative;">⚙️<span id="settingsBadge" style="display:none; position:absolute; top:-2px; right:-2px; width:9px; height:9px; border-radius:50%; background:var(--danger); border:1.5px solid var(--paper);"></span></button>
       <div class="more-menu" id="settingsMenu" style="min-width:200px;">
         <div id="settingsMainPanel">
           <button type="button" id="openLanguagePanelBtn" data-i18n="languageMenuEntry">Language</button>
           <button type="button" id="openContactsBtn" data-i18n="manageFriends">Manage Friends</button>
+          <button type="button" id="openHelpFeedbackBtn" style="position:relative;" data-i18n="helpFeedbackMenuLabel">Help &amp; Feedback<span id="feedbackMenuBadge" style="display:none; position:absolute; top:10px; right:14px; width:8px; height:8px; border-radius:50%; background:var(--danger);"></span></button>
         </div>
         <div id="settingsLanguagePanel" style="display:none;">
           <button type="button" id="backToSettingsBtn" data-i18n="backAction">← Back</button>
@@ -561,6 +570,29 @@
     </div>
 
     <button class="text-btn" id="closeContactsBtn" data-i18n="close">Close</button>
+  </div>
+</div>
+
+<!-- Help & Feedback -->
+<div class="sheet-overlay" id="helpFeedbackOverlay" style="z-index:450;">
+  <div class="sheet" style="max-width:420px;">
+    <h2 data-i18n="helpFeedbackTitle">Help &amp; Feedback</h2>
+
+    <div id="feedbackThreadsListPanel" style="display:none;">
+      <div id="feedbackThreadsList" style="display:flex; flex-direction:column; gap:8px;"></div>
+      <div id="feedbackThreadsEmpty" class="empty-note" style="display:none;" data-i18n="feedbackNoThreads">No feedback yet.</div>
+    </div>
+
+    <div id="feedbackConversationPanel" style="display:none;">
+      <button class="text-btn" id="backToThreadsBtn" style="display:none; text-align:left; color:var(--plum-deep); font-weight:600;" data-i18n="backAction">← Back</button>
+      <div id="feedbackMessagesList" style="display:flex; flex-direction:column; gap:8px; max-height:320px; overflow-y:auto; margin:8px 0 12px; padding-right:2px;"></div>
+      <div style="display:flex; gap:8px;">
+        <input class="field" id="feedbackMessageInput" type="text" data-i18n-placeholder="feedbackPlaceholder" placeholder="Type a message…" style="flex:1;">
+        <button class="primary-btn" id="feedbackSendBtn" style="margin-top:0; width:auto; padding:0 16px; white-space:nowrap;" data-i18n="sendAction">Send</button>
+      </div>
+    </div>
+
+    <button class="text-btn" id="closeHelpFeedbackBtn" data-i18n="close">Close</button>
   </div>
 </div>
 
@@ -876,6 +908,10 @@
       shareWeChatHint: "微信 / Instagram：复制下面的链接，去那边粘贴分享",
       shareViaLink: "或者复制链接",
       manageFriends: "管理好友",
+      helpFeedbackMenuLabel: "帮助与反馈",
+      helpFeedbackTitle: "帮助与反馈",
+      feedbackNoThreads: "还没有人发过反馈",
+      feedbackPlaceholder: "输入消息…",
       languageMenuEntry: "语言",
       backAction: "← 返回",
       nicknameOptional: "备注名（选填）",
@@ -1019,6 +1055,10 @@
       shareViaLink: "或者複製連結",
       manageFriends: "管理好友",
       languageMenuEntry: "語言",
+      helpFeedbackMenuLabel: "幫助與反饋",
+      helpFeedbackTitle: "幫助與反饋",
+      feedbackNoThreads: "還沒有人發過反饋",
+      feedbackPlaceholder: "輸入訊息…",
       backAction: "← 返回",
       nicknameOptional: "備註名稱（選填）",
       addFriend: "新增",
@@ -1162,6 +1202,10 @@
       manageFriends: "Manage Friends",
       languageMenuEntry: "Language",
       backAction: "← Back",
+      helpFeedbackMenuLabel: "Help & Feedback",
+      helpFeedbackTitle: "Help & Feedback",
+      feedbackNoThreads: "No feedback yet.",
+      feedbackPlaceholder: "Type a message…",
       nicknameOptional: "Nickname (optional)",
       addFriend: "Add",
       manageAction: "Manage",
@@ -2582,6 +2626,176 @@
   $('closeContactsBtn').addEventListener('click', ()=> $('contactsOverlay').classList.remove('open'));
   $('contactsOverlay').addEventListener('click', (e)=>{ if(e.target.id==='contactsOverlay') $('contactsOverlay').classList.remove('open'); });
 
+  // ---------- Help & Feedback ----------
+  const ADMIN_EMAIL = 'yuyamiya@gmail.com';
+  let currentFeedbackThreadUid = null;
+
+  function isAdmin(){
+    const fb = window.__firebase;
+    return !!(fb.auth.currentUser && fb.auth.currentUser.email === ADMIN_EMAIL);
+  }
+
+  async function ensureFeedbackThread(uid, email){
+    const fb = window.__firebase;
+    try{
+      await fb.setDoc(fb.doc(fb.db, 'feedbackThreads', uid), {
+        userEmail: email, updatedAt: Date.now()
+      }, { merge: true });
+    }catch(e){ console.error('ensure feedback thread failed', e); }
+  }
+
+  async function listFeedbackThreads(){
+    const fb = window.__firebase;
+    try{
+      const q = fb.query(fb.collection(fb.db, 'feedbackThreads'), fb.orderBy('lastMessageAt', 'desc'));
+      const snap = await fb.getDocs(q);
+      return snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+    }catch(e){ console.error('list feedback threads failed', e); return []; }
+  }
+
+  async function listFeedbackMessages(threadUid){
+    const fb = window.__firebase;
+    try{
+      const q = fb.query(fb.collection(fb.db, 'feedbackThreads', threadUid, 'messages'), fb.orderBy('createdAt', 'asc'));
+      const snap = await fb.getDocs(q);
+      return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    }catch(e){ console.error('list feedback messages failed', e); return []; }
+  }
+
+  async function sendFeedbackMessage(threadUid, text){
+    const fb = window.__firebase;
+    const me = fb.auth.currentUser;
+    const fromAdmin = isAdmin();
+    const msgId = cryptoId();
+    try{
+      await fb.setDoc(fb.doc(fb.db, 'feedbackThreads', threadUid, 'messages', msgId), {
+        senderUid: me.uid, senderEmail: me.email, text, fromAdmin, createdAt: Date.now()
+      });
+      await fb.setDoc(fb.doc(fb.db, 'feedbackThreads', threadUid), {
+        lastMessageText: text, lastMessageAt: Date.now(),
+        unreadByAdmin: !fromAdmin, unreadByUser: fromAdmin
+      }, { merge: true });
+    }catch(e){ console.error('send feedback message failed', e); showToast(T().shareCreateFail); }
+  }
+
+  async function markFeedbackThreadRead(threadUid){
+    const fb = window.__firebase;
+    const fromAdmin = isAdmin();
+    try{
+      await fb.setDoc(fb.doc(fb.db, 'feedbackThreads', threadUid), fromAdmin ? { unreadByAdmin:false } : { unreadByUser:false }, { merge:true });
+    }catch(e){}
+  }
+
+  function renderFeedbackMessages(messages){
+    const list = $('feedbackMessagesList');
+    list.innerHTML = '';
+    const me = window.__firebase.auth.currentUser;
+    messages.forEach(m => {
+      const bubble = document.createElement('div');
+      bubble.className = 'feedback-msg ' + (m.senderUid === me.uid ? 'mine' : 'theirs');
+      bubble.innerHTML = `<div>${escapeHtml(m.text)}</div><div class="feedback-msg-time">${formatDate(m.createdAt)}</div>`;
+      list.appendChild(bubble);
+    });
+    list.scrollTop = list.scrollHeight;
+  }
+
+  function showFeedbackPanel(panel){
+    $('feedbackThreadsListPanel').style.display = panel === 'threads' ? 'block' : 'none';
+    $('feedbackConversationPanel').style.display = panel === 'conversation' ? 'block' : 'none';
+    $('backToThreadsBtn').style.display = (panel === 'conversation' && isAdmin()) ? 'block' : 'none';
+  }
+
+  async function openFeedbackConversation(threadUid){
+    currentFeedbackThreadUid = threadUid;
+    showFeedbackPanel('conversation');
+    const messages = await listFeedbackMessages(threadUid);
+    renderFeedbackMessages(messages);
+    await markFeedbackThreadRead(threadUid);
+    refreshFeedbackBadge();
+  }
+
+  async function renderFeedbackThreadsList(){
+    const list = $('feedbackThreadsList');
+    list.innerHTML = '';
+    const threads = await listFeedbackThreads();
+    $('feedbackThreadsEmpty').style.display = threads.length === 0 ? 'block' : 'none';
+    for(const t of threads){
+      const nickname = t.userEmail ? await getContactNickname(t.userEmail) : null;
+      const row = document.createElement('div');
+      row.className = 'feedback-thread-row';
+      row.innerHTML = `
+        <div style="min-width:0;">
+          <div style="font-size:13.5px; font-weight:600; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(nickname || t.userEmail || '')}</div>
+          <div style="font-size:12px; color:var(--ink-soft); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:260px;">${escapeHtml(t.lastMessageText || '')}</div>
+        </div>
+        ${t.unreadByAdmin ? '<span style="width:8px; height:8px; border-radius:50%; background:var(--danger); flex-shrink:0;"></span>' : ''}
+      `;
+      row.addEventListener('click', ()=> openFeedbackConversation(t.uid));
+      list.appendChild(row);
+    }
+  }
+
+  async function refreshFeedbackBadge(){
+    if(!isSignedIn){
+      $('feedbackMenuBadge').style.display = 'none';
+      $('settingsBadge').style.display = 'none';
+      return;
+    }
+    let hasUnread = false;
+    if(isAdmin()){
+      const threads = await listFeedbackThreads();
+      hasUnread = threads.some(t => t.unreadByAdmin);
+    } else {
+      const fb = window.__firebase;
+      try{
+        const snap = await fb.getDoc(fb.doc(fb.db, 'feedbackThreads', fb.auth.currentUser.uid));
+        hasUnread = !!(snap.exists() && snap.data().unreadByUser);
+      }catch(e){ hasUnread = false; }
+    }
+    $('feedbackMenuBadge').style.display = hasUnread ? 'block' : 'none';
+    $('settingsBadge').style.display = hasUnread ? 'block' : 'none';
+  }
+
+  $('openHelpFeedbackBtn').addEventListener('click', async ()=>{
+    $('settingsMenu').classList.remove('open');
+    if(!isSignedIn){
+      showToast(T().toastFileNeedsAccount);
+      showAuthOverlay();
+      return;
+    }
+    $('helpFeedbackOverlay').classList.add('open');
+    const fb = window.__firebase;
+    const me = fb.auth.currentUser;
+    if(isAdmin()){
+      showFeedbackPanel('threads');
+      renderFeedbackThreadsList();
+    } else {
+      await ensureFeedbackThread(me.uid, me.email);
+      openFeedbackConversation(me.uid);
+    }
+  });
+
+  $('backToThreadsBtn').addEventListener('click', ()=>{
+    currentFeedbackThreadUid = null;
+    showFeedbackPanel('threads');
+    renderFeedbackThreadsList();
+  });
+
+  $('feedbackSendBtn').addEventListener('click', async ()=>{
+    const text = $('feedbackMessageInput').value.trim();
+    if(!text || !currentFeedbackThreadUid) return;
+    $('feedbackMessageInput').value = '';
+    await sendFeedbackMessage(currentFeedbackThreadUid, text);
+    const messages = await listFeedbackMessages(currentFeedbackThreadUid);
+    renderFeedbackMessages(messages);
+  });
+  $('feedbackMessageInput').addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter'){ e.preventDefault(); $('feedbackSendBtn').click(); }
+  });
+
+  $('closeHelpFeedbackBtn').addEventListener('click', ()=> $('helpFeedbackOverlay').classList.remove('open'));
+  $('helpFeedbackOverlay').addEventListener('click', (e)=>{ if(e.target.id==='helpFeedbackOverlay') $('helpFeedbackOverlay').classList.remove('open'); });
+
   // ---------- Inbox ----------
   async function listInbox(){
     const fb = window.__firebase;
@@ -3131,10 +3345,13 @@
         if(wasGuest){ await migrateGuestDataToAccount(localStorageImpl); }
         registerEmailIndex(user);
         checkInboxOnLogin();
+        refreshFeedbackBadge();
       } else {
         isSignedIn = false;
         activeStorageImpl = localStorageImpl;
         refreshInboxBadgeFromCount(0);
+        $('feedbackMenuBadge').style.display = 'none';
+        $('settingsBadge').style.display = 'none';
         if(!hasDoneInitialAuthCheck){
           let seen = null;
           try{ seen = localStorage.getItem(SEEN_AUTH_PROMPT_KEY); }catch(e){}
