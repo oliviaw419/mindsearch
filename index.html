@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Mind Search</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wonk,wght@0,9..144,0,400;0,9..144,0,500;0,9..144,0,600;1,9..144,0,400;1,9..144,0,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
     --radius-lg: 22px;
@@ -241,6 +241,12 @@
     background:var(--paper-raised); border-radius:12px; border:1px solid var(--line);
   }
   .file-chip-row .file-chip-name{ font-size:13px; color:var(--ink); flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .tag-chip{
+    padding:6px 13px; border-radius:999px; font-size:12.5px; font-weight:600; cursor:pointer;
+    border:1px solid var(--line); background:var(--paper-raised); color:var(--ink-soft);
+  }
+  .tag-chip.selected{ background:var(--plum); border-color:var(--plum); color:#fff; }
+  .tag-chip.add-new{ border-style:dashed; color:var(--plum-deep); }
   .file-chip-row button{ background:none; border:none; color:var(--danger); font-size:13px; cursor:pointer; padding:2px; flex-shrink:0; }
   .attach-btn{ flex:1; display:flex; align-items:center; justify-content:center; gap:6px; padding:11px; border-radius:var(--radius-sm); border:1px dashed var(--line); background:var(--paper-raised); backdrop-filter: blur(var(--blur)); -webkit-backdrop-filter: blur(var(--blur)); font-size:13px; color:var(--ink-soft); cursor:pointer; }
   .attach-btn.active{ border:1px solid var(--plum); color:var(--plum-deep); background:var(--plum-tint); }
@@ -331,6 +337,7 @@
         <div id="settingsMainPanel">
           <button type="button" id="openLanguagePanelBtn" data-i18n="languageMenuEntry">Language</button>
           <button type="button" id="openContactsBtn" data-i18n="manageFriends">Manage Friends</button>
+          <button type="button" id="openManageTagsBtn" data-i18n="manageTagsMenuLabel">Manage Tags</button>
           <button type="button" id="openHelpFeedbackBtn" style="position:relative;"><span data-i18n="helpFeedbackMenuLabel">Help &amp; Feedback</span><span id="feedbackMenuBadge" style="display:none; position:absolute; top:10px; right:14px; width:8px; height:8px; border-radius:50%; background:var(--danger);"></span></button>
         </div>
         <div id="settingsLanguagePanel" style="display:none;">
@@ -419,6 +426,8 @@
     <label class="field-label" data-i18n="contentLabel">Content</label>
     <textarea class="field" id="inputContent" placeholder="Write down what you want to remember…"></textarea>
 
+    <div id="tagPickerRow" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:12px;"></div>
+
     <label class="field-label" data-i18n="attachmentsLabel">Attachments</label>
     <div class="photo-strip" id="photoStrip"></div>
     <div id="filesListPreview" style="display:flex; flex-direction:column; gap:6px; margin-top:8px;"></div>
@@ -467,7 +476,7 @@
         <p id="sharedNoteBadge" style="display:none; align-items:center; gap:5px; font-size:11.5px; font-weight:600; color:var(--ink-soft); margin:5px 0 0;">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
           <span id="sharedNoteBadgeText"></span>
-          <button type="button" id="stopCoEditingBtn" title="Stop co-editing" style="margin-left:auto; background:none; border:none; color:var(--ink-soft); cursor:pointer; padding:2px; display:flex; align-items:center; flex-shrink:0;">
+          <button type="button" id="stopCoEditingBtn" title="Stop co-editing" style="margin-left:2px; background:none; border:none; color:var(--ink-soft); cursor:pointer; padding:2px; display:flex; align-items:center; flex-shrink:0;">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           </button>
         </p>
@@ -596,6 +605,31 @@
     </div>
 
     <button class="text-btn" id="closeHelpFeedbackBtn" data-i18n="close">Close</button>
+  </div>
+</div>
+
+<!-- Manage Tags -->
+<div class="sheet-overlay" id="manageTagsOverlay" style="z-index:450;">
+  <div class="sheet" style="max-width:400px;">
+    <h2 data-i18n="manageTagsTitle">Manage Tags</h2>
+    <div style="display:flex; gap:8px; margin-bottom:14px;">
+      <input class="field" id="newTagInput" type="text" data-i18n-placeholder="newTagInputPlaceholder" placeholder="New tag name" style="flex:1;">
+      <button class="primary-btn" id="addTagBtn" style="margin-top:0; width:auto; padding:0 16px; white-space:nowrap;" data-i18n="addNewAction">+ Add</button>
+    </div>
+    <div id="tagsManageList" style="display:flex; flex-direction:column; gap:8px;"></div>
+    <div id="tagsManageEmpty" class="empty-note" style="display:none;" data-i18n="noTagsYet">No tags yet.</div>
+    <button class="text-btn" id="closeManageTagsBtn" data-i18n="close">Close</button>
+  </div>
+</div>
+
+<!-- Delete tag choice -->
+<div class="sheet-overlay" id="tagDeleteChoiceOverlay" style="z-index:460;">
+  <div class="sheet" style="max-width:360px;">
+    <h2 data-i18n="deleteTagTitle">Delete this tag?</h2>
+    <p style="font-size:13.5px; color:var(--ink-soft); margin:0 0 16px;" data-i18n="deleteTagExplain">Choose what happens to notes that already have this tag.</p>
+    <button class="primary-btn" id="tagDeleteLibraryOnlyBtn" style="margin-top:0;" data-i18n="deleteTagLibraryOnly">Remove from tag list only (keep on existing notes)</button>
+    <button class="primary-btn" id="tagDeleteEverywhereBtn" style="margin-top:10px; background:var(--danger);" data-i18n="deleteTagEverywhere">Remove from tag list and all notes</button>
+    <button class="text-btn" id="cancelTagDeleteBtn" data-i18n="cancel">Cancel</button>
   </div>
 </div>
 
@@ -734,7 +768,10 @@
 (function(){
   const INDEX_KEY = 'mind-search-index';
   const LEGACY_KEY = 'mind-search-entries';
+  const TAGS_KEY = 'mind-search-tags';
   const mediaKey = (id) => 'entry-media:' + id;
+
+  let allTags = [];
 
   let entries = [];
   let currentDetailId = null;
@@ -746,6 +783,7 @@
   let pendingPhotos = [];
   let pendingAudioData = null;
   let pendingFiles = []; // each: {isNew:true, file:File, name} or {isNew:false, name,url,type,size,path}
+  let pendingTags = [];
   let filesToDeleteOnSave = []; // storage paths to clean up after a successful save
   const MAX_FILES = 10;
   const MAX_PHOTOS = 10;
@@ -825,7 +863,7 @@
       searchResultsLabel: "搜索结果",
       frequentlyForgottenLabel: "常忘",
       randomLabel: "随机",
-      recentlyAddedLabel: "最近添加",
+      recentlyAddedLabel: "最近添加或查看",
       shuffleBtn: "⟳ 再来一个",
       addSheetTitleNew: "记一笔",
       titleLabel: "标题",
@@ -916,6 +954,18 @@
       shareWeChatHint: "微信 / Instagram：复制下面的链接，去那边粘贴分享",
       shareViaLink: "或者复制链接",
       manageFriends: "管理好友",
+      manageTagsMenuLabel: "管理标签",
+      manageTagsTitle: "管理标签",
+      newTagInputPlaceholder: "新标签名称",
+      noTagsYet: "还没有标签",
+      addNewTagChip: "+ 新建标签",
+      newTagPrompt: "新标签叫什么？",
+      deleteTagTitle: "删除这个标签？",
+      deleteTagExplain: "选一下已经贴过这个标签的笔记要怎么处理。",
+      deleteTagLibraryOnly: "只从标签列表删除（已贴的笔记保留标签）",
+      deleteTagEverywhere: "从标签列表和所有笔记里一起删除",
+      toastTagRemovedLibraryOnly: "已从标签列表删除，笔记上的标签保留了",
+      toastTagRemovedEverywhere: "已从标签列表和所有笔记里删除",
       helpFeedbackMenuLabel: "帮助与反馈",
       helpFeedbackTitle: "帮助与反馈",
       feedbackNoThreads: "还没有人发过反馈",
@@ -976,7 +1026,7 @@
       searchResultsLabel: "搜尋結果",
       frequentlyForgottenLabel: "常忘",
       randomLabel: "隨機",
-      recentlyAddedLabel: "最近新增",
+      recentlyAddedLabel: "最近新增或查看",
       shuffleBtn: "⟳ 再來一個",
       addSheetTitleNew: "記一筆",
       titleLabel: "標題",
@@ -1068,6 +1118,18 @@
       shareViaLink: "或者複製連結",
       manageFriends: "管理好友",
       languageMenuEntry: "語言",
+      manageTagsMenuLabel: "管理標籤",
+      manageTagsTitle: "管理標籤",
+      newTagInputPlaceholder: "新標籤名稱",
+      noTagsYet: "還沒有標籤",
+      addNewTagChip: "+ 新增標籤",
+      newTagPrompt: "新標籤叫什麼？",
+      deleteTagTitle: "刪除這個標籤？",
+      deleteTagExplain: "選一下已經貼過這個標籤的筆記要怎麼處理。",
+      deleteTagLibraryOnly: "只從標籤列表刪除（已貼的筆記保留標籤）",
+      deleteTagEverywhere: "從標籤列表和所有筆記裡一起刪除",
+      toastTagRemovedLibraryOnly: "已從標籤列表刪除，筆記上的標籤保留了",
+      toastTagRemovedEverywhere: "已從標籤列表和所有筆記裡刪除",
       helpFeedbackMenuLabel: "幫助與反饋",
       helpFeedbackTitle: "幫助與反饋",
       feedbackNoThreads: "還沒有人發過反饋",
@@ -1127,7 +1189,7 @@
       searchResultsLabel: "Search Results",
       frequentlyForgottenLabel: "Frequently Forgotten",
       randomLabel: "Random",
-      recentlyAddedLabel: "Recently Added",
+      recentlyAddedLabel: "Recently Added or Viewed",
       shuffleBtn: "⟳ Shuffle",
       addSheetTitleNew: "New Entry",
       titleLabel: "Title",
@@ -1219,6 +1281,18 @@
       shareViaLink: "Or copy link",
       manageFriends: "Manage Friends",
       languageMenuEntry: "Language",
+      manageTagsMenuLabel: "Manage Tags",
+      manageTagsTitle: "Manage Tags",
+      newTagInputPlaceholder: "New tag name",
+      noTagsYet: "No tags yet.",
+      addNewTagChip: "+ New Tag",
+      newTagPrompt: "What should the new tag be called?",
+      deleteTagTitle: "Delete this tag?",
+      deleteTagExplain: "Choose what happens to notes that already have this tag.",
+      deleteTagLibraryOnly: "Remove from tag list only (keep on existing notes)",
+      deleteTagEverywhere: "Remove from tag list and all notes",
+      toastTagRemovedLibraryOnly: "Removed from tag list — existing notes kept their tag",
+      toastTagRemovedEverywhere: "Removed from tag list and all notes",
       backAction: "← Back",
       helpFeedbackMenuLabel: "Help & Feedback",
       helpFeedbackTitle: "Help & Feedback",
@@ -1296,11 +1370,12 @@
       forgetCount: e.forgetCount||0, pinned: !!e.pinned,
       images, imageCount: images.length, hasAudio: !!e.hasAudio,
       files: e.files || [],
+      tags: e.tags || [],
       isSample: !!e.isSample,
       sharedBy: e.sharedBy || null, sharedAt: e.sharedAt || null,
       sharedId: e.sharedId || null, isSharedOwner: !!e.isSharedOwner,
       sharedWithEmail: e.sharedWithEmail || null,
-      createdAt: e.createdAt, updatedAt: e.updatedAt
+      createdAt: e.createdAt, updatedAt: e.updatedAt, lastViewedAt: e.lastViewedAt || null
     };
   }
 
@@ -1428,6 +1503,22 @@
     renderForgotten();
   }
 
+  async function loadTags(){
+    try{
+      const res = await storageAdapter.get(TAGS_KEY, false);
+      allTags = (res && res.value) ? JSON.parse(res.value) : [];
+    }catch(e){
+      allTags = [];
+    }
+  }
+
+  function persistTags(){
+    storageAdapter.set(TAGS_KEY, JSON.stringify(allTags), false).catch(()=>{
+      console.error('tag save failed');
+      showToast(T().toastMediaFail);
+    });
+  }
+
   function formatDate(ts){
     const d = new Date(ts);
     return d.toLocaleDateString(T().dateLocale, { year:'numeric', month:'long', day:'numeric' });
@@ -1479,7 +1570,7 @@
       list.innerHTML = `<div class="empty-note">${T().emptyRecent}</div>`;
       return;
     }
-    const sorted = [...entries].sort((a,b)=> b.updatedAt - a.updatedAt).slice(0,8);
+    const sorted = [...entries].sort((a,b)=> Math.max(b.updatedAt, b.lastViewedAt||0) - Math.max(a.updatedAt, a.lastViewedAt||0)).slice(0,8);
     sorted.forEach(entry => {
       const row = document.createElement('div');
       row.className = 'entry-row';
@@ -1688,7 +1779,9 @@
     $('searchResultsSection').style.display = '';
     $('defaultSections').style.display = 'none';
     const results = entries.filter(entry =>
-      entry.title.toLowerCase().includes(q) || entry.content.toLowerCase().includes(q)
+      entry.title.toLowerCase().includes(q) ||
+      entry.content.toLowerCase().includes(q) ||
+      (entry.tags || []).some(tag => tag.toLowerCase().includes(q))
     ).sort((a,b)=> b.updatedAt - a.updatedAt);
     const container = $('searchResults');
     container.innerHTML = '';
@@ -1757,9 +1850,11 @@
     pendingPhotoProcessingCount = 0;
     pendingAudioData = null;
     pendingFiles = [];
+    pendingTags = [];
     filesToDeleteOnSave = [];
     renderPhotoStrip();
     renderFileChips();
+    renderTagPicker();
     $('audioPreviewWrap').style.display = 'none';
     $('addAudioMoreMenu').classList.remove('open');
     $('voiceBtn').classList.remove('active','recording');
@@ -1794,6 +1889,8 @@
     }
     pendingFiles = (entry.files || []).map(f => ({ isNew:false, name:f.name, url:f.url, type:f.type, size:f.size, path:f.path }));
     renderFileChips();
+    pendingTags = [...(entry.tags || [])];
+    renderTagPicker();
     $('addOverlay').classList.add('open');
   }
 
@@ -1874,6 +1971,43 @@
     $('voiceBtn').classList.remove('active');
     updateVoiceBtnTitle();
   });
+
+  function renderTagPicker(){
+    const row = $('tagPickerRow');
+    row.innerHTML = '';
+    allTags.forEach(tag => {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'tag-chip' + (pendingTags.includes(tag) ? ' selected' : '');
+      chip.textContent = tag;
+      chip.addEventListener('click', ()=>{
+        if(pendingTags.includes(tag)){
+          pendingTags = pendingTags.filter(t => t !== tag);
+        } else {
+          pendingTags.push(tag);
+        }
+        renderTagPicker();
+      });
+      row.appendChild(chip);
+    });
+    const addChip = document.createElement('button');
+    addChip.type = 'button';
+    addChip.className = 'tag-chip add-new';
+    addChip.textContent = T().addNewTagChip;
+    addChip.addEventListener('click', ()=>{
+      const name = prompt(T().newTagPrompt);
+      if(!name) return;
+      const trimmed = name.trim();
+      if(!trimmed) return;
+      if(!allTags.includes(trimmed)){
+        allTags.push(trimmed);
+        persistTags();
+      }
+      if(!pendingTags.includes(trimmed)){ pendingTags.push(trimmed); }
+      renderTagPicker();
+    });
+    row.appendChild(addChip);
+  }
 
   function renderFileChips(){
     const wrap = $('filesListPreview');
@@ -2051,6 +2185,7 @@
       }
       entry.audio = pendingAudioData;
       entry.hasAudio = !!pendingAudioData;
+      entry.tags = [...pendingTags];
 
       const isShared = !!entry.sharedId;
 
@@ -2182,6 +2317,9 @@
     const entry = entries.find(e=>e.id === id);
     if(!entry) return;
     currentDetailId = id;
+    entry.lastViewedAt = Date.now();
+    persistIndex();
+    renderRecent();
     await ensureMedia(entry);
 
     if(entry.sharedId){
@@ -2834,6 +2972,86 @@
   $('closeHelpFeedbackBtn').addEventListener('click', ()=> $('helpFeedbackOverlay').classList.remove('open'));
   $('helpFeedbackOverlay').addEventListener('click', (e)=>{ if(e.target.id==='helpFeedbackOverlay') $('helpFeedbackOverlay').classList.remove('open'); });
 
+  // ---------- Manage Tags ----------
+  let pendingDeleteTagName = null;
+
+  function renderTagsManageList(){
+    const list = $('tagsManageList');
+    list.innerHTML = '';
+    $('tagsManageEmpty').style.display = allTags.length === 0 ? 'block' : 'none';
+    allTags.forEach(tag => {
+      const row = document.createElement('div');
+      row.className = 'file-chip-row';
+      row.innerHTML = `
+        <span class="file-chip-name">${escapeHtml(tag)}</span>
+        <button type="button" style="color:var(--danger); font-weight:600; font-size:12.5px; background:none; border:none; cursor:pointer;">${T().deleteAction}</button>
+      `;
+      row.querySelector('button').addEventListener('click', ()=>{
+        pendingDeleteTagName = tag;
+        $('tagDeleteChoiceOverlay').classList.add('open');
+      });
+      list.appendChild(row);
+    });
+  }
+
+  $('openManageTagsBtn').addEventListener('click', ()=>{
+    $('settingsMenu').classList.remove('open');
+    $('newTagInput').value = '';
+    renderTagsManageList();
+    $('manageTagsOverlay').classList.add('open');
+  });
+  $('closeManageTagsBtn').addEventListener('click', ()=> $('manageTagsOverlay').classList.remove('open'));
+  $('manageTagsOverlay').addEventListener('click', (e)=>{ if(e.target.id==='manageTagsOverlay') $('manageTagsOverlay').classList.remove('open'); });
+
+  $('addTagBtn').addEventListener('click', ()=>{
+    const name = $('newTagInput').value.trim();
+    if(!name) return;
+    if(!allTags.includes(name)){
+      allTags.push(name);
+      persistTags();
+    }
+    $('newTagInput').value = '';
+    renderTagsManageList();
+  });
+  $('newTagInput').addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter'){ e.preventDefault(); $('addTagBtn').click(); }
+  });
+
+  $('cancelTagDeleteBtn').addEventListener('click', ()=>{
+    pendingDeleteTagName = null;
+    $('tagDeleteChoiceOverlay').classList.remove('open');
+  });
+  $('tagDeleteChoiceOverlay').addEventListener('click', (e)=>{
+    if(e.target.id==='tagDeleteChoiceOverlay'){ pendingDeleteTagName = null; $('tagDeleteChoiceOverlay').classList.remove('open'); }
+  });
+
+  $('tagDeleteLibraryOnlyBtn').addEventListener('click', ()=>{
+    if(!pendingDeleteTagName) return;
+    allTags = allTags.filter(t => t !== pendingDeleteTagName);
+    persistTags();
+    pendingDeleteTagName = null;
+    $('tagDeleteChoiceOverlay').classList.remove('open');
+    renderTagsManageList();
+    showToast(T().toastTagRemovedLibraryOnly);
+  });
+
+  $('tagDeleteEverywhereBtn').addEventListener('click', ()=>{
+    if(!pendingDeleteTagName) return;
+    const tagName = pendingDeleteTagName;
+    allTags = allTags.filter(t => t !== tagName);
+    persistTags();
+    entries.forEach(e => {
+      if(e.tags && e.tags.includes(tagName)){
+        e.tags = e.tags.filter(t => t !== tagName);
+      }
+    });
+    persistIndex();
+    pendingDeleteTagName = null;
+    $('tagDeleteChoiceOverlay').classList.remove('open');
+    renderTagsManageList();
+    showToast(T().toastTagRemovedEverywhere);
+  });
+
   // ---------- Inbox ----------
   async function listInbox(){
     const fb = window.__firebase;
@@ -3421,6 +3639,7 @@
       recentRandomIds = [];
       recentForgottenIds = [];
       loadEntries();
+      loadTags();
     });
   }
 
