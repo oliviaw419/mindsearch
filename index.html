@@ -476,6 +476,7 @@
           <div class="more-menu" id="moreMenu">
             <button id="shareEntryBtn" data-i18n="shareAction">Share</button>
             <button id="editEntryBtn" data-i18n="editAction">Edit</button>
+            <button id="stopCoEditingBtn" style="display:none;" data-i18n="stopCoEditingAction">Stop co-editing</button>
             <button id="deleteEntryBtn" class="danger" data-i18n="deleteAction">Delete</button>
           </div>
         </div>
@@ -855,6 +856,10 @@
       save: "保存",
       cancel: "取消",
       editAction: "编辑",
+      stopCoEditingAction: "取消共同编辑",
+      confirmStopCoEditing: "取消共同编辑后，双方各自保留现在的内容，变成两条独立的笔记，以后不再同步。确定吗？",
+      toastCoEditingStopped: "已取消共同编辑，这条笔记现在是你自己的独立笔记了",
+      toastCoEditingEnded: "对方结束了共同编辑，这条笔记现在是你自己的独立笔记了",
       deleteAction: "删除",
       infoToggle: "ⓘ 详情",
       created: "创建于",
@@ -1001,6 +1006,10 @@
       save: "儲存",
       cancel: "取消",
       editAction: "編輯",
+      stopCoEditingAction: "取消共同編輯",
+      confirmStopCoEditing: "取消共同編輯後，雙方各自保留現在的內容，變成兩則獨立的筆記，以後不再同步。確定嗎？",
+      toastCoEditingStopped: "已取消共同編輯，這則筆記現在是你自己的獨立筆記了",
+      toastCoEditingEnded: "對方結束了共同編輯，這則筆記現在是你自己的獨立筆記了",
       deleteAction: "刪除",
       infoToggle: "ⓘ 詳情",
       created: "建立於",
@@ -1145,6 +1154,10 @@
       infoToggle: "ⓘ Details",
       fileLabel: "File",
       addFile: "Add PDF",
+      stopCoEditingAction: "Stop co-editing",
+      confirmStopCoEditing: "You'll each keep your current version as a separate, independent note — they'll no longer stay in sync. Continue?",
+      toastCoEditingStopped: "Co-editing stopped — this is now your own independent note",
+      toastCoEditingEnded: "The other person ended co-editing — this is now your own independent note",
       replaceFile: "Replace PDF",
       openFile: "Open",
       toastPdfWrongType: "Only PDF files can be added",
@@ -2168,6 +2181,8 @@
 
     if(entry.sharedId){
       const shared = await fetchSharedEntry(entry.sharedId);
+      let stillShared = !!shared;
+
       if(shared){
         entry.title = shared.title;
         entry.content = shared.content;
@@ -2176,32 +2191,47 @@
         entry.files = shared.files || [];
         entry.imageCount = entry.images.length;
         entry.hasAudio = !!entry.audio;
-        persistIndex();
-      }
-      let otherPartyName = '';
-      if(entry.isSharedOwner){
-        let email = entry.sharedWithEmail || '';
-        if(!email){
+
+        if(entry.isSharedOwner){
           const collaborators = await listSharedCollaborators(entry.sharedId);
-          const first = collaborators[0];
-          if(first && first.email) email = first.email;
-        }
-        if(email){
-          const nickname = await getContactNickname(email);
-          otherPartyName = nickname || email;
-        }
-      } else {
-        const email = entry.sharedBy || (shared && shared.ownerEmail) || '';
-        if(email){
-          const nickname = await getContactNickname(email);
-          otherPartyName = nickname || email;
+          if(collaborators.length === 0){ stillShared = false; }
         }
       }
-      $('sharedNoteBadgeText').textContent = T().sharedCollabBadge(otherPartyName);
-      $('sharedNoteBadge').style.display = 'flex';
-    } else {
-      $('sharedNoteBadge').style.display = 'none';
+
+      if(!stillShared){
+        // The other party ended the collaboration (or the shared doc is gone) — detach into a standalone note, keep current content
+        entry.sharedId = null;
+        entry.isSharedOwner = false;
+        entry.sharedWithEmail = null;
+        persistIndex();
+        showToast(T().toastCoEditingEnded);
+      } else {
+        let otherPartyName = '';
+        if(entry.isSharedOwner){
+          let email = entry.sharedWithEmail || '';
+          if(!email){
+            const collaborators = await listSharedCollaborators(entry.sharedId);
+            const first = collaborators[0];
+            if(first && first.email) email = first.email;
+          }
+          if(email){
+            const nickname = await getContactNickname(email);
+            otherPartyName = nickname || email;
+          }
+        } else {
+          const email = entry.sharedBy || (shared && shared.ownerEmail) || '';
+          if(email){
+            const nickname = await getContactNickname(email);
+            otherPartyName = nickname || email;
+          }
+        }
+        $('sharedNoteBadgeText').textContent = T().sharedCollabBadge(otherPartyName);
+      }
+      persistIndex();
     }
+
+    $('sharedNoteBadge').style.display = entry.sharedId ? 'flex' : 'none';
+    $('stopCoEditingBtn').style.display = entry.sharedId ? 'block' : 'none';
 
     $('detailTitle').textContent = entry.title;
     $('detailContent').textContent = entry.content;
@@ -3038,6 +3068,28 @@
     if(confirm(T().confirmDeleteEntryFull)){
       deleteEntry(currentDetailId);
       $('detailOverlay').classList.remove('open');
+    }
+  });
+
+  $('stopCoEditingBtn').addEventListener('click', async ()=>{
+    $('moreMenu').classList.remove('open');
+    const entry = entries.find(e=>e.id === currentDetailId);
+    if(!entry || !entry.sharedId) return;
+    if(!confirm(T().confirmStopCoEditing)) return;
+    const sharedId = entry.sharedId;
+    const wasOwner = entry.isSharedOwner;
+    entry.sharedId = null;
+    entry.isSharedOwner = false;
+    entry.sharedWithEmail = null;
+    persistIndex();
+    $('sharedNoteBadge').style.display = 'none';
+    $('stopCoEditingBtn').style.display = 'none';
+    showToast(T().toastCoEditingStopped);
+    if(wasOwner){
+      const fb = window.__firebase;
+      try{ await fb.deleteDoc(fb.doc(fb.db, 'sharedEntries', sharedId)); }catch(e){ console.error('delete shared entry failed', e); }
+    } else {
+      await leaveSharedEntry(sharedId);
     }
   });
 
