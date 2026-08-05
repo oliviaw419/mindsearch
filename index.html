@@ -331,7 +331,7 @@
         <div id="settingsMainPanel">
           <button type="button" id="openLanguagePanelBtn" data-i18n="languageMenuEntry">Language</button>
           <button type="button" id="openContactsBtn" data-i18n="manageFriends">Manage Friends</button>
-          <button type="button" id="openHelpFeedbackBtn" style="position:relative;" data-i18n="helpFeedbackMenuLabel">Help &amp; Feedback<span id="feedbackMenuBadge" style="display:none; position:absolute; top:10px; right:14px; width:8px; height:8px; border-radius:50%; background:var(--danger);"></span></button>
+          <button type="button" id="openHelpFeedbackBtn" style="position:relative;"><span data-i18n="helpFeedbackMenuLabel">Help &amp; Feedback</span><span id="feedbackMenuBadge" style="display:none; position:absolute; top:10px; right:14px; width:8px; height:8px; border-radius:50%; background:var(--danger);"></span></button>
         </div>
         <div id="settingsLanguagePanel" style="display:none;">
           <button type="button" id="backToSettingsBtn" data-i18n="backAction">← Back</button>
@@ -586,8 +586,8 @@
     <div id="feedbackConversationPanel" style="display:none;">
       <button class="text-btn" id="backToThreadsBtn" style="display:none; text-align:left; color:var(--plum-deep); font-weight:600;" data-i18n="backAction">← Back</button>
       <div id="feedbackMessagesList" style="display:flex; flex-direction:column; gap:8px; max-height:320px; overflow-y:auto; margin:8px 0 12px; padding-right:2px;"></div>
-      <div style="display:flex; gap:8px;">
-        <input class="field" id="feedbackMessageInput" type="text" data-i18n-placeholder="feedbackPlaceholder" placeholder="Type a message…" style="flex:1;">
+      <div style="display:flex; gap:8px; align-items:flex-end;">
+        <textarea class="field" id="feedbackMessageInput" rows="1" data-i18n-placeholder="feedbackPlaceholder" placeholder="Type a message…" style="flex:1; resize:none; max-height:120px; overflow-y:auto; line-height:1.4;"></textarea>
         <button class="primary-btn" id="feedbackSendBtn" style="margin-top:0; width:auto; padding:0 16px; white-space:nowrap;" data-i18n="sendAction">Send</button>
       </div>
     </div>
@@ -2781,16 +2781,24 @@
     renderFeedbackThreadsList();
   });
 
+  function autoResizeFeedbackInput(){
+    const el = $('feedbackMessageInput');
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+  }
+
   $('feedbackSendBtn').addEventListener('click', async ()=>{
     const text = $('feedbackMessageInput').value.trim();
     if(!text || !currentFeedbackThreadUid) return;
     $('feedbackMessageInput').value = '';
+    autoResizeFeedbackInput();
     await sendFeedbackMessage(currentFeedbackThreadUid, text);
     const messages = await listFeedbackMessages(currentFeedbackThreadUid);
     renderFeedbackMessages(messages);
   });
+  $('feedbackMessageInput').addEventListener('input', autoResizeFeedbackInput);
   $('feedbackMessageInput').addEventListener('keydown', (e)=>{
-    if(e.key === 'Enter'){ e.preventDefault(); $('feedbackSendBtn').click(); }
+    if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); $('feedbackSendBtn').click(); }
   });
 
   $('closeHelpFeedbackBtn').addEventListener('click', ()=> $('helpFeedbackOverlay').classList.remove('open'));
