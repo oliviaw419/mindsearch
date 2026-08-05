@@ -467,6 +467,9 @@
         <p id="sharedNoteBadge" style="display:none; align-items:center; gap:5px; font-size:11.5px; font-weight:600; color:var(--ink-soft); margin:5px 0 0;">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
           <span id="sharedNoteBadgeText"></span>
+          <button type="button" id="stopCoEditingBtn" title="Stop co-editing" style="margin-left:auto; background:none; border:none; color:var(--ink-soft); cursor:pointer; padding:2px; display:flex; align-items:center; flex-shrink:0;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
         </p>
       </div>
       <div class="detail-header-actions">
@@ -476,7 +479,6 @@
           <div class="more-menu" id="moreMenu">
             <button id="shareEntryBtn" data-i18n="shareAction">Share</button>
             <button id="editEntryBtn" data-i18n="editAction">Edit</button>
-            <button id="stopCoEditingBtn" style="display:none;" data-i18n="stopCoEditingAction">Stop co-editing</button>
             <button id="deleteEntryBtn" class="danger" data-i18n="deleteAction">Delete</button>
           </div>
         </div>
@@ -857,9 +859,9 @@
       cancel: "取消",
       editAction: "编辑",
       stopCoEditingAction: "取消共同编辑",
-      confirmStopCoEditing: "取消共同编辑后，双方各自保留现在的内容，变成两条独立的笔记，以后不再同步。确定吗？",
-      toastCoEditingStopped: "已取消共同编辑，这条笔记现在是你自己的独立笔记了",
-      toastCoEditingEnded: "对方结束了共同编辑，这条笔记现在是你自己的独立笔记了",
+      confirmStopCoEditing: "退出后，这条笔记会变成你自己独立的一份，不再跟其他人同步；如果还有别人在共同编辑，他们会继续。确定吗？",
+      toastCoEditingStopped: "已退出共同编辑，这条笔记现在是你自己的独立笔记了",
+      toastCoEditingEnded: "共同编辑已结束，这条笔记现在是你自己的独立笔记了",
       deleteAction: "删除",
       infoToggle: "ⓘ 详情",
       created: "创建于",
@@ -868,6 +870,7 @@
       allowEditLabel: "允许对方也能编辑这条笔记",
       sharedOwnerBadge: "共同编辑中，对方改动会同步给你",
       sharedCollabBadge: (who) => who ? `与 ${who} 共同编辑` : `共同编辑中`,
+      sharedCollabBadgeMore: (n) => ` 等 ${n} 人`,
       close: "关闭",
       starTitle: "常复习",
       decideLaterTitle: "稍后处理",
@@ -1007,9 +1010,9 @@
       cancel: "取消",
       editAction: "編輯",
       stopCoEditingAction: "取消共同編輯",
-      confirmStopCoEditing: "取消共同編輯後，雙方各自保留現在的內容，變成兩則獨立的筆記，以後不再同步。確定嗎？",
-      toastCoEditingStopped: "已取消共同編輯，這則筆記現在是你自己的獨立筆記了",
-      toastCoEditingEnded: "對方結束了共同編輯，這則筆記現在是你自己的獨立筆記了",
+      confirmStopCoEditing: "退出後，這則筆記會變成你自己獨立的一份，不再跟其他人同步；如果還有別人在共同編輯，他們會繼續。確定嗎？",
+      toastCoEditingStopped: "已退出共同編輯，這則筆記現在是你自己的獨立筆記了",
+      toastCoEditingEnded: "共同編輯已結束，這則筆記現在是你自己的獨立筆記了",
       deleteAction: "刪除",
       infoToggle: "ⓘ 詳情",
       created: "建立於",
@@ -1020,6 +1023,7 @@
       allowEditLabel: "允許對方也能編輯這則筆記",
       sharedOwnerBadge: "共同編輯中，對方改動會同步給你",
       sharedCollabBadge: (who) => who ? `與 ${who} 共同編輯` : `共同編輯中`,
+      sharedCollabBadgeMore: (n) => ` 等 ${n} 人`,
       decideLaterTitle: "稍後處理",
       themeBtnTitle: "換主題",
       langBtnTitle: "切換語言",
@@ -1155,9 +1159,9 @@
       fileLabel: "File",
       addFile: "Add PDF",
       stopCoEditingAction: "Stop co-editing",
-      confirmStopCoEditing: "You'll each keep your current version as a separate, independent note — they'll no longer stay in sync. Continue?",
-      toastCoEditingStopped: "Co-editing stopped — this is now your own independent note",
-      toastCoEditingEnded: "The other person ended co-editing — this is now your own independent note",
+      confirmStopCoEditing: "You'll keep your own independent copy and stop syncing with the others — anyone else still co-editing will carry on. Continue?",
+      toastCoEditingStopped: "You've left — this is now your own independent note",
+      toastCoEditingEnded: "Co-editing has ended — this is now your own independent note",
       replaceFile: "Replace PDF",
       openFile: "Open",
       toastPdfWrongType: "Only PDF files can be added",
@@ -1172,6 +1176,7 @@
       allowEditLabel: "Allow them to edit this note too",
       sharedOwnerBadge: "Shared for co-editing — their changes will sync to you",
       sharedCollabBadge: (who) => who ? `Shared with ${who} for co-editing` : `Shared for co-editing`,
+      sharedCollabBadgeMore: (n) => ` and ${n} more`,
       langBtnTitle: "Switch language",
       languageMenuLabelZh: "Language: 中文",
       languageMenuLabelEn: "Language: English",
@@ -2181,7 +2186,6 @@
 
     if(entry.sharedId){
       const shared = await fetchSharedEntry(entry.sharedId);
-      let stillShared = !!shared;
 
       if(shared){
         entry.title = shared.title;
@@ -2191,47 +2195,37 @@
         entry.files = shared.files || [];
         entry.imageCount = entry.images.length;
         entry.hasAudio = !!entry.audio;
-
-        if(entry.isSharedOwner){
-          const collaborators = await listSharedCollaborators(entry.sharedId);
-          if(collaborators.length === 0){ stillShared = false; }
-        }
       }
 
-      if(!stillShared){
-        // The other party ended the collaboration (or the shared doc is gone) — detach into a standalone note, keep current content
+      if(!shared){
+        // The shared note is gone (last participant left) — detach into a standalone note, keep current content
         entry.sharedId = null;
         entry.isSharedOwner = false;
         entry.sharedWithEmail = null;
         persistIndex();
         showToast(T().toastCoEditingEnded);
       } else {
-        let otherPartyName = '';
-        if(entry.isSharedOwner){
-          let email = entry.sharedWithEmail || '';
-          if(!email){
-            const collaborators = await listSharedCollaborators(entry.sharedId);
-            const first = collaborators[0];
-            if(first && first.email) email = first.email;
-          }
-          if(email){
-            const nickname = await getContactNickname(email);
-            otherPartyName = nickname || email;
-          }
-        } else {
-          const email = entry.sharedBy || (shared && shared.ownerEmail) || '';
-          if(email){
-            const nickname = await getContactNickname(email);
-            otherPartyName = nickname || email;
-          }
+        const fb = window.__firebase;
+        const myUid = fb.auth.currentUser.uid;
+        const participants = await listSharedParticipants(entry.sharedId);
+        const others = participants.filter(p => p.uid !== myUid);
+        const names = [];
+        for(const p of others.slice(0, 2)){
+          if(!p.email){ continue; }
+          const nickname = await getContactNickname(p.email);
+          names.push(nickname || p.email);
         }
-        $('sharedNoteBadgeText').textContent = T().sharedCollabBadge(otherPartyName);
+        let namesLabel = names.join('、');
+        if(others.length > names.length){
+          namesLabel += T().sharedCollabBadgeMore(others.length - names.length);
+        }
+        $('sharedNoteBadgeText').textContent = T().sharedCollabBadge(namesLabel);
       }
       persistIndex();
     }
 
     $('sharedNoteBadge').style.display = entry.sharedId ? 'flex' : 'none';
-    $('stopCoEditingBtn').style.display = entry.sharedId ? 'block' : 'none';
+    $('stopCoEditingBtn').style.display = entry.sharedId ? 'flex' : 'none';
 
     $('detailTitle').textContent = entry.title;
     $('detailContent').textContent = entry.content;
@@ -2377,9 +2371,10 @@
     await fb.setDoc(fb.doc(fb.db, 'sharedEntries', sharedId), {
       title: entry.title, content: entry.content,
       images: entry.images || [], audio: entry.audio || null, files: entry.files || [],
-      ownerUid: me.uid, ownerEmail: me.email,
+      createdByEmail: me.email,
       updatedAt: Date.now(), updatedBy: me.email
     });
+    await fb.setDoc(fb.doc(fb.db, 'sharedEntries', sharedId, 'participants', me.uid), { joinedAt: Date.now(), email: me.email || '' });
     return sharedId;
   }
 
@@ -2405,23 +2400,28 @@
   async function joinSharedEntry(sharedId){
     const fb = window.__firebase;
     const me = fb.auth.currentUser;
-    try{ await fb.setDoc(fb.doc(fb.db, 'sharedEntries', sharedId, 'collaborators', me.uid), { joinedAt: Date.now(), email: me.email || '' }); }
+    try{ await fb.setDoc(fb.doc(fb.db, 'sharedEntries', sharedId, 'participants', me.uid), { joinedAt: Date.now(), email: me.email || '' }); }
     catch(e){ console.error('join shared entry failed', e); }
   }
 
-  async function listSharedCollaborators(sharedId){
+  async function listSharedParticipants(sharedId){
     const fb = window.__firebase;
     try{
-      const snap = await fb.getDocs(fb.collection(fb.db, 'sharedEntries', sharedId, 'collaborators'));
+      const snap = await fb.getDocs(fb.collection(fb.db, 'sharedEntries', sharedId, 'participants'));
       return snap.docs.map(d => ({ uid: d.id, ...d.data() }));
-    }catch(e){ console.error('list collaborators failed', e); return []; }
+    }catch(e){ console.error('list participants failed', e); return []; }
   }
 
   async function leaveSharedEntry(sharedId){
     const fb = window.__firebase;
     const uid = fb.auth.currentUser.uid;
-    try{ await fb.deleteDoc(fb.doc(fb.db, 'sharedEntries', sharedId, 'collaborators', uid)); }
-    catch(e){ /* best effort */ }
+    try{
+      await fb.deleteDoc(fb.doc(fb.db, 'sharedEntries', sharedId, 'participants', uid));
+      const remaining = await listSharedParticipants(sharedId);
+      if(remaining.length === 0){
+        try{ await fb.deleteDoc(fb.doc(fb.db, 'sharedEntries', sharedId)); }catch(e){}
+      }
+    }catch(e){ /* best effort */ }
   }
 
   async function shareEntryToEmail(entry, email, allowEdit){
@@ -3077,7 +3077,6 @@
     if(!entry || !entry.sharedId) return;
     if(!confirm(T().confirmStopCoEditing)) return;
     const sharedId = entry.sharedId;
-    const wasOwner = entry.isSharedOwner;
     entry.sharedId = null;
     entry.isSharedOwner = false;
     entry.sharedWithEmail = null;
@@ -3085,12 +3084,7 @@
     $('sharedNoteBadge').style.display = 'none';
     $('stopCoEditingBtn').style.display = 'none';
     showToast(T().toastCoEditingStopped);
-    if(wasOwner){
-      const fb = window.__firebase;
-      try{ await fb.deleteDoc(fb.doc(fb.db, 'sharedEntries', sharedId)); }catch(e){ console.error('delete shared entry failed', e); }
-    } else {
-      await leaveSharedEntry(sharedId);
-    }
+    await leaveSharedEntry(sharedId);
   });
 
   $('detailDeleteAudioBtn').addEventListener('click', ()=>{
@@ -3122,8 +3116,8 @@
     persistIndex();
     storageAdapter.delete(mediaKey(id), false).catch(()=>{});
     if(entry && entry.sharedId){
-      // Collaborative note: just leave it, don't touch the shared content — the other party still needs it
-      if(!entry.isSharedOwner){ leaveSharedEntry(entry.sharedId); }
+      // Collaborative note: just leave it — cleans itself up once the last participant leaves
+      leaveSharedEntry(entry.sharedId);
       return;
     }
     if(entry && entry.files){
