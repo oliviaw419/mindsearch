@@ -574,7 +574,7 @@
 
     <div id="contactsEditPanel" style="display:none;">
       <label class="field-label" data-i18n="emailLabel">Email</label>
-      <input class="field" id="editContactEmail" type="email" disabled style="opacity:0.6;">
+      <input class="field" id="editContactEmail" type="email">
       <label class="field-label" data-i18n="nicknameOptional">Nickname (optional)</label>
       <input class="field" id="editContactNickname" type="text">
       <button class="primary-btn" id="saveContactEditBtn" style="margin-top:14px;" data-i18n="save">Save</button>
@@ -2759,6 +2759,7 @@
       `;
       row.querySelector('.edit-contact-btn').addEventListener('click', ()=>{
         $('editContactEmail').value = c.email;
+        $('editContactEmail').dataset.originalEmail = c.email;
         $('editContactNickname').value = c.nickname || '';
         showContactsPanel('edit');
       });
@@ -2789,8 +2790,13 @@
   $('goToAddPanelBtn').addEventListener('click', ()=> showContactsPanel('add'));
 
   $('saveContactEditBtn').addEventListener('click', async ()=>{
-    const email = $('editContactEmail').value;
+    const email = $('editContactEmail').value.trim();
+    const originalEmail = $('editContactEmail').dataset.originalEmail || email;
     const nickname = $('editContactNickname').value.trim();
+    if(!email){ showToast(T().authErrorMissingEmail); return; }
+    if(email !== originalEmail){
+      await deleteContact(originalEmail);
+    }
     await setContactNickname(email, nickname);
     showToast(T().contactAdded);
     showContactsPanel('manage');
