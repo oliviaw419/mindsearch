@@ -301,7 +301,7 @@
   .detail-photos{ display:grid; grid-template-columns: repeat(2, 1fr); gap:8px; margin-top:16px; }
   .detail-photos img{ width:100%; aspect-ratio:1; border-radius:var(--radius-sm); object-fit:cover; cursor:pointer; }
   .lightbox-overlay{
-    position:fixed; inset:0; background:rgba(20,18,15,0.88); z-index:300;
+    position:fixed; inset:0; background:rgba(20,18,15,0.88); z-index:650;
     display:none; align-items:center; justify-content:center; padding:24px; cursor:zoom-out;
   }
   .lightbox-overlay.open{ display:flex; }
@@ -320,8 +320,14 @@
 
   ::-webkit-scrollbar{ display:none; }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/mp4box@0.5.2/dist/mp4box.all.min.js"></script>
+<script type="module">
+  import * as Mp4MuxerModule from "https://cdn.jsdelivr.net/npm/mp4-muxer@5.2.2/+esm";
+  window.Mp4Muxer = Mp4MuxerModule;
+</script>
 </head>
 <body data-theme="diagonal">
+<div id="videoProcessingSandbox" style="position:fixed; left:-9999px; top:-9999px; width:1px; height:1px; overflow:hidden;"></div>
 <div id="app">
 
   <header>
@@ -442,9 +448,21 @@
       </div>
     </div>
 
+    <div id="videoPreviewWrap" style="display:none; margin-top:8px;">
+      <video id="videoPreview" controls style="width:100%; border-radius:14px; display:block; background:#000;"></video>
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-top:6px;">
+        <span id="videoPreviewMeta" style="font-size:11.5px; color:var(--ink-soft);"></span>
+        <button type="button" id="removeVideoBtn" style="color:var(--danger); font-weight:600; font-size:12.5px; background:none; border:none; cursor:pointer;">✕</button>
+      </div>
+    </div>
+    <p id="videoProcessingStatus" style="display:none; font-size:11.5px; font-weight:600; color:var(--plum-deep); margin:8px 2px 0;"></p>
+
     <div class="attach-toolbar">
       <button type="button" class="toolbar-icon-btn" id="photoToolbarBtn" title="Add Photo">
         <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="15" rx="2.5"/><circle cx="8.5" cy="10.5" r="1.7"/><path d="M21 16.5l-5-5-9 9"/></svg>
+      </button>
+      <button type="button" class="toolbar-icon-btn" id="videoToolbarBtn" title="Add Video">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="14" height="12" rx="2.3"/><path d="M16.5 10.5l5-3v9l-5-3z"/></svg>
       </button>
       <button type="button" class="toolbar-icon-btn" id="fileToolbarBtn" title="Add File">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 12.5l-8.4 8.4a5 5 0 01-7.1-7.1l9-9a3.5 3.5 0 015 5l-9 9a2 2 0 01-2.8-2.8l8-8"/></svg>
@@ -457,6 +475,7 @@
     <p id="recordingStatusLine" style="display:none; font-size:11.5px; font-weight:600; color:var(--danger); margin:6px 2px 0;" data-i18n="recording"></p>
     <input type="file" id="photoInput" accept="image/*" multiple style="display:none;">
     <input type="file" id="fileInput" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.rtf,.txt" multiple style="display:none;">
+    <input type="file" id="videoInput" accept="video/*" style="display:none;">
 
     <div id="uploadProgressWrap" style="display:none; margin-top:14px; height:6px; border-radius:999px; background:var(--line); overflow:hidden;">
       <div id="uploadProgressFill" style="width:0%; height:100%; background:var(--plum); border-radius:999px; transition:width .15s ease;"></div>
@@ -494,6 +513,9 @@
       </div>
     </div>
     <div class="detail-content" id="detailContent"></div>
+    <div id="detailVideoWrap" style="display:none; margin-top:12px;">
+      <video id="detailVideo" controls style="width:100%; border-radius:14px; display:block; background:#000;"></video>
+    </div>
     <div class="audio-row" id="detailAudioRow" style="display:none;">
       <audio class="preview-audio" id="detailAudio" controls controlslist="nodownload noplaybackrate"></audio>
       <div style="position:relative;">
@@ -659,10 +681,14 @@
       </div>
     </div>
     <div class="detail-content" id="inboxItemContent"></div>
+    <div id="inboxItemVideoWrap" style="display:none; margin-top:12px;">
+      <video id="inboxItemVideo" controls style="width:100%; border-radius:14px; display:block; background:#000;"></video>
+    </div>
     <div class="audio-row" id="inboxItemAudioRow" style="display:none;">
       <audio class="preview-audio" id="inboxItemAudio" controls></audio>
     </div>
     <div class="detail-photos" id="inboxItemPhotos" style="display:none;"></div>
+    <div id="inboxItemFilesList" style="display:flex; flex-direction:column; gap:8px; margin-top:12px;"></div>
     <div class="detail-actions" style="display:flex; gap:10px; margin-top:20px;">
       <button class="primary-btn" id="inboxItemSaveBtn" style="margin-top:0; flex:1;" data-i18n="saveToLibrary">Save to my library</button>
       <button class="text-btn" id="inboxItemDiscardBtn" style="margin-top:0; flex:1;" data-i18n="discardAction">Discard</button>
@@ -678,7 +704,11 @@
       <div class="detail-title" id="sharedTitle"></div>
     </div>
     <div class="detail-content" id="sharedContent"></div>
+    <div id="sharedVideoWrap" style="display:none; margin-top:12px;">
+      <video id="sharedVideo" controls style="width:100%; border-radius:14px; display:block; background:#000;"></video>
+    </div>
     <div class="detail-photos" id="sharedPhotos" style="display:none;"></div>
+    <div id="sharedFilesList" style="display:flex; flex-direction:column; gap:8px; margin-top:12px;"></div>
     <audio class="preview-audio" id="sharedAudio" controls style="display:none; margin-top:12px;"></audio>
 
     <div style="margin-top:24px; padding:16px; background:var(--header-tint); border-radius:16px; text-align:center;">
@@ -787,6 +817,11 @@
   let pendingAudioData = null;
   let pendingFiles = []; // each: {isNew:true, file:File, name} or {isNew:false, name,url,type,size,path}
   let pendingTags = [];
+  let pendingVideo = null; // {isNew:true, file:Blob, duration, previewUrl} or {isNew:false, url, path, duration, size}
+  const VIDEO_MAX_DURATION_SEC = 300; // 5 minutes
+  const VIDEO_MAX_INPUT_BYTES = 500 * 1024 * 1024; // sanity cap on the original file before compression
+  const VIDEO_TARGET_LONG_EDGE = 1280; // 720p
+  const VIDEO_BITRATE = 1500000; // ~1.5Mbps video, targets ~65-70MB combined with audio over 5 min
   let filesToDeleteOnSave = []; // storage paths to clean up after a successful save
   const MAX_FILES = 10;
   const MAX_PHOTOS = 10;
@@ -881,6 +916,12 @@
       toastFileWrongType: "支持 PDF、Word、Excel、PPT、RTF、TXT 格式",
       toastFileTooLarge: "文件不能超过 10MB",
       toastFileUploadFail: "文件上传失败，请重试",
+      toastVideoNotSupported: "你的浏览器不支持视频压缩，换个新一点的浏览器试试",
+      confirmReplaceVideo: "替换掉现在这个视频？",
+      toastVideoTooLarge: "视频文件太大了，换个小一点的试试",
+      confirmVideoTruncate: (mins) => `这段视频有 ${mins} 分钟，只会截取前 5 分钟，要继续吗？`,
+      videoProcessing: (cur, total) => `压缩中… ${cur} / ${total}`,
+      toastVideoCompressFail: "视频压缩失败，请重试或换一段视频",
       uploadingFiles: "上传中…",
       voiceLabel: "语音",
       addVoice: "添加语音",
@@ -1048,6 +1089,12 @@
       toastFileTooLarge: "檔案不能超過 10MB",
       toastFileUploadFail: "檔案上傳失敗，請重試",
       uploadingFiles: "上傳中…",
+      toastVideoNotSupported: "你的瀏覽器不支援影片壓縮，換個新一點的瀏覽器試試",
+      confirmReplaceVideo: "取代掉現在這個影片？",
+      toastVideoTooLarge: "影片檔案太大了，換個小一點的試試",
+      confirmVideoTruncate: (mins) => `這段影片有 ${mins} 分鐘，只會截取前 5 分鐘，要繼續嗎？`,
+      videoProcessing: (cur, total) => `壓縮中… ${cur} / ${total}`,
+      toastVideoCompressFail: "影片壓縮失敗，請重試或換一段影片",
       voiceLabel: "語音",
       addVoice: "新增語音",
       replaceVoice: "取代語音",
@@ -1215,6 +1262,12 @@
       toastFileUploadFail: "File upload failed, please try again",
       uploadingFiles: "Uploading…",
       voiceLabel: "Voice",
+      toastVideoNotSupported: "Your browser doesn't support video compression — try a newer browser",
+      confirmReplaceVideo: "Replace the current video?",
+      toastVideoTooLarge: "That video file is too large — try a smaller one",
+      confirmVideoTruncate: (mins) => `This video is ${mins} minutes long — only the first 5 minutes will be used. Continue?`,
+      videoProcessing: (cur, total) => `Compressing… ${cur} / ${total}`,
+      toastVideoCompressFail: "Video compression failed — please try again or use a different video",
       addVoice: "Add Voice",
       replaceVoice: "Replace Voice",
       recording: "Recording… tap to stop & save",
@@ -1382,6 +1435,7 @@
       forgetCount: e.forgetCount||0, pinned: !!e.pinned,
       images, imageCount: images.length, hasAudio: !!e.hasAudio,
       files: e.files || [],
+      video: e.video || null,
       tags: e.tags || [],
       isSample: !!e.isSample,
       sharedBy: e.sharedBy || null, sharedAt: e.sharedAt || null,
@@ -1587,6 +1641,7 @@
       const row = document.createElement('div');
       row.className = 'entry-row';
       const photoBadge = entry.imageCount ? `<span class="badge">📷${entry.imageCount>1 ? '×'+entry.imageCount : ''}</span>` : '';
+      const videoBadge = entry.video ? '<span class="badge">🎥</span>' : '';
       const audioBadge = entry.hasAudio ? '<span class="badge">🎤</span>' : '';
       const pdfBadge = (entry.files && entry.files.length) ? '<span class="badge">📎</span>' : '';
       const sharedBadge = entry.sharedId ? '<span class="badge">👥</span>' : '';
@@ -1595,7 +1650,7 @@
         <div class="entry-card" data-id="${entry.id}">
           <div class="etitle">${escapeHtml(entry.title)}</div>
           <div class="esnippet">${escapeHtml(snippet(entry))}</div>
-          <div class="ebadges">${photoBadge}${audioBadge}${pdfBadge}${sharedBadge}</div>
+          <div class="ebadges">${photoBadge}${videoBadge}${audioBadge}${pdfBadge}${sharedBadge}</div>
         </div>`;
       list.appendChild(row);
       attachSwipe(row, entry.id);
@@ -1863,10 +1918,14 @@
     pendingAudioData = null;
     pendingFiles = [];
     pendingTags = [];
+    if(pendingVideo && pendingVideo.isNew && pendingVideo.previewUrl){ URL.revokeObjectURL(pendingVideo.previewUrl); }
+    pendingVideo = null;
     filesToDeleteOnSave = [];
     renderPhotoStrip();
     renderFileChips();
     renderTagPicker();
+    renderVideoPreview();
+    $('videoProcessingStatus').style.display = 'none';
     $('audioPreviewWrap').style.display = 'none';
     $('addAudioMoreMenu').classList.remove('open');
     $('voiceBtn').classList.remove('active','recording');
@@ -1903,43 +1962,316 @@
     renderFileChips();
     pendingTags = [...(entry.tags || [])];
     renderTagPicker();
+    if(entry.video){
+      pendingVideo = { isNew:false, url: entry.video.url, path: entry.video.path, duration: entry.video.duration, size: entry.video.size };
+      renderVideoPreview();
+    }
     $('addOverlay').classList.add('open');
   }
 
   $('fabAdd').addEventListener('click', openAddSheet);
   $('cancelAddBtn').addEventListener('click', ()=> $('addOverlay').classList.remove('open'));
 
-  function compressImage(file, maxDim, quality){
+  function compressVideoMediaRecorderFallback(file, onProgress){
     return new Promise((resolve, reject) => {
-      if(!file.type || !file.type.startsWith('image/')){ resolve(file); return; }
-      const objectUrl = URL.createObjectURL(file);
-      const img = new Image();
-      img.onload = () => {
-        let { width, height } = img;
-        if(width > maxDim || height > maxDim){
-          if(width > height){
-            height = Math.round(height * (maxDim / width));
-            width = maxDim;
-          } else {
-            width = Math.round(width * (maxDim / height));
-            height = maxDim;
-          }
-        }
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, width, height);
-        canvas.toBlob(blob => {
-          URL.revokeObjectURL(objectUrl);
-          if(!blob){ resolve(file); return; }
-          const newName = file.name.replace(/\.[^.]+$/, '') + '.jpg';
-          resolve(new File([blob], newName, { type:'image/jpeg' }));
-        }, 'image/jpeg', quality);
+      const sandbox = $('videoProcessingSandbox');
+      const sourceVideo = document.createElement('video');
+      sourceVideo.muted = false;
+      sourceVideo.playsInline = true;
+      sourceVideo.src = URL.createObjectURL(file);
+      sandbox.appendChild(sourceVideo);
+
+      let finished = false;
+      const cleanup = () => {
+        URL.revokeObjectURL(sourceVideo.src);
+        if(sourceVideo.parentNode){ sourceVideo.parentNode.removeChild(sourceVideo); }
       };
-      img.onerror = () => { URL.revokeObjectURL(objectUrl); resolve(file); };
-      img.src = objectUrl;
+      const fail = (err) => {
+        if(finished) return;
+        finished = true;
+        cleanup();
+        reject(err);
+      };
+
+      sourceVideo.onerror = () => fail(new Error('video load failed'));
+
+      sourceVideo.onloadedmetadata = () => {
+        const duration = Math.min(sourceVideo.duration || 0, VIDEO_MAX_DURATION_SEC);
+        const srcW = sourceVideo.videoWidth, srcH = sourceVideo.videoHeight;
+        if(!srcW || !srcH){ fail(new Error('no video dimensions')); return; }
+        let targetW, targetH;
+        if(srcW >= srcH){
+          targetW = Math.min(VIDEO_TARGET_LONG_EDGE, srcW);
+          targetH = Math.round(targetW * srcH / srcW);
+        } else {
+          targetH = Math.min(VIDEO_TARGET_LONG_EDGE, srcH);
+          targetW = Math.round(targetH * srcW / srcH);
+        }
+        targetW -= targetW % 2;
+        targetH -= targetH % 2;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = targetW;
+        canvas.height = targetH;
+        const ctx = canvas.getContext('2d');
+
+        sourceVideo.play().then(() => {
+          const canvasStream = canvas.captureStream(30);
+          let audioTracks = [];
+          try{
+            const capture = sourceVideo.captureStream ? sourceVideo.captureStream() : (sourceVideo.mozCaptureStream ? sourceVideo.mozCaptureStream() : null);
+            if(capture){ audioTracks = capture.getAudioTracks(); }
+          }catch(e){ /* proceed video-only if audio capture isn't available */ }
+          const combinedStream = new MediaStream([...canvasStream.getVideoTracks(), ...audioTracks]);
+
+          let mimeType = 'video/webm;codecs=vp9,opus';
+          if(!window.MediaRecorder || !MediaRecorder.isTypeSupported(mimeType)){ mimeType = 'video/webm;codecs=vp8,opus'; }
+          if(!MediaRecorder.isTypeSupported(mimeType)){ mimeType = 'video/webm'; }
+          if(!window.MediaRecorder || !MediaRecorder.isTypeSupported(mimeType)){ fail(new Error('MediaRecorder not supported')); return; }
+
+          const chunks = [];
+          let recorder;
+          try{
+            recorder = new MediaRecorder(combinedStream, { mimeType, videoBitsPerSecond: VIDEO_BITRATE });
+          }catch(e){ fail(e); return; }
+
+          recorder.ondataavailable = (e) => { if(e.data && e.data.size > 0) chunks.push(e.data); };
+          recorder.onerror = (e) => fail(e.error || new Error('recording failed'));
+          recorder.onstop = () => {
+            if(finished) return;
+            finished = true;
+            sourceVideo.pause();
+            cleanup();
+            const blob = new Blob(chunks, { type: mimeType.split(';')[0] });
+            resolve({ blob, duration });
+          };
+
+          recorder.start();
+
+          const drawFrame = () => {
+            if(finished) return;
+            if(sourceVideo.paused || sourceVideo.ended){ return; }
+            ctx.drawImage(sourceVideo, 0, 0, targetW, targetH);
+            if(onProgress) onProgress(sourceVideo.currentTime, duration);
+            if(sourceVideo.currentTime >= duration){
+              if(recorder.state !== 'inactive'){ recorder.stop(); }
+              return;
+            }
+            requestAnimationFrame(drawFrame);
+          };
+          requestAnimationFrame(drawFrame);
+
+          sourceVideo.onended = () => {
+            if(recorder.state !== 'inactive'){ recorder.stop(); }
+          };
+        }).catch(err => fail(err));
+      };
     });
+  }
+
+  function getMp4BoxCodecDescription(mp4boxFile, trackId){
+    const track = mp4boxFile.getTrackById(trackId);
+    for(const entry of track.mdia.minf.stbl.stsd.entries){
+      const box = entry.avcC || entry.hvcC || entry.vpcC || entry.av1C;
+      if(box){
+        const stream = new MP4Box.DataStream(undefined, 0, MP4Box.DataStream.BIG_ENDIAN);
+        box.write(stream);
+        return new Uint8Array(stream.buffer, 8); // strip the box header, keep just the codec description
+      }
+    }
+    return undefined;
+  }
+
+  function compressVideoWebCodecs(file, onProgress){
+    return new Promise((resolve, reject) => {
+      if(!window.VideoEncoder || !window.VideoDecoder || !window.MP4Box || !window.Mp4Muxer){
+        reject(new Error('WebCodecs pipeline not available'));
+        return;
+      }
+
+      const mp4boxFile = MP4Box.createFile();
+      let videoTrackInfo = null, audioTrackInfo = null;
+      let muxer = null, videoEncoder = null, audioEncoder = null;
+      let targetW, targetH, durationSec;
+      let canvas, ctx;
+      let videoChunkCount = 0, audioChunkCount = 0;
+      let settled = false;
+
+      const finish = (err, result) => {
+        if(settled) return;
+        settled = true;
+        if(err){ reject(err); } else { resolve(result); }
+      };
+
+      mp4boxFile.onError = (e) => finish(new Error('mp4box error: ' + e));
+
+      mp4boxFile.onReady = (info) => {
+        const vTrack = info.videoTracks[0];
+        if(!vTrack){ finish(new Error('no video track found')); return; }
+        videoTrackInfo = vTrack;
+        const aTrack = info.audioTracks[0] || null;
+        audioTrackInfo = aTrack;
+
+        durationSec = Math.min(vTrack.duration / vTrack.timescale, VIDEO_MAX_DURATION_SEC);
+        const srcW = vTrack.video.width, srcH = vTrack.video.height;
+        if(srcW >= srcH){
+          targetW = Math.min(VIDEO_TARGET_LONG_EDGE, srcW);
+          targetH = Math.round(targetW * srcH / srcW);
+        } else {
+          targetH = Math.min(VIDEO_TARGET_LONG_EDGE, srcH);
+          targetW = Math.round(targetH * srcW / srcH);
+        }
+        targetW -= targetW % 2;
+        targetH -= targetH % 2;
+
+        canvas = document.createElement('canvas');
+        canvas.width = targetW;
+        canvas.height = targetH;
+        ctx = canvas.getContext('2d');
+
+        muxer = new Mp4Muxer.Muxer({
+          target: new Mp4Muxer.ArrayBufferTarget(),
+          video: { codec: 'avc', width: targetW, height: targetH },
+          audio: aTrack ? { codec: 'aac', numberOfChannels: aTrack.audio.channel_count, sampleRate: aTrack.audio.sample_rate } : undefined,
+          fastStart: 'in-memory'
+        });
+
+        videoEncoder = new VideoEncoder({
+          output: (chunk, meta) => { muxer.addVideoChunk(chunk, meta); videoChunkCount++; },
+          error: (e) => finish(e)
+        });
+        videoEncoder.configure({
+          codec: 'avc1.42001f',
+          width: targetW, height: targetH,
+          bitrate: VIDEO_BITRATE,
+          framerate: 30
+        });
+
+        let videoDecoder = new VideoDecoder({
+          output: (frame) => {
+            const t = frame.timestamp / 1e6;
+            if(t > durationSec){ frame.close(); return; }
+            ctx.drawImage(frame, 0, 0, targetW, targetH);
+            frame.close();
+            const resized = new VideoFrame(canvas, { timestamp: frame.timestamp });
+            videoEncoder.encode(resized);
+            resized.close();
+            if(onProgress) onProgress(t, durationSec);
+          },
+          error: (e) => finish(e)
+        });
+        const vDescription = getMp4BoxCodecDescription(mp4boxFile, vTrack.id);
+        videoDecoder.configure({
+          codec: vTrack.codec,
+          codedWidth: srcW, codedHeight: srcH,
+          description: vDescription
+        });
+
+        let audioDecoder = null;
+        if(aTrack){
+          audioEncoder = new AudioEncoder({
+            output: (chunk, meta) => { muxer.addAudioChunk(chunk, meta); audioChunkCount++; },
+            error: (e) => finish(e)
+          });
+          audioEncoder.configure({
+            codec: 'mp4a.40.2',
+            numberOfChannels: aTrack.audio.channel_count,
+            sampleRate: aTrack.audio.sample_rate,
+            bitrate: 96000
+          });
+          audioDecoder = new AudioDecoder({
+            output: (audioData) => {
+              const t = audioData.timestamp / 1e6;
+              if(t > durationSec){ audioData.close(); return; }
+              audioEncoder.encode(audioData);
+              audioData.close();
+            },
+            error: (e) => finish(e)
+          });
+          const aDescription = getMp4BoxCodecDescription(mp4boxFile, aTrack.id);
+          audioDecoder.configure({
+            codec: aTrack.codec,
+            numberOfChannels: aTrack.audio.channel_count,
+            sampleRate: aTrack.audio.sample_rate,
+            description: aDescription
+          });
+        }
+
+        mp4boxFile.setExtractionOptions(vTrack.id, 'video', { nbSamples: 1000 });
+        if(aTrack){ mp4boxFile.setExtractionOptions(aTrack.id, 'audio', { nbSamples: 1000 }); }
+
+        mp4boxFile.onSamples = async (id, user, samples) => {
+          if(user === 'video'){
+            for(const sample of samples){
+              if((sample.cts / sample.timescale) > durationSec){ continue; }
+              videoDecoder.decode(new EncodedVideoChunk({
+                type: sample.is_sync ? 'key' : 'delta',
+                timestamp: sample.cts * 1e6 / sample.timescale,
+                duration: sample.duration * 1e6 / sample.timescale,
+                data: sample.data
+              }));
+            }
+          } else if(user === 'audio'){
+            for(const sample of samples){
+              if((sample.cts / sample.timescale) > durationSec){ continue; }
+              audioDecoder.decode(new EncodedAudioChunk({
+                type: 'key',
+                timestamp: sample.cts * 1e6 / sample.timescale,
+                duration: sample.duration * 1e6 / sample.timescale,
+                data: sample.data
+              }));
+            }
+          }
+        };
+
+        mp4boxFile.start();
+      };
+
+      const file_ = file;
+      const reader = new FileReader();
+      let allSamplesFedFlag = { done: false };
+      reader.onload = async () => {
+        try{
+          const buffer = reader.result;
+          buffer.fileStart = 0;
+          mp4boxFile.appendBuffer(buffer);
+          mp4boxFile.flush();
+          if(!videoTrackInfo){ finish(new Error('no usable video track')); return; }
+          // appendBuffer+flush deliver all samples synchronously via onSamples for a fully-buffered file,
+          // so by this point every sample has already been handed to the decoders.
+          allSamplesFedFlag.done = true;
+        }catch(e){ finish(e); }
+      };
+      reader.onerror = () => finish(new Error('file read failed'));
+      reader.readAsArrayBuffer(file_);
+
+      // Poll for decode/encode completion now that all samples have been fed to the decoders
+      const checkDone = setInterval(async () => {
+        if(settled){ clearInterval(checkDone); return; }
+        if(!videoTrackInfo || !videoEncoder || !allSamplesFedFlag.done) return;
+        const videoIdle = videoEncoder.encodeQueueSize === 0;
+        const audioIdle = !audioEncoder || audioEncoder.encodeQueueSize === 0;
+        if(videoIdle && audioIdle){
+          clearInterval(checkDone);
+          try{
+            await videoEncoder.flush();
+            if(audioEncoder){ await audioEncoder.flush(); }
+            muxer.finalize();
+            const blob = new Blob([muxer.target.buffer], { type: 'video/mp4' });
+            finish(null, { blob, duration: durationSec });
+          }catch(e){ finish(e); }
+        }
+      }, 300);
+    });
+  }
+
+  async function compressVideo(file, onProgress){
+    try{
+      return await compressVideoWebCodecs(file, onProgress);
+    }catch(e){
+      console.error('WebCodecs compression failed, falling back to MediaRecorder', e);
+      return await compressVideoMediaRecorderFallback(file, onProgress);
+    }
   }
 
   $('photoToolbarBtn').addEventListener('click', ()=>{
@@ -2072,6 +2404,90 @@
     e.target.value = '';
   });
 
+  function formatDuration(sec){
+    const m = Math.floor(sec / 60);
+    const s = Math.floor(sec % 60);
+    return m + ':' + String(s).padStart(2,'0');
+  }
+
+  function renderVideoPreview(){
+    if(!pendingVideo){
+      $('videoPreviewWrap').style.display = 'none';
+      return;
+    }
+    const src = pendingVideo.isNew ? pendingVideo.previewUrl : pendingVideo.url;
+    $('videoPreview').src = src;
+    $('videoPreviewMeta').textContent = formatDuration(pendingVideo.duration || 0);
+    $('videoPreviewWrap').style.display = 'block';
+  }
+
+  $('videoToolbarBtn').addEventListener('click', ()=>{
+    if(!isSignedIn){
+      showToast(T().toastFileNeedsAccount);
+      showAuthOverlay();
+      return;
+    }
+    if(!window.MediaRecorder){
+      showToast(T().toastVideoNotSupported);
+      return;
+    }
+    if(pendingVideo){
+      if(!confirm(T().confirmReplaceVideo)) return;
+    }
+    $('videoInput').click();
+  });
+
+  $('videoInput').addEventListener('change', async (e)=>{
+    const file = e.target.files[0];
+    e.target.value = '';
+    if(!file) return;
+    if(file.size > VIDEO_MAX_INPUT_BYTES){
+      showToast(T().toastVideoTooLarge);
+      return;
+    }
+
+    // Peek duration first so we can warn about truncation before committing to compression
+    const probe = document.createElement('video');
+    probe.preload = 'metadata';
+    probe.src = URL.createObjectURL(file);
+    probe.onloadedmetadata = async () => {
+      const durationSec = probe.duration || 0;
+      URL.revokeObjectURL(probe.src);
+      if(durationSec > VIDEO_MAX_DURATION_SEC){
+        const mins = (durationSec / 60).toFixed(1);
+        if(!confirm(T().confirmVideoTruncate(mins))) return;
+      }
+
+      if(pendingVideo && pendingVideo.isNew && pendingVideo.previewUrl){ URL.revokeObjectURL(pendingVideo.previewUrl); }
+      $('videoProcessingStatus').style.display = 'block';
+      $('videoProcessingStatus').textContent = T().videoProcessing(0, Math.min(durationSec, VIDEO_MAX_DURATION_SEC));
+      $('videoToolbarBtn').style.pointerEvents = 'none';
+
+      try{
+        const { blob, duration } = await compressVideo(file, (current, total) => {
+          $('videoProcessingStatus').textContent = T().videoProcessing(formatDuration(current), formatDuration(total));
+        });
+        const compressedFile = new File([blob], 'video.webm', { type: blob.type || 'video/webm' });
+        pendingVideo = { isNew:true, file: compressedFile, duration, previewUrl: URL.createObjectURL(compressedFile) };
+        renderVideoPreview();
+      }catch(err){
+        console.error('video compression failed', err);
+        showToast(T().toastVideoCompressFail);
+      } finally {
+        $('videoProcessingStatus').style.display = 'none';
+        $('videoToolbarBtn').style.pointerEvents = '';
+      }
+    };
+    probe.onerror = () => showToast(T().toastVideoCompressFail);
+  });
+
+  $('removeVideoBtn').addEventListener('click', ()=>{
+    if(pendingVideo && pendingVideo.isNew && pendingVideo.previewUrl){ URL.revokeObjectURL(pendingVideo.previewUrl); }
+    if(pendingVideo && !pendingVideo.isNew && pendingVideo.path){ filesToDeleteOnSave.push(pendingVideo.path); }
+    pendingVideo = null;
+    renderVideoPreview();
+  });
+
   function pickSupportedAudioMime(){
     const candidates = [
       'audio/mp4',
@@ -2201,10 +2617,10 @@
 
       const isShared = !!entry.sharedId;
 
-      // Upload any newly-selected photos/files to Storage in parallel, tracking real byte-level progress
+      // Upload any newly-selected photos/files/video to Storage in parallel, tracking real byte-level progress
       const newPhotoItems = pendingPhotos.filter(p => p.isNew);
       const newFileItems = pendingFiles.filter(f => f.isNew);
-      const totalNewUploads = newPhotoItems.length + newFileItems.length;
+      const totalNewUploads = newPhotoItems.length + newFileItems.length + (pendingVideo && pendingVideo.isNew ? 1 : 0);
       const progressState = new Map(); // key -> { transferred, total }
 
       function updateProgressBar(){
@@ -2262,13 +2678,33 @@
       }));
       const resolvedFiles = fileResults.filter(Boolean);
       entry.files = resolvedFiles;
+
+      if(pendingVideo){
+        if(pendingVideo.isNew){
+          try{
+            const onProgress = trackProgress('video');
+            const meta = isShared
+              ? await uploadFileToSharedStorage(entry.sharedId, pendingVideo.file, onProgress)
+              : await uploadFileToStorage(entry.id, pendingVideo.file, onProgress);
+            entry.video = { url: meta.url, path: meta.path, duration: pendingVideo.duration, size: pendingVideo.file.size };
+          }catch(e){
+            console.error('video upload failed', e);
+            showToast(T().toastFileUploadFail);
+          }
+        } else {
+          entry.video = { url: pendingVideo.url, path: pendingVideo.path, duration: pendingVideo.duration, size: pendingVideo.size };
+        }
+      } else {
+        entry.video = null;
+      }
+
       $('saveEntryBtn').textContent = T().save;
       $('uploadProgressWrap').style.display = 'none';
 
       if(isShared){
         updateSharedEntry(entry.sharedId, {
           title: entry.title, content: entry.content,
-          images: entry.images, audio: entry.audio, files: entry.files
+          images: entry.images, audio: entry.audio, files: entry.files, video: entry.video
         });
       }
 
@@ -2343,6 +2779,7 @@
         entry.images = shared.images || [];
         entry.audio = shared.audio || null;
         entry.files = shared.files || [];
+        entry.video = shared.video || null;
         entry.imageCount = entry.images.length;
         entry.hasAudio = !!entry.audio;
       }
@@ -2379,6 +2816,13 @@
 
     $('detailTitle').textContent = entry.title;
     $('detailContent').textContent = entry.content;
+
+    if(entry.video){
+      $('detailVideo').src = entry.video.url;
+      $('detailVideoWrap').style.display = 'block';
+    } else {
+      $('detailVideoWrap').style.display = 'none';
+    }
 
     if(entry.images && entry.images.length){
       $('detailPhotos').innerHTML = entry.images.map(img => `<img src="${img.url}">`).join('');
@@ -2524,7 +2968,7 @@
     const sharedId = cryptoId();
     await fb.setDoc(fb.doc(fb.db, 'sharedEntries', sharedId), {
       title: entry.title, content: entry.content,
-      images: entry.images || [], audio: entry.audio || null, files: entry.files || [],
+      images: entry.images || [], audio: entry.audio || null, files: entry.files || [], video: entry.video || null,
       createdByEmail: me.email,
       updatedAt: Date.now(), updatedBy: me.email
     });
@@ -2611,6 +3055,7 @@
         images: entry.images || [],
         audio: entry.audio || null,
         files: entry.files || [],
+        video: entry.video || null,
         editable: !!allowEdit,
         sharedId: allowEdit ? sharedId : null,
         createdAt: Date.now()
@@ -2636,6 +3081,7 @@
         images: entry.images || [],
         audio: entry.audio || null,
         files: entry.files || [],
+        video: entry.video || null,
         createdAt: Date.now()
       });
       $('shareLinkInput').value = location.origin + location.pathname + '?share=' + shareId;
@@ -3132,6 +3578,12 @@
     $('inboxItemFrom').textContent = nickname || item.fromEmail || '';
     $('inboxItemTitle').textContent = item.title || '';
     $('inboxItemContent').textContent = item.content || '';
+    if(item.video){
+      $('inboxItemVideo').src = item.video.url;
+      $('inboxItemVideoWrap').style.display = 'block';
+    } else {
+      $('inboxItemVideoWrap').style.display = 'none';
+    }
     if(item.audio){
       $('inboxItemAudio').src = item.audio;
       $('inboxItemAudioRow').style.display = 'flex';
@@ -3141,9 +3593,27 @@
     if(item.images && item.images.length){
       $('inboxItemPhotos').innerHTML = item.images.map(img => `<img src="${img.url}">`).join('');
       $('inboxItemPhotos').style.display = 'grid';
+      $('inboxItemPhotos').querySelectorAll('img').forEach(img => {
+        img.addEventListener('click', () => {
+          $('lightboxImg').src = img.src;
+          $('lightboxOverlay').classList.add('open');
+        });
+      });
     } else {
       $('inboxItemPhotos').style.display = 'none';
     }
+    const inboxFilesList = $('inboxItemFilesList');
+    inboxFilesList.innerHTML = '';
+    (item.files || []).forEach(f => {
+      const row = document.createElement('div');
+      row.className = 'file-chip-row';
+      row.innerHTML = `
+        <span>📎</span>
+        <span class="file-chip-name">${escapeHtml(f.name)}</span>
+        <a href="${f.url}" target="_blank" rel="noopener" style="color:var(--plum-deep); font-weight:600; text-decoration:none; font-size:12.5px; flex-shrink:0;">${T().openFile}</a>
+      `;
+      inboxFilesList.appendChild(row);
+    });
     $('inboxItemOverlay').classList.add('open');
   }
 
@@ -3262,6 +3732,12 @@
       const data = snap.data();
       $('sharedTitle').textContent = data.title || '';
       $('sharedContent').textContent = data.content || '';
+      if(data.video){
+        $('sharedVideo').src = data.video.url;
+        $('sharedVideoWrap').style.display = 'block';
+      } else {
+        $('sharedVideoWrap').style.display = 'none';
+      }
       if(data.images && data.images.length){
         $('sharedPhotos').innerHTML = data.images.map(img => `<img src="${img.url}">`).join('');
         $('sharedPhotos').style.display = 'grid';
@@ -3272,6 +3748,18 @@
           });
         });
       }
+      const sharedFilesList = $('sharedFilesList');
+      sharedFilesList.innerHTML = '';
+      (data.files || []).forEach(f => {
+        const row = document.createElement('div');
+        row.className = 'file-chip-row';
+        row.innerHTML = `
+          <span>📎</span>
+          <span class="file-chip-name">${escapeHtml(f.name)}</span>
+          <a href="${f.url}" target="_blank" rel="noopener" style="color:var(--plum-deep); font-weight:600; text-decoration:none; font-size:12.5px; flex-shrink:0;">${T().openFile}</a>
+        `;
+        sharedFilesList.appendChild(row);
+      });
       if(data.audio){
         $('sharedAudio').src = data.audio;
         $('sharedAudio').style.display = '';
@@ -3365,6 +3853,9 @@
     }
     if(entry && entry.images){
       entry.images.forEach(img => deleteFileFromStorage(img.path));
+    }
+    if(entry && entry.video && entry.video.path){
+      deleteFileFromStorage(entry.video.path);
     }
   }
 
