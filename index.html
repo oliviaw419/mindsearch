@@ -350,6 +350,7 @@
           <button type="button" id="openLanguagePanelBtn" data-i18n="languageMenuEntry">Language</button>
           <button type="button" id="openContactsBtn" data-i18n="manageFriends">Manage Friends</button>
           <button type="button" id="openManageTagsBtn" data-i18n="manageTagsMenuLabel">Manage Tags</button>
+          <button type="button" id="openManageRemindersBtn" data-i18n="manageRemindersMenuLabel">Manage Reminders</button>
           <button type="button" id="openHelpFeedbackBtn" style="position:relative;"><span data-i18n="helpFeedbackMenuLabel">Help &amp; Feedback</span><span id="feedbackMenuBadge" style="display:none; position:absolute; top:10px; right:14px; width:8px; height:8px; border-radius:50%; background:var(--danger);"></span></button>
         </div>
         <div id="settingsLanguagePanel" style="display:none;">
@@ -440,15 +441,12 @@
 
     <div id="tagPickerRow" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:12px;"></div>
 
-    <div id="reminderPreviewWrap" style="display:none; margin-top:10px;">
-      <div class="file-chip-row">
-        <span>⏰</span>
-        <span class="file-chip-name" id="reminderPreviewLabel"></span>
-        <button type="button" id="removeReminderBtn" style="color:var(--danger); font-weight:600; font-size:12.5px; background:none; border:none; cursor:pointer;">✕</button>
-      </div>
+    <div id="addReminderRow" style="display:flex; align-items:center; gap:8px; margin-top:10px;">
+      <span style="font-size:14px;">⏰</span>
+      <span style="font-size:12.5px; color:var(--plum-deep); font-weight:600;" data-i18n="reminderLabelShort">Reminder date</span>
+      <input type="date" id="reminderDateInput" style="border:1px solid var(--line); border-radius:8px; padding:4px 8px; font-size:12.5px; background:var(--paper-raised); color:var(--ink); font-family:inherit;">
+      <button type="button" id="removeReminderBtn" style="display:none; color:var(--danger); font-weight:600; font-size:12.5px; background:none; border:none; cursor:pointer;">✕</button>
     </div>
-    <button type="button" class="text-btn" id="addReminderBtn" style="margin:8px 0 0; padding:0; text-align:left; color:var(--plum-deep); font-weight:600; font-size:12.5px;" data-i18n="addReminderAction">+ Set reminder date</button>
-    <input type="date" id="reminderDateInput" style="display:none;">
 
     <label class="field-label" data-i18n="attachmentsLabel">Attachments</label>
     <div class="photo-strip" id="photoStrip"></div>
@@ -560,6 +558,14 @@
         <span>📍</span>
         <span class="file-chip-name" id="detailLocationLabel"></span>
       </button>
+    </div>
+    <div id="detailReminderWrap" style="display:none; margin-top:12px;">
+      <div class="file-chip-row">
+        <span>⏰</span>
+        <span class="file-chip-name" id="detailReminderLabel"></span>
+        <input type="date" id="detailReminderDateInput" style="border:1px solid var(--line); border-radius:8px; padding:3px 6px; font-size:11.5px; background:var(--paper-raised); color:var(--ink); font-family:inherit; flex-shrink:0;">
+        <button type="button" id="detailRemoveReminderBtn" style="color:var(--danger); font-weight:600; font-size:12.5px; background:none; border:none; cursor:pointer; flex-shrink:0;">✕</button>
+      </div>
     </div>
 
     <button class="info-toggle" id="infoToggle" data-i18n="infoToggle">ⓘ Details</button>
@@ -765,6 +771,12 @@
     </div>
     <div class="detail-photos" id="sharedPhotos" style="display:none;"></div>
     <div id="sharedFilesList" style="display:flex; flex-direction:column; gap:8px; margin-top:12px;"></div>
+    <div id="sharedLocationWrap" style="display:none; margin-top:12px;">
+      <button type="button" class="file-chip-row" id="sharedLocationBtn" style="width:100%; cursor:pointer; border:1px solid var(--line); text-align:left;">
+        <span>📍</span>
+        <span class="file-chip-name" id="sharedLocationLabel"></span>
+      </button>
+    </div>
     <audio class="preview-audio" id="sharedAudio" controls style="display:none; margin-top:12px;"></audio>
 
     <div style="margin-top:24px; padding:16px; background:var(--header-tint); border-radius:16px; text-align:center;">
@@ -807,22 +819,23 @@
 
 <div class="toast" id="toast"></div>
 
-<div id="pendingSharesBanner" style="display:none; position:fixed; bottom:100px; left:50%; transform:translateX(-50%); background:var(--ink); color:#fff; padding:12px 14px 12px 18px; border-radius:999px; z-index:250; align-items:center; gap:12px; max-width:88%; box-shadow:0 8px 24px -8px rgba(0,0,0,0.35);">
-  <span id="pendingSharesBannerText" style="font-size:13px;"></span>
-  <button id="pendingSharesBannerBtn" style="background:#fff; color:var(--ink); border:none; border-radius:999px; padding:6px 14px; font-size:12.5px; font-weight:600; cursor:pointer;"></button>
-  <button id="pendingSharesBannerClose" style="background:none; border:none; color:rgba(255,255,255,0.7); font-size:14px; cursor:pointer; padding:0 2px;">✕</button>
+<div id="pendingSharesBanner" style="display:none; position:fixed; bottom:96px; left:16px; right:16px; margin:0 auto; max-width:420px; background:var(--ink); color:#fff; padding:14px 16px; border-radius:16px; z-index:250; align-items:center; gap:12px; box-shadow:0 10px 30px -10px rgba(0,0,0,0.4);">
+  <span id="pendingSharesBannerText" style="font-size:13px; flex:1; min-width:0; line-height:1.4;"></span>
+  <button id="pendingSharesBannerBtn" style="background:#fff; color:var(--ink); border:none; border-radius:10px; padding:7px 14px; font-size:12.5px; font-weight:600; cursor:pointer; flex-shrink:0; white-space:nowrap;"></button>
+  <button id="pendingSharesBannerClose" style="background:none; border:none; color:rgba(255,255,255,0.7); font-size:15px; cursor:pointer; padding:0 2px; flex-shrink:0;">✕</button>
 </div>
 
-<div id="remindersDueBanner" style="display:none; position:fixed; bottom:100px; left:50%; transform:translateX(-50%); background:var(--plum-deep); color:#fff; padding:12px 14px 12px 18px; border-radius:999px; z-index:250; align-items:center; gap:12px; max-width:88%; box-shadow:0 8px 24px -8px rgba(0,0,0,0.35);">
-  <span id="remindersDueBannerText" style="font-size:13px;"></span>
-  <button id="remindersDueBannerBtn" style="background:#fff; color:var(--plum-deep); border:none; border-radius:999px; padding:6px 14px; font-size:12.5px; font-weight:600; cursor:pointer;"></button>
-  <button id="remindersDueBannerClose" style="background:none; border:none; color:rgba(255,255,255,0.7); font-size:14px; cursor:pointer; padding:0 2px;">✕</button>
+<div id="remindersDueBanner" style="display:none; position:fixed; bottom:96px; left:16px; right:16px; margin:0 auto; max-width:420px; background:var(--amber-deep); color:#fff; padding:14px 16px; border-radius:16px; z-index:250; align-items:center; gap:12px; box-shadow:0 10px 30px -10px rgba(0,0,0,0.4);">
+  <span id="remindersDueBannerText" style="font-size:13px; flex:1; min-width:0; line-height:1.4;"></span>
+  <button id="remindersDueBannerBtn" style="background:#fff; color:var(--amber-deep); border:none; border-radius:10px; padding:7px 14px; font-size:12.5px; font-weight:600; cursor:pointer; flex-shrink:0; white-space:nowrap;"></button>
+  <button id="remindersDueBannerClose" style="background:none; border:none; color:rgba(255,255,255,0.7); font-size:15px; cursor:pointer; padding:0 2px; flex-shrink:0;">✕</button>
 </div>
 
 <div class="sheet-overlay" id="remindersListOverlay" style="z-index:450;">
   <div class="sheet" style="max-width:420px;">
-    <h2 data-i18n="remindersDueTitle">Reminders due</h2>
+    <h2 data-i18n="manageRemindersTitle">Manage Reminders</h2>
     <div id="remindersList" style="display:flex; flex-direction:column; gap:8px;"></div>
+    <div id="remindersListEmpty" class="empty-note" style="display:none;" data-i18n="noRemindersYet">No reminders set.</div>
     <button class="text-btn" id="closeRemindersListBtn" data-i18n="close">Close</button>
   </div>
 </div>
@@ -1023,9 +1036,18 @@
       lastEdited: "最后编辑",
       tagsLabel: "标签：",
       addReminderAction: "+ 设置提醒日期",
+      reminderLabelShort: "提醒日期",
       reminderLabel: "提醒日期：",
       remindersDueBannerText: (n) => `你有 ${n} 条笔记快到提醒日子了`,
       remindersDueTitle: "提醒日期到了",
+      manageRemindersTitle: "管理提醒",
+      manageRemindersMenuLabel: "管理提醒",
+      noRemindersYet: "还没有设置提醒",
+      reminderDueNow: "已到期",
+      keepNextYearAction: "明年这天继续提醒",
+      discardReminderAction: "不再提醒",
+      toastReminderKept: "好的，明年这天会再提醒你",
+      toastReminderDiscarded: "已取消这条提醒",
       goToReminders: "去看看",
       sharedByLabel: "分享自：",
       allowEditLabel: "允许对方也能编辑这条笔记",
@@ -1214,10 +1236,19 @@
       tagsLabel: "標籤：",
       close: "關閉",
       addReminderAction: "+ 設定提醒日期",
+      reminderLabelShort: "提醒日期",
       reminderLabel: "提醒日期：",
       remindersDueBannerText: (n) => `你有 ${n} 則筆記快到提醒日子了`,
       remindersDueTitle: "提醒日期到了",
       goToReminders: "去看看",
+      manageRemindersTitle: "管理提醒",
+      manageRemindersMenuLabel: "管理提醒",
+      noRemindersYet: "還沒有設定提醒",
+      reminderDueNow: "已到期",
+      keepNextYearAction: "明年這天繼續提醒",
+      discardReminderAction: "不再提醒",
+      toastReminderKept: "好的，明年這天會再提醒你",
+      toastReminderDiscarded: "已取消這條提醒",
       starTitle: "常復習",
       allowEditLabel: "允許對方也能編輯這則筆記",
       sharedOwnerBadge: "共同編輯中，對方改動會同步給你",
@@ -1405,11 +1436,20 @@
       starTitle: "Review often",
       decideLaterTitle: "Decide later",
       addReminderAction: "+ Set reminder date",
+      reminderLabelShort: "Reminder date",
       reminderLabel: "Reminder date:",
       remindersDueBannerText: (n) => `You have ${n} notes with reminders due`,
       remindersDueTitle: "Reminders due",
       goToReminders: "Take a look",
       themeBtnTitle: "Switch theme",
+      manageRemindersTitle: "Manage Reminders",
+      manageRemindersMenuLabel: "Manage Reminders",
+      noRemindersYet: "No reminders set.",
+      reminderDueNow: "Due now",
+      keepNextYearAction: "Remind me again next year",
+      discardReminderAction: "Don't remind me",
+      toastReminderKept: "Got it, we'll remind you again next year",
+      toastReminderDiscarded: "Reminder removed",
       allowEditLabel: "Allow them to edit this note too",
       sharedOwnerBadge: "Shared for co-editing — their changes will sync to you",
       sharedCollabBadge: (who) => who ? `Shared with ${who} for co-editing` : `Shared for co-editing`,
@@ -1717,25 +1757,63 @@
     $('remindersDueBanner').style.display = 'flex';
   }
 
+  function getAllReminderEntries(){
+    return entries.filter(e => e.reminderDate).sort((a,b) => a.reminderDate.localeCompare(b.reminderDate));
+  }
+
+  function advanceReminderOneYear(dateStr){
+    const [y, m, d] = dateStr.split('-').map(Number);
+    return (y+1) + '-' + String(m).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+  }
+
   function renderRemindersList(){
-    const due = getDueReminders();
+    const all = getAllReminderEntries();
+    const today = todayDateStr();
     const list = $('remindersList');
     list.innerHTML = '';
-    due.forEach(entry => {
+    $('remindersListEmpty').style.display = all.length === 0 ? 'block' : 'none';
+
+    all.forEach(entry => {
+      const isDue = entry.reminderDate <= today;
       const row = document.createElement('div');
       row.className = 'file-chip-row';
-      row.style.cursor = 'pointer';
+      row.style.cssText += 'flex-direction:column; align-items:stretch; gap:6px;';
       row.innerHTML = `
-        <span>⏰</span>
-        <div style="flex:1; min-width:0;">
-          <div class="file-chip-name">${escapeHtml(entry.title)}</div>
-          <div style="font-size:11px; color:var(--ink-soft);">${formatReminderDate(entry.reminderDate)}</div>
+        <div style="display:flex; align-items:center; gap:10px; cursor:pointer;">
+          <span>⏰</span>
+          <div style="flex:1; min-width:0;">
+            <div class="file-chip-name">${escapeHtml(entry.title)}</div>
+            <div style="font-size:11px; color:${isDue ? 'var(--danger)' : 'var(--ink-soft)'}; font-weight:${isDue ? '600' : '400'};">${formatReminderDate(entry.reminderDate)}${isDue ? ' · ' + T().reminderDueNow : ''}</div>
+          </div>
         </div>
+        ${isDue ? `
+        <div style="display:flex; gap:8px;">
+          <button type="button" class="reminder-keep-btn" style="flex:1; font-size:11.5px; font-weight:600; padding:6px; border-radius:8px; border:1px solid var(--line); background:var(--paper-raised); color:var(--ink); cursor:pointer;">${T().keepNextYearAction}</button>
+          <button type="button" class="reminder-discard-btn" style="flex:1; font-size:11.5px; font-weight:600; padding:6px; border-radius:8px; border:1px solid var(--line); background:var(--paper-raised); color:var(--danger); cursor:pointer;">${T().discardReminderAction}</button>
+        </div>` : ''}
       `;
-      row.addEventListener('click', ()=>{
+      row.querySelector('div').addEventListener('click', ()=>{
         $('remindersListOverlay').classList.remove('open');
         openDetail(entry.id);
       });
+      if(isDue){
+        row.querySelector('.reminder-keep-btn').addEventListener('click', (e)=>{
+          e.stopPropagation();
+          entry.reminderDate = advanceReminderOneYear(entry.reminderDate);
+          persistIndex();
+          renderRemindersList();
+          checkRemindersDue();
+          showToast(T().toastReminderKept);
+        });
+        row.querySelector('.reminder-discard-btn').addEventListener('click', (e)=>{
+          e.stopPropagation();
+          entry.reminderDate = null;
+          persistIndex();
+          renderRemindersList();
+          checkRemindersDue();
+          showToast(T().toastReminderDiscarded);
+        });
+      }
       list.appendChild(row);
     });
   }
@@ -1746,6 +1824,11 @@
     $('remindersListOverlay').classList.add('open');
   });
   $('remindersDueBannerClose').addEventListener('click', ()=> $('remindersDueBanner').style.display = 'none');
+  $('openManageRemindersBtn').addEventListener('click', ()=>{
+    $('settingsMenu').classList.remove('open');
+    renderRemindersList();
+    $('remindersListOverlay').classList.add('open');
+  });
   $('closeRemindersListBtn').addEventListener('click', ()=> $('remindersListOverlay').classList.remove('open'));
   $('remindersListOverlay').addEventListener('click', (e)=>{ if(e.target.id==='remindersListOverlay') $('remindersListOverlay').classList.remove('open'); });
 
@@ -2221,8 +2304,10 @@
 
           let mimeType = 'video/webm;codecs=vp9,opus';
           if(!window.MediaRecorder || !MediaRecorder.isTypeSupported(mimeType)){ mimeType = 'video/webm;codecs=vp8,opus'; }
-          if(!MediaRecorder.isTypeSupported(mimeType)){ mimeType = 'video/webm'; }
-          if(!window.MediaRecorder || !MediaRecorder.isTypeSupported(mimeType)){ fail(new Error('MediaRecorder not supported')); return; }
+          if(!window.MediaRecorder || !MediaRecorder.isTypeSupported(mimeType)){ mimeType = 'video/webm'; }
+          if(!window.MediaRecorder || !MediaRecorder.isTypeSupported(mimeType)){ mimeType = 'video/mp4;codecs=avc1,mp4a'; }
+          if(!window.MediaRecorder || !MediaRecorder.isTypeSupported(mimeType)){ mimeType = 'video/mp4'; }
+          if(!window.MediaRecorder || !MediaRecorder.isTypeSupported(mimeType)){ fail(new Error('MediaRecorder: no supported mimeType (tried webm vp9/vp8/generic and mp4)')); return; }
 
           const chunks = [];
           let recorder;
@@ -2469,6 +2554,47 @@
     }
   }
 
+  function compressImage(file, maxDim, quality){
+    return new Promise((resolve) => {
+      if(!file.type || !file.type.startsWith('image/')){ resolve(file); return; }
+      let settled = false;
+      const finish = (result) => { if(settled) return; settled = true; resolve(result); };
+      // Safety net: if the browser's canvas/toBlob pipeline ever silently stalls
+      // (seen on some memory-constrained mobile browsers), fall back to the
+      // original file after a few seconds instead of hanging forever.
+      const safetyTimer = setTimeout(() => finish(file), 8000);
+
+      const objectUrl = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        let { width, height } = img;
+        if(width > maxDim || height > maxDim){
+          if(width > height){
+            height = Math.round(height * (maxDim / width));
+            width = maxDim;
+          } else {
+            width = Math.round(width * (maxDim / height));
+            height = maxDim;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(blob => {
+          URL.revokeObjectURL(objectUrl);
+          clearTimeout(safetyTimer);
+          if(!blob){ finish(file); return; }
+          const newName = file.name.replace(/\.[^.]+$/, '') + '.jpg';
+          finish(new File([blob], newName, { type:'image/jpeg' }));
+        }, 'image/jpeg', quality);
+      };
+      img.onerror = () => { URL.revokeObjectURL(objectUrl); clearTimeout(safetyTimer); finish(file); };
+      img.src = objectUrl;
+    });
+  }
+
   $('photoToolbarBtn').addEventListener('click', ()=>{
     if(!isSignedIn){
       showToast(T().toastFileNeedsAccount);
@@ -2495,8 +2621,13 @@
         renderPhotoStrip();
         continue;
       }
-      const compressed = await compressImage(file, PHOTO_MAX_DIMENSION, PHOTO_JPEG_QUALITY);
-      pendingPhotos.push({ isNew:true, file: compressed, previewUrl: URL.createObjectURL(compressed) });
+      try{
+        const compressed = await compressImage(file, PHOTO_MAX_DIMENSION, PHOTO_JPEG_QUALITY);
+        pendingPhotos.push({ isNew:true, file: compressed, previewUrl: URL.createObjectURL(compressed) });
+      }catch(err){
+        console.error('photo compression failed', err);
+        showToast(T().toastVideoCompressFail);
+      }
       pendingPhotoProcessingCount--;
       renderPhotoStrip();
     }
@@ -2662,7 +2793,9 @@
         const { blob, duration } = await compressVideo(file, (current, total) => {
           $('videoProcessingStatus').textContent = T().videoProcessing(formatDuration(current), formatDuration(total));
         });
-        const compressedFile = new File([blob], 'video.webm', { type: blob.type || 'video/webm' });
+        const outType = blob.type || 'video/webm';
+        const ext = outType.includes('mp4') ? 'mp4' : 'webm';
+        const compressedFile = new File([blob], 'video.' + ext, { type: outType });
         pendingVideo = { isNew:true, file: compressedFile, duration, previewUrl: URL.createObjectURL(compressedFile) };
         renderVideoPreview();
       }catch(err){
@@ -2770,20 +2903,10 @@
   }
 
   function renderReminderPreview(){
-    if(!pendingReminderDate){
-      $('reminderPreviewWrap').style.display = 'none';
-      $('addReminderBtn').style.display = 'block';
-      return;
-    }
-    $('reminderPreviewLabel').textContent = formatReminderDate(pendingReminderDate);
-    $('reminderPreviewWrap').style.display = 'block';
-    $('addReminderBtn').style.display = 'none';
+    $('reminderDateInput').value = pendingReminderDate || '';
+    $('removeReminderBtn').style.display = pendingReminderDate ? 'inline' : 'none';
   }
 
-  $('addReminderBtn').addEventListener('click', ()=>{
-    const input = $('reminderDateInput');
-    if(input.showPicker){ input.showPicker(); } else { input.click(); }
-  });
   $('reminderDateInput').addEventListener('change', (e)=>{
     if(e.target.value){
       pendingReminderDate = e.target.value;
@@ -2847,6 +2970,26 @@
   $('detailLocationBtn').addEventListener('click', ()=>{
     if(currentDetailLocation) openMapsChooser(currentDetailLocation);
   });
+
+  $('detailReminderDateInput').addEventListener('change', (e)=>{
+    const entry = entries.find(en => en.id === currentDetailId);
+    if(!entry || !e.target.value) return;
+    entry.reminderDate = e.target.value;
+    persistIndex();
+    $('detailReminderLabel').textContent = formatReminderDate(entry.reminderDate);
+    checkRemindersDue();
+    showToast(T().toastSaved);
+  });
+  $('detailRemoveReminderBtn').addEventListener('click', ()=>{
+    const entry = entries.find(en => en.id === currentDetailId);
+    if(!entry) return;
+    entry.reminderDate = null;
+    persistIndex();
+    $('detailReminderWrap').style.display = 'none';
+    checkRemindersDue();
+    showToast(T().toastReminderDiscarded);
+  });
+
   $('closeMapsChooserBtn').addEventListener('click', ()=> $('openMapsChooserOverlay').classList.remove('open'));
   $('openMapsChooserOverlay').addEventListener('click', (e)=>{ if(e.target.id==='openMapsChooserOverlay') $('openMapsChooserOverlay').classList.remove('open'); });
   $('openGoogleMapsBtn').addEventListener('click', ()=>{
@@ -3248,11 +3391,14 @@
     if(entry.tags && entry.tags.length){
       tagsLine = `<br><br>${T().tagsLabel} ${escapeHtml(entry.tags.join('、'))}`;
     }
-    let reminderLine = '';
     if(entry.reminderDate){
-      reminderLine = `<br><br>${T().reminderLabel} ${formatReminderDate(entry.reminderDate)}`;
+      $('detailReminderLabel').textContent = formatReminderDate(entry.reminderDate);
+      $('detailReminderDateInput').value = entry.reminderDate;
+      $('detailReminderWrap').style.display = 'block';
+    } else {
+      $('detailReminderWrap').style.display = 'none';
     }
-    $('infoBox').innerHTML = `${T().created}:<br>${formatDate(entry.createdAt)}<br><br>${T().lastEdited}:<br>${formatDate(entry.updatedAt)}${tagsLine}${reminderLine}${sharedLine}`;
+    $('infoBox').innerHTML = `${T().created}:<br>${formatDate(entry.createdAt)}<br><br>${T().lastEdited}:<br>${formatDate(entry.updatedAt)}${tagsLine}${sharedLine}`;
     $('detailOverlay').classList.add('open');
   }
 
@@ -3450,6 +3596,7 @@
         audio: entry.audio || null,
         files: entry.files || [],
         video: entry.video || null,
+        location: entry.location || null,
         editable: !!allowEdit,
         sharedId: allowEdit ? sharedId : null,
         createdAt: Date.now()
@@ -3476,6 +3623,7 @@
         audio: entry.audio || null,
         files: entry.files || [],
         video: entry.video || null,
+        location: entry.location || null,
         createdAt: Date.now()
       });
       $('shareLinkInput').value = location.origin + location.pathname + '?share=' + shareId;
@@ -4154,6 +4302,13 @@
         `;
         sharedFilesList.appendChild(row);
       });
+      if(data.location){
+        $('sharedLocationLabel').textContent = data.location.label || (data.location.lat.toFixed(5) + ', ' + data.location.lng.toFixed(5));
+        $('sharedLocationWrap').style.display = 'block';
+        $('sharedLocationBtn').onclick = () => openMapsChooser(data.location);
+      } else {
+        $('sharedLocationWrap').style.display = 'none';
+      }
       if(data.audio){
         $('sharedAudio').src = data.audio;
         $('sharedAudio').style.display = '';
