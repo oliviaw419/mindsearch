@@ -190,7 +190,7 @@
   .entry-card .etitle{ font-family:'Newsreader', serif; font-size:16px; font-weight:400; color:var(--ink); }
   .entry-card .esnippet{ font-size:13px; color:var(--ink-soft); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .entry-card .ebadges{ margin-top:4px; display:flex; gap:6px; }
-  .badge{ font-size:11px; color:var(--plum-deep); background:var(--plum-tint); padding:2px 7px; border-radius:999px; }
+  .badge{ font-size:11px; color:var(--plum-deep); background:var(--plum-tint); padding:3px 8px; border-radius:999px; display:inline-flex; align-items:center; gap:2px; }
 
   .fab{
     position:fixed; bottom:28px; left:50%; transform:translateX(calc(-50% + 190px));
@@ -439,7 +439,22 @@
     <label class="field-label" data-i18n="contentLabel">Content</label>
     <textarea class="field" id="inputContent" placeholder="Write down what you want to remember…"></textarea>
 
-    <label class="field-label" data-i18n="attachmentsLabel">Attachments</label>
+    <div id="tagPickerRow" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:12px;"></div>
+
+    <button type="button" class="text-btn" id="addReminderBtn" style="margin:12px 0 0; padding:0; text-align:left; color:var(--plum-deep); font-weight:600; font-size:12.5px; display:block;" data-i18n="addReminderAction">+ Set reminder date</button>
+    <div id="reminderChipWrap" style="display:none; margin-top:10px;">
+      <div class="file-chip-row">
+        <span>⏰</span>
+        <span class="file-chip-name" id="reminderChipLabel"></span>
+        <button type="button" id="editReminderBtn" style="color:var(--plum-deep); font-weight:600; font-size:12.5px; background:none; border:none; cursor:pointer; flex-shrink:0;">✏️</button>
+        <button type="button" id="removeReminderBtn" style="color:var(--danger); font-weight:600; font-size:12.5px; background:none; border:none; cursor:pointer; flex-shrink:0;">✕</button>
+      </div>
+    </div>
+    <div id="reminderInputRow" style="display:none; margin-top:10px;">
+      <input type="date" id="reminderDateInput" style="width:100%; box-sizing:border-box; border:1px solid var(--line); border-radius:10px; padding:9px 12px; font-size:13px; background:var(--paper-raised); color:var(--ink); font-family:inherit;">
+    </div>
+
+    <label class="field-label" data-i18n="attachmentsLabel" style="margin-top:14px;">Attachments</label>
     <div id="videoPreviewWrap" style="display:none; margin-top:8px;">
       <video id="videoPreview" controls style="width:100%; border-radius:14px; display:block; background:#000;"></video>
       <div style="display:flex; align-items:center; justify-content:space-between; margin-top:6px;">
@@ -481,12 +496,12 @@
       <button type="button" class="toolbar-icon-btn" id="fileToolbarBtn" title="Add File">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 12.5l-8.4 8.4a5 5 0 01-7.1-7.1l9-9a3.5 3.5 0 015 5l-9 9a2 2 0 01-2.8-2.8l8-8"/></svg>
       </button>
-      <button type="button" class="toolbar-icon-btn" id="locationToolbarBtn" title="Add Location">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0119 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.3"/></svg>
-      </button>
       <button type="button" class="toolbar-icon-btn" id="voiceBtn" title="Add Voice">
         <span class="mic-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v4"/></svg></span>
         <span class="stop-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="3"/></svg></span>
+      </button>
+      <button type="button" class="toolbar-icon-btn" id="locationToolbarBtn" title="Add Location">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0119 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.3"/></svg>
       </button>
     </div>
     <p id="recordingStatusLine" style="display:none; font-size:11.5px; font-weight:600; color:var(--danger); margin:6px 2px 0;" data-i18n="recording"></p>
@@ -497,19 +512,6 @@
     <div id="uploadProgressWrap" style="display:none; margin-top:14px; height:6px; border-radius:999px; background:var(--line); overflow:hidden;">
       <div id="uploadProgressFill" style="width:0%; height:100%; background:var(--plum); border-radius:999px; transition:width .15s ease;"></div>
     </div>
-
-    <button type="button" class="text-btn" id="addReminderBtn" style="margin:14px 0 0; padding:0; text-align:left; color:var(--plum-deep); font-weight:600; font-size:12.5px; display:block;" data-i18n="addReminderAction">+ Set reminder date</button>
-    <div id="reminderChipWrap" style="display:none; margin-top:10px;">
-      <div class="file-chip-row">
-        <span>⏰</span>
-        <span class="file-chip-name" id="reminderChipLabel"></span>
-        <button type="button" id="editReminderBtn" style="color:var(--plum-deep); font-weight:600; font-size:12.5px; background:none; border:none; cursor:pointer; flex-shrink:0;">✏️</button>
-        <button type="button" id="removeReminderBtn" style="color:var(--danger); font-weight:600; font-size:12.5px; background:none; border:none; cursor:pointer; flex-shrink:0;">✕</button>
-      </div>
-    </div>
-    <input type="date" id="reminderDateInput" style="display:none;">
-
-    <div id="tagPickerRow" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:14px;"></div>
 
     <button class="primary-btn" id="saveEntryBtn" data-i18n="save">Save</button>
     <button class="text-btn" id="cancelAddBtn" data-i18n="cancel">Cancel</button>
@@ -558,12 +560,6 @@
     </div>
     <div class="detail-photos" id="detailPhotos" style="display:none;"></div>
     <div id="detailFilesList" style="display:flex; flex-direction:column; gap:8px; margin-top:12px;"></div>
-    <div id="detailLocationWrap" style="display:none; margin-top:12px;">
-      <button type="button" class="file-chip-row" id="detailLocationBtn" style="width:100%; cursor:pointer; border:1px solid var(--line); text-align:left;">
-        <span>📍</span>
-        <span class="file-chip-name" id="detailLocationLabel"></span>
-      </button>
-    </div>
     <div id="detailReminderWrap" style="display:none; margin-top:12px;">
       <div class="file-chip-row">
         <span>⏰</span>
@@ -571,6 +567,12 @@
         <input type="date" id="detailReminderDateInput" style="border:1px solid var(--line); border-radius:8px; padding:3px 6px; font-size:11.5px; background:var(--paper-raised); color:var(--ink); font-family:inherit; flex-shrink:0;">
         <button type="button" id="detailRemoveReminderBtn" style="color:var(--danger); font-weight:600; font-size:12.5px; background:none; border:none; cursor:pointer; flex-shrink:0;">✕</button>
       </div>
+    </div>
+    <div id="detailLocationWrap" style="display:none; margin-top:12px;">
+      <button type="button" class="file-chip-row" id="detailLocationBtn" style="width:100%; cursor:pointer; border:1px solid var(--line); text-align:left;">
+        <span>📍</span>
+        <span class="file-chip-name" id="detailLocationLabel"></span>
+      </button>
     </div>
 
     <button class="info-toggle" id="infoToggle" data-i18n="infoToggle">ⓘ Details</button>
@@ -1912,15 +1914,21 @@
       return;
     }
     const sorted = [...entries].sort((a,b)=> Math.max(b.updatedAt, b.lastViewedAt||0) - Math.max(a.updatedAt, a.lastViewedAt||0)).slice(0,8);
+    const BADGE_ICON_PHOTO = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="15" rx="2.5"/><circle cx="8.5" cy="10.5" r="1.7"/><path d="M21 16.5l-5-5-9 9"/></svg>';
+    const BADGE_ICON_VIDEO = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="14" height="12" rx="2.3"/><path d="M16.5 10.5l5-3v9l-5-3z"/></svg>';
+    const BADGE_ICON_VOICE = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v4"/></svg>';
+    const BADGE_ICON_FILE = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 12.5l-8.4 8.4a5 5 0 01-7.1-7.1l9-9a3.5 3.5 0 015 5l-9 9a2 2 0 01-2.8-2.8l8-8"/></svg>';
+    const BADGE_ICON_LOCATION = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0119 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.3"/></svg>';
+    const BADGE_ICON_SHARED = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>';
     sorted.forEach(entry => {
       const row = document.createElement('div');
       row.className = 'entry-row';
-      const photoBadge = entry.imageCount ? `<span class="badge">📷${entry.imageCount>1 ? '×'+entry.imageCount : ''}</span>` : '';
-      const videoBadge = entry.video ? '<span class="badge">🎥</span>' : '';
-      const audioBadge = entry.hasAudio ? '<span class="badge">🎤</span>' : '';
-      const pdfBadge = (entry.files && entry.files.length) ? '<span class="badge">📎</span>' : '';
-      const locationBadge = entry.location ? '<span class="badge">📍</span>' : '';
-      const sharedBadge = entry.sharedId ? '<span class="badge">👥</span>' : '';
+      const photoBadge = entry.imageCount ? `<span class="badge">${BADGE_ICON_PHOTO}${entry.imageCount>1 ? '×'+entry.imageCount : ''}</span>` : '';
+      const videoBadge = entry.video ? `<span class="badge">${BADGE_ICON_VIDEO}</span>` : '';
+      const audioBadge = entry.hasAudio ? `<span class="badge">${BADGE_ICON_VOICE}</span>` : '';
+      const pdfBadge = (entry.files && entry.files.length) ? `<span class="badge">${BADGE_ICON_FILE}</span>` : '';
+      const locationBadge = entry.location ? `<span class="badge">${BADGE_ICON_LOCATION}</span>` : '';
+      const sharedBadge = entry.sharedId ? `<span class="badge">${BADGE_ICON_SHARED}</span>` : '';
       row.innerHTML = `
         <div class="delete-bg">${T().deleteSwipeLabel}</div>
         <div class="entry-card" data-id="${entry.id}">
@@ -2941,6 +2949,7 @@
 
   function renderReminderPreview(){
     $('reminderDateInput').value = pendingReminderDate || '';
+    $('reminderInputRow').style.display = 'none';
     if(pendingReminderDate){
       $('reminderChipLabel').textContent = formatReminderDate(pendingReminderDate);
       $('reminderChipWrap').style.display = 'block';
@@ -2952,9 +2961,9 @@
   }
 
   function openReminderPicker(){
-    const input = $('reminderDateInput');
-    input.style.display = 'block'; // must be genuinely visible (not display:none) for mobile pickers to open reliably
-    if(input.showPicker){ input.showPicker(); } else { input.focus(); input.click(); }
+    $('addReminderBtn').style.display = 'none';
+    $('reminderChipWrap').style.display = 'none';
+    $('reminderInputRow').style.display = 'block';
   }
 
   $('addReminderBtn').addEventListener('click', openReminderPicker);
@@ -2965,10 +2974,6 @@
       renderReminderPreview();
       maybeEnablePushNotifications();
     }
-    $('reminderDateInput').style.display = 'none';
-  });
-  $('reminderDateInput').addEventListener('blur', ()=>{
-    $('reminderDateInput').style.display = 'none';
   });
   $('removeReminderBtn').addEventListener('click', ()=>{
     pendingReminderDate = null;
