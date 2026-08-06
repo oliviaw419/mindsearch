@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Mind Search</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#f7f3eb">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Mind Search">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Newsreader:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -434,6 +440,16 @@
 
     <div id="tagPickerRow" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:12px;"></div>
 
+    <div id="reminderPreviewWrap" style="display:none; margin-top:10px;">
+      <div class="file-chip-row">
+        <span>⏰</span>
+        <span class="file-chip-name" id="reminderPreviewLabel"></span>
+        <button type="button" id="removeReminderBtn" style="color:var(--danger); font-weight:600; font-size:12.5px; background:none; border:none; cursor:pointer;">✕</button>
+      </div>
+    </div>
+    <button type="button" class="text-btn" id="addReminderBtn" style="margin:8px 0 0; padding:0; text-align:left; color:var(--plum-deep); font-weight:600; font-size:12.5px;" data-i18n="addReminderAction">+ Set reminder date</button>
+    <input type="date" id="reminderDateInput" style="display:none;">
+
     <label class="field-label" data-i18n="attachmentsLabel">Attachments</label>
     <div class="photo-strip" id="photoStrip"></div>
     <div id="filesListPreview" style="display:flex; flex-direction:column; gap:6px; margin-top:8px;"></div>
@@ -457,6 +473,14 @@
     </div>
     <p id="videoProcessingStatus" style="display:none; font-size:11.5px; font-weight:600; color:var(--plum-deep); margin:8px 2px 0;"></p>
 
+    <div id="locationPreviewWrap" style="display:none; margin-top:8px;">
+      <div class="file-chip-row">
+        <span>📍</span>
+        <span class="file-chip-name" id="locationPreviewLabel"></span>
+        <button type="button" id="removeLocationBtn" style="color:var(--danger); font-weight:600; font-size:12.5px; background:none; border:none; cursor:pointer;">✕</button>
+      </div>
+    </div>
+
     <div class="attach-toolbar">
       <button type="button" class="toolbar-icon-btn" id="photoToolbarBtn" title="Add Photo">
         <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="15" rx="2.5"/><circle cx="8.5" cy="10.5" r="1.7"/><path d="M21 16.5l-5-5-9 9"/></svg>
@@ -466,6 +490,9 @@
       </button>
       <button type="button" class="toolbar-icon-btn" id="fileToolbarBtn" title="Add File">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 12.5l-8.4 8.4a5 5 0 01-7.1-7.1l9-9a3.5 3.5 0 015 5l-9 9a2 2 0 01-2.8-2.8l8-8"/></svg>
+      </button>
+      <button type="button" class="toolbar-icon-btn" id="locationToolbarBtn" title="Add Location">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0119 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.3"/></svg>
       </button>
       <button type="button" class="toolbar-icon-btn" id="voiceBtn" title="Add Voice">
         <span class="mic-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v4"/></svg></span>
@@ -528,6 +555,12 @@
     </div>
     <div class="detail-photos" id="detailPhotos" style="display:none;"></div>
     <div id="detailFilesList" style="display:flex; flex-direction:column; gap:8px; margin-top:12px;"></div>
+    <div id="detailLocationWrap" style="display:none; margin-top:12px;">
+      <button type="button" class="file-chip-row" id="detailLocationBtn" style="width:100%; cursor:pointer; border:1px solid var(--line); text-align:left;">
+        <span>📍</span>
+        <span class="file-chip-name" id="detailLocationLabel"></span>
+      </button>
+    </div>
 
     <button class="info-toggle" id="infoToggle" data-i18n="infoToggle">ⓘ Details</button>
     <div class="info-box" id="infoBox"></div>
@@ -658,6 +691,29 @@
   </div>
 </div>
 
+<!-- Location picker -->
+<div class="sheet-overlay" id="locationPickerOverlay" style="z-index:460;">
+  <div class="sheet" style="max-width:400px;">
+    <h2 data-i18n="addLocationTitle">Add Location</h2>
+    <button class="primary-btn" id="useCurrentLocationBtn" style="margin-top:0;" data-i18n="useCurrentLocation">📍 Use current location</button>
+    <label class="field-label" data-i18n="orSearchAddress">Or search for an address</label>
+    <input class="field" id="locationSearchInput" type="text" data-i18n-placeholder="searchAddressPlaceholder" placeholder="Search address…">
+    <div id="locationSearchResults" style="display:flex; flex-direction:column; gap:8px; margin-top:10px;"></div>
+    <button class="text-btn" id="closeLocationPickerBtn" data-i18n="cancel">Cancel</button>
+  </div>
+</div>
+
+<!-- Open in maps chooser -->
+<div class="sheet-overlay" id="openMapsChooserOverlay" style="z-index:460;">
+  <div class="sheet" style="max-width:360px;">
+    <h2 data-i18n="openLocationTitle">Open Location</h2>
+    <button class="primary-btn" id="openGoogleMapsBtn" style="margin-top:0;" data-i18n="openInGoogleMaps">Open in Google Maps</button>
+    <button class="primary-btn" id="openAppleMapsBtn" style="margin-top:10px;" data-i18n="openInAppleMaps">Open in Apple Maps</button>
+    <button class="primary-btn" id="copyCoordinatesBtn" style="margin-top:10px;" data-i18n="copyCoordinates">Copy Coordinates</button>
+    <button class="text-btn" id="closeMapsChooserBtn" data-i18n="cancel">Cancel</button>
+  </div>
+</div>
+
 <!-- Inbox -->
 <div class="sheet-overlay" id="inboxOverlay" style="z-index:450;">
   <div class="sheet" style="max-width:420px;">
@@ -757,6 +813,20 @@
   <button id="pendingSharesBannerClose" style="background:none; border:none; color:rgba(255,255,255,0.7); font-size:14px; cursor:pointer; padding:0 2px;">✕</button>
 </div>
 
+<div id="remindersDueBanner" style="display:none; position:fixed; bottom:100px; left:50%; transform:translateX(-50%); background:var(--plum-deep); color:#fff; padding:12px 14px 12px 18px; border-radius:999px; z-index:250; align-items:center; gap:12px; max-width:88%; box-shadow:0 8px 24px -8px rgba(0,0,0,0.35);">
+  <span id="remindersDueBannerText" style="font-size:13px;"></span>
+  <button id="remindersDueBannerBtn" style="background:#fff; color:var(--plum-deep); border:none; border-radius:999px; padding:6px 14px; font-size:12.5px; font-weight:600; cursor:pointer;"></button>
+  <button id="remindersDueBannerClose" style="background:none; border:none; color:rgba(255,255,255,0.7); font-size:14px; cursor:pointer; padding:0 2px;">✕</button>
+</div>
+
+<div class="sheet-overlay" id="remindersListOverlay" style="z-index:450;">
+  <div class="sheet" style="max-width:420px;">
+    <h2 data-i18n="remindersDueTitle">Reminders due</h2>
+    <div id="remindersList" style="display:flex; flex-direction:column; gap:8px;"></div>
+    <button class="text-btn" id="closeRemindersListBtn" data-i18n="close">Close</button>
+  </div>
+</div>
+
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
   import {
@@ -818,6 +888,9 @@
   let pendingFiles = []; // each: {isNew:true, file:File, name} or {isNew:false, name,url,type,size,path}
   let pendingTags = [];
   let pendingVideo = null; // {isNew:true, file:Blob, duration, previewUrl} or {isNew:false, url, path, duration, size}
+  let pendingLocation = null; // {lat, lng, label}
+  let pendingReminderDate = null; // 'YYYY-MM-DD' string
+  let currentDetailLocation = null;
   const VIDEO_MAX_DURATION_SEC = 300; // 5 minutes
   const VIDEO_MAX_INPUT_BYTES = 500 * 1024 * 1024; // sanity cap on the original file before compression
   const VIDEO_TARGET_LONG_EDGE = 1280; // 720p
@@ -949,6 +1022,11 @@
       created: "创建于",
       lastEdited: "最后编辑",
       tagsLabel: "标签：",
+      addReminderAction: "+ 设置提醒日期",
+      reminderLabel: "提醒日期：",
+      remindersDueBannerText: (n) => `你有 ${n} 条笔记快到提醒日子了`,
+      remindersDueTitle: "提醒日期到了",
+      goToReminders: "去看看",
       sharedByLabel: "分享自：",
       allowEditLabel: "允许对方也能编辑这条笔记",
       sharedOwnerBadge: "共同编辑中，对方改动会同步给你",
@@ -1002,6 +1080,18 @@
       addTagAction: "+ 添加",
       manageTagsMenuLabel: "管理标签",
       manageTagsTitle: "管理标签",
+      addLocationTitle: "添加位置",
+      useCurrentLocation: "📍 使用当前位置",
+      locatingNow: "定位中…",
+      orSearchAddress: "或者搜索地址",
+      searchAddressPlaceholder: "搜索地址…",
+      openLocationTitle: "打开位置",
+      openInGoogleMaps: "在 Google 地图打开",
+      openInAppleMaps: "在苹果地图打开",
+      copyCoordinates: "复制坐标",
+      toastLocationNotSupported: "你的浏览器不支持定位",
+      toastLocationFailed: "获取位置失败，检查一下是不是拒绝了定位权限",
+      toastCoordinatesCopied: "坐标已复制",
       newTagInputPlaceholder: "新标签名称",
       noTagsYet: "还没有标签",
       addNewTagChip: "+ 新建标签",
@@ -1123,6 +1213,11 @@
       sharedByLabel: "分享自：",
       tagsLabel: "標籤：",
       close: "關閉",
+      addReminderAction: "+ 設定提醒日期",
+      reminderLabel: "提醒日期：",
+      remindersDueBannerText: (n) => `你有 ${n} 則筆記快到提醒日子了`,
+      remindersDueTitle: "提醒日期到了",
+      goToReminders: "去看看",
       starTitle: "常復習",
       allowEditLabel: "允許對方也能編輯這則筆記",
       sharedOwnerBadge: "共同編輯中，對方改動會同步給你",
@@ -1176,6 +1271,18 @@
       manageTagsMenuLabel: "管理標籤",
       manageTagsTitle: "管理標籤",
       newTagInputPlaceholder: "新標籤名稱",
+      addLocationTitle: "新增位置",
+      useCurrentLocation: "📍 使用目前位置",
+      locatingNow: "定位中…",
+      orSearchAddress: "或者搜尋地址",
+      searchAddressPlaceholder: "搜尋地址…",
+      openLocationTitle: "開啟位置",
+      openInGoogleMaps: "在 Google 地圖開啟",
+      openInAppleMaps: "在蘋果地圖開啟",
+      copyCoordinates: "複製座標",
+      toastLocationNotSupported: "你的瀏覽器不支援定位",
+      toastLocationFailed: "取得位置失敗，檢查一下是不是拒絕了定位權限",
+      toastCoordinatesCopied: "座標已複製",
       noTagsYet: "還沒有標籤",
       addNewTagChip: "+ 新增標籤",
       newTagPrompt: "新標籤叫什麼？",
@@ -1297,6 +1404,11 @@
       tagsLabel: "Tags:",
       starTitle: "Review often",
       decideLaterTitle: "Decide later",
+      addReminderAction: "+ Set reminder date",
+      reminderLabel: "Reminder date:",
+      remindersDueBannerText: (n) => `You have ${n} notes with reminders due`,
+      remindersDueTitle: "Reminders due",
+      goToReminders: "Take a look",
       themeBtnTitle: "Switch theme",
       allowEditLabel: "Allow them to edit this note too",
       sharedOwnerBadge: "Shared for co-editing — their changes will sync to you",
@@ -1349,6 +1461,18 @@
       manageTagsTitle: "Manage Tags",
       newTagInputPlaceholder: "New tag name",
       noTagsYet: "No tags yet.",
+      addLocationTitle: "Add Location",
+      useCurrentLocation: "📍 Use current location",
+      locatingNow: "Locating…",
+      orSearchAddress: "Or search for an address",
+      searchAddressPlaceholder: "Search address…",
+      openLocationTitle: "Open Location",
+      openInGoogleMaps: "Open in Google Maps",
+      openInAppleMaps: "Open in Apple Maps",
+      copyCoordinates: "Copy Coordinates",
+      toastLocationNotSupported: "Your browser doesn't support location",
+      toastLocationFailed: "Couldn't get your location — check if location access was denied",
+      toastCoordinatesCopied: "Coordinates copied",
       addNewTagChip: "+ New Tag",
       newTagPrompt: "What should the new tag be called?",
       deleteTagTitle: "Delete this tag?",
@@ -1436,6 +1560,8 @@
       images, imageCount: images.length, hasAudio: !!e.hasAudio,
       files: e.files || [],
       video: e.video || null,
+      location: e.location || null,
+      reminderDate: e.reminderDate || null,
       tags: e.tags || [],
       isSample: !!e.isSample,
       sharedBy: e.sharedBy || null, sharedAt: e.sharedAt || null,
@@ -1567,7 +1693,61 @@
     renderRecent();
     renderRandom();
     renderForgotten();
+    checkRemindersDue();
   }
+
+  function todayDateStr(){
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+
+  function getDueReminders(){
+    const today = todayDateStr();
+    return entries.filter(e => e.reminderDate && e.reminderDate <= today);
+  }
+
+  function checkRemindersDue(){
+    const due = getDueReminders();
+    if(due.length === 0){
+      $('remindersDueBanner').style.display = 'none';
+      return;
+    }
+    $('remindersDueBannerText').textContent = T().remindersDueBannerText(due.length);
+    $('remindersDueBannerBtn').textContent = T().goToReminders;
+    $('remindersDueBanner').style.display = 'flex';
+  }
+
+  function renderRemindersList(){
+    const due = getDueReminders();
+    const list = $('remindersList');
+    list.innerHTML = '';
+    due.forEach(entry => {
+      const row = document.createElement('div');
+      row.className = 'file-chip-row';
+      row.style.cursor = 'pointer';
+      row.innerHTML = `
+        <span>⏰</span>
+        <div style="flex:1; min-width:0;">
+          <div class="file-chip-name">${escapeHtml(entry.title)}</div>
+          <div style="font-size:11px; color:var(--ink-soft);">${formatReminderDate(entry.reminderDate)}</div>
+        </div>
+      `;
+      row.addEventListener('click', ()=>{
+        $('remindersListOverlay').classList.remove('open');
+        openDetail(entry.id);
+      });
+      list.appendChild(row);
+    });
+  }
+
+  $('remindersDueBannerBtn').addEventListener('click', ()=>{
+    $('remindersDueBanner').style.display = 'none';
+    renderRemindersList();
+    $('remindersListOverlay').classList.add('open');
+  });
+  $('remindersDueBannerClose').addEventListener('click', ()=> $('remindersDueBanner').style.display = 'none');
+  $('closeRemindersListBtn').addEventListener('click', ()=> $('remindersListOverlay').classList.remove('open'));
+  $('remindersListOverlay').addEventListener('click', (e)=>{ if(e.target.id==='remindersListOverlay') $('remindersListOverlay').classList.remove('open'); });
 
   async function loadTags(){
     try{
@@ -1644,13 +1824,14 @@
       const videoBadge = entry.video ? '<span class="badge">🎥</span>' : '';
       const audioBadge = entry.hasAudio ? '<span class="badge">🎤</span>' : '';
       const pdfBadge = (entry.files && entry.files.length) ? '<span class="badge">📎</span>' : '';
+      const locationBadge = entry.location ? '<span class="badge">📍</span>' : '';
       const sharedBadge = entry.sharedId ? '<span class="badge">👥</span>' : '';
       row.innerHTML = `
         <div class="delete-bg">${T().deleteSwipeLabel}</div>
         <div class="entry-card" data-id="${entry.id}">
           <div class="etitle">${escapeHtml(entry.title)}</div>
           <div class="esnippet">${escapeHtml(snippet(entry))}</div>
-          <div class="ebadges">${photoBadge}${videoBadge}${audioBadge}${pdfBadge}${sharedBadge}</div>
+          <div class="ebadges">${photoBadge}${videoBadge}${audioBadge}${pdfBadge}${locationBadge}${sharedBadge}</div>
         </div>`;
       list.appendChild(row);
       attachSwipe(row, entry.id);
@@ -1920,11 +2101,16 @@
     pendingTags = [];
     if(pendingVideo && pendingVideo.isNew && pendingVideo.previewUrl){ URL.revokeObjectURL(pendingVideo.previewUrl); }
     pendingVideo = null;
+    pendingLocation = null;
+    pendingReminderDate = null;
+    $('reminderDateInput').value = '';
     filesToDeleteOnSave = [];
     renderPhotoStrip();
     renderFileChips();
     renderTagPicker();
     renderVideoPreview();
+    renderLocationPreview();
+    renderReminderPreview();
     $('videoProcessingStatus').style.display = 'none';
     $('audioPreviewWrap').style.display = 'none';
     $('addAudioMoreMenu').classList.remove('open');
@@ -1965,6 +2151,15 @@
     if(entry.video){
       pendingVideo = { isNew:false, url: entry.video.url, path: entry.video.path, duration: entry.video.duration, size: entry.video.size };
       renderVideoPreview();
+    }
+    if(entry.location){
+      pendingLocation = { ...entry.location };
+      renderLocationPreview();
+    }
+    if(entry.reminderDate){
+      pendingReminderDate = entry.reminderDate;
+      $('reminderDateInput').value = entry.reminderDate;
+      renderReminderPreview();
     }
     $('addOverlay').classList.add('open');
   }
@@ -2488,6 +2683,191 @@
     renderVideoPreview();
   });
 
+  function renderLocationPreview(){
+    if(!pendingLocation){
+      $('locationPreviewWrap').style.display = 'none';
+      return;
+    }
+    $('locationPreviewLabel').textContent = pendingLocation.label || (pendingLocation.lat.toFixed(5) + ', ' + pendingLocation.lng.toFixed(5));
+    $('locationPreviewWrap').style.display = 'block';
+  }
+
+  async function reverseGeocode(lat, lng){
+    try{
+      const res = await fetch('https://nominatim.openstreetmap.org/reverse?lat=' + lat + '&lon=' + lng + '&format=json', {
+        headers: { 'Accept-Language': currentLang === 'en' ? 'en' : 'zh' }
+      });
+      const data = await res.json();
+      return data && data.display_name ? data.display_name : null;
+    }catch(e){ return null; }
+  }
+
+  $('locationToolbarBtn').addEventListener('click', ()=>{
+    $('locationSearchInput').value = '';
+    $('locationSearchResults').innerHTML = '';
+    $('locationPickerOverlay').classList.add('open');
+  });
+  $('closeLocationPickerBtn').addEventListener('click', ()=> $('locationPickerOverlay').classList.remove('open'));
+  $('locationPickerOverlay').addEventListener('click', (e)=>{ if(e.target.id==='locationPickerOverlay') $('locationPickerOverlay').classList.remove('open'); });
+
+  $('useCurrentLocationBtn').addEventListener('click', ()=>{
+    if(!navigator.geolocation){
+      showToast(T().toastLocationNotSupported);
+      return;
+    }
+    $('useCurrentLocationBtn').textContent = T().locatingNow;
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+      const lat = pos.coords.latitude, lng = pos.coords.longitude;
+      const label = await reverseGeocode(lat, lng);
+      pendingLocation = { lat, lng, label };
+      renderLocationPreview();
+      $('useCurrentLocationBtn').textContent = T().useCurrentLocation;
+      $('locationPickerOverlay').classList.remove('open');
+    }, (err) => {
+      console.error('geolocation failed', err);
+      showToast(T().toastLocationFailed);
+      $('useCurrentLocationBtn').textContent = T().useCurrentLocation;
+    }, { enableHighAccuracy:true, timeout:10000 });
+  });
+
+  let locationSearchDebounce = null;
+  $('locationSearchInput').addEventListener('input', (e)=>{
+    clearTimeout(locationSearchDebounce);
+    const q = e.target.value.trim();
+    if(!q){ $('locationSearchResults').innerHTML = ''; return; }
+    locationSearchDebounce = setTimeout(async () => {
+      try{
+        const res = await fetch('https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(q) + '&format=json&limit=6', {
+          headers: { 'Accept-Language': currentLang === 'en' ? 'en' : 'zh' }
+        });
+        const results = await res.json();
+        const wrap = $('locationSearchResults');
+        wrap.innerHTML = '';
+        results.forEach(r => {
+          const row = document.createElement('div');
+          row.className = 'file-chip-row';
+          row.style.cursor = 'pointer';
+          row.innerHTML = '<span>📍</span><span class="file-chip-name">' + escapeHtml(r.display_name) + '</span>';
+          row.addEventListener('click', ()=>{
+            pendingLocation = { lat: parseFloat(r.lat), lng: parseFloat(r.lon), label: r.display_name };
+            renderLocationPreview();
+            $('locationPickerOverlay').classList.remove('open');
+          });
+          wrap.appendChild(row);
+        });
+      }catch(e){ console.error('address search failed', e); }
+    }, 400);
+  });
+
+  $('removeLocationBtn').addEventListener('click', ()=>{
+    pendingLocation = null;
+    renderLocationPreview();
+  });
+
+  function formatReminderDate(dateStr){
+    const d = new Date(dateStr + 'T00:00:00');
+    return d.toLocaleDateString(T().dateLocale, { year:'numeric', month:'long', day:'numeric' });
+  }
+
+  function renderReminderPreview(){
+    if(!pendingReminderDate){
+      $('reminderPreviewWrap').style.display = 'none';
+      $('addReminderBtn').style.display = 'block';
+      return;
+    }
+    $('reminderPreviewLabel').textContent = formatReminderDate(pendingReminderDate);
+    $('reminderPreviewWrap').style.display = 'block';
+    $('addReminderBtn').style.display = 'none';
+  }
+
+  $('addReminderBtn').addEventListener('click', ()=>{
+    const input = $('reminderDateInput');
+    if(input.showPicker){ input.showPicker(); } else { input.click(); }
+  });
+  $('reminderDateInput').addEventListener('change', (e)=>{
+    if(e.target.value){
+      pendingReminderDate = e.target.value;
+      renderReminderPreview();
+      maybeEnablePushNotifications();
+    }
+  });
+  $('removeReminderBtn').addEventListener('click', ()=>{
+    pendingReminderDate = null;
+    $('reminderDateInput').value = '';
+    renderReminderPreview();
+  });
+
+  // ---------- Push notifications ----------
+  const VAPID_PUBLIC_KEY = 'BIHvwMoeAD8KhlcndbiYfWOafZCW5MCQ1tiGKOL-jvZcmoVGBSHtialJd21aE-b2C0WIRlXsPKbwdaA_xy1zxtU';
+
+  function urlBase64ToUint8Array(base64String){
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const rawData = atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for(let i = 0; i < rawData.length; i++){ outputArray[i] = rawData.charCodeAt(i); }
+    return outputArray;
+  }
+
+  async function maybeEnablePushNotifications(){
+    if(!isSignedIn){ return; } // push subscriptions are only useful tied to a signed-in account
+    if(!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+    if(Notification.permission === 'denied') return;
+    if(Notification.permission === 'granted'){
+      await ensurePushSubscriptionSaved();
+      return;
+    }
+    // permission === 'default' — ask now, since the user just showed intent by setting a reminder
+    try{
+      const permission = await Notification.requestPermission();
+      if(permission === 'granted'){
+        await ensurePushSubscriptionSaved();
+      }
+    }catch(e){ console.error('notification permission request failed', e); }
+  }
+
+  async function ensurePushSubscriptionSaved(){
+    try{
+      const registration = await navigator.serviceWorker.ready;
+      let subscription = await registration.pushManager.getSubscription();
+      if(!subscription){
+        subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+        });
+      }
+      await storageAdapter.set('push-subscription', JSON.stringify(subscription), false);
+    }catch(e){ console.error('push subscription failed', e); }
+  }
+
+  function openMapsChooser(location){
+    currentDetailLocation = location;
+    $('openMapsChooserOverlay').classList.add('open');
+  }
+  $('detailLocationBtn').addEventListener('click', ()=>{
+    if(currentDetailLocation) openMapsChooser(currentDetailLocation);
+  });
+  $('closeMapsChooserBtn').addEventListener('click', ()=> $('openMapsChooserOverlay').classList.remove('open'));
+  $('openMapsChooserOverlay').addEventListener('click', (e)=>{ if(e.target.id==='openMapsChooserOverlay') $('openMapsChooserOverlay').classList.remove('open'); });
+  $('openGoogleMapsBtn').addEventListener('click', ()=>{
+    if(!currentDetailLocation) return;
+    window.open('https://www.google.com/maps/search/?api=1&query=' + currentDetailLocation.lat + ',' + currentDetailLocation.lng, '_blank');
+    $('openMapsChooserOverlay').classList.remove('open');
+  });
+  $('openAppleMapsBtn').addEventListener('click', ()=>{
+    if(!currentDetailLocation) return;
+    window.open('https://maps.apple.com/?ll=' + currentDetailLocation.lat + ',' + currentDetailLocation.lng, '_blank');
+    $('openMapsChooserOverlay').classList.remove('open');
+  });
+  $('copyCoordinatesBtn').addEventListener('click', async ()=>{
+    if(!currentDetailLocation) return;
+    try{
+      await navigator.clipboard.writeText(currentDetailLocation.lat + ', ' + currentDetailLocation.lng);
+      showToast(T().toastCoordinatesCopied);
+    }catch(e){ showToast(T().toastCoordinatesCopied); }
+    $('openMapsChooserOverlay').classList.remove('open');
+  });
+
   function pickSupportedAudioMime(){
     const candidates = [
       'audio/mp4',
@@ -2614,6 +2994,8 @@
       entry.audio = pendingAudioData;
       entry.hasAudio = !!pendingAudioData;
       entry.tags = [...pendingTags];
+      entry.location = pendingLocation ? { ...pendingLocation } : null;
+      entry.reminderDate = pendingReminderDate || null;
 
       const isShared = !!entry.sharedId;
 
@@ -2704,7 +3086,7 @@
       if(isShared){
         updateSharedEntry(entry.sharedId, {
           title: entry.title, content: entry.content,
-          images: entry.images, audio: entry.audio, files: entry.files, video: entry.video
+          images: entry.images, audio: entry.audio, files: entry.files, video: entry.video, location: entry.location
         });
       }
 
@@ -2780,6 +3162,7 @@
         entry.audio = shared.audio || null;
         entry.files = shared.files || [];
         entry.video = shared.video || null;
+        entry.location = shared.location || null;
         entry.imageCount = entry.images.length;
         entry.hasAudio = !!entry.audio;
       }
@@ -2837,6 +3220,13 @@
       $('detailPhotos').style.display = 'none';
     }
     renderDetailFilesList(entry);
+    currentDetailLocation = entry.location || null;
+    if(entry.location){
+      $('detailLocationLabel').textContent = entry.location.label || (entry.location.lat.toFixed(5) + ', ' + entry.location.lng.toFixed(5));
+      $('detailLocationWrap').style.display = 'block';
+    } else {
+      $('detailLocationWrap').style.display = 'none';
+    }
     if(entry.audio){
       $('detailAudio').src = entry.audio;
       $('detailDownloadAudioBtn').href = entry.audio;
@@ -2858,7 +3248,11 @@
     if(entry.tags && entry.tags.length){
       tagsLine = `<br><br>${T().tagsLabel} ${escapeHtml(entry.tags.join('、'))}`;
     }
-    $('infoBox').innerHTML = `${T().created}:<br>${formatDate(entry.createdAt)}<br><br>${T().lastEdited}:<br>${formatDate(entry.updatedAt)}${tagsLine}${sharedLine}`;
+    let reminderLine = '';
+    if(entry.reminderDate){
+      reminderLine = `<br><br>${T().reminderLabel} ${formatReminderDate(entry.reminderDate)}`;
+    }
+    $('infoBox').innerHTML = `${T().created}:<br>${formatDate(entry.createdAt)}<br><br>${T().lastEdited}:<br>${formatDate(entry.updatedAt)}${tagsLine}${reminderLine}${sharedLine}`;
     $('detailOverlay').classList.add('open');
   }
 
@@ -4158,6 +4552,10 @@
 
   loadTheme();
   loadLanguage();
+
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('sw.js').catch(e => console.error('service worker registration failed', e));
+  }
 
   if(window.__firebase){
     initAuth();
