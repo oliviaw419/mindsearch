@@ -126,6 +126,17 @@
   }
   .section{ margin-top:28px; padding:0 24px; }
   .section-label{ display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+  .section-tabs{ display:flex; gap:6px; margin-bottom:14px; background:var(--paper-raised); border-radius:12px; padding:4px; }
+  .section-tab{ flex:1; border:none; background:none; padding:8px 10px; border-radius:9px; font-size:13px; font-weight:600; color:var(--ink-soft); opacity:0.55; cursor:pointer; font-family:inherit; transition:background .15s ease, color .15s ease, opacity .15s ease; }
+  .section-tab.active{ background:var(--paper); color:var(--ink); opacity:1; box-shadow:0 2px 8px -3px rgba(0,0,0,0.15); }
+  .section-tab-add{ flex:0 0 auto; width:32px; border:none; background:none; color:var(--ink-soft); opacity:0.6; font-size:16px; font-weight:700; cursor:pointer; border-radius:9px; font-family:inherit; }
+  .section-tab-add:hover{ opacity:1; }
+  .reminder-row{ display:flex; align-items:center; gap:10px; padding:12px 14px; background:var(--paper-raised); border-radius:14px; margin-bottom:8px; cursor:pointer; }
+  .reminder-row .reminder-title{ flex:1; min-width:0; font-size:14px; font-weight:600; color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .reminder-row .reminder-when{ font-size:12px; font-weight:600; color:var(--amber-deep); flex-shrink:0; }
+  .tag-row{ display:flex; align-items:center; gap:10px; padding:12px 14px; background:var(--paper-raised); border-radius:14px; margin-bottom:8px; cursor:pointer; }
+  .tag-row .tag-name{ flex:1; font-size:14px; font-weight:600; color:var(--ink); }
+  .tag-row .tag-count{ font-size:12px; color:var(--ink-soft); }
   .section-label span{ font-size:12px; text-transform:uppercase; letter-spacing:0.08em; color:var(--ink-soft); font-weight:600; }
   .shuffle-btn{ background:none; border:none; color:var(--plum); font-size:13px; font-weight:600; display:flex; align-items:center; gap:5px; cursor:pointer; padding:4px 8px; }
   .shuffle-btn.amber{ color:var(--amber-deep); }
@@ -155,6 +166,9 @@
 
   .entry-row{ position:relative; overflow:hidden; border-radius:var(--radius-md); margin-bottom:10px; }
   .entry-row .delete-bg{ position:absolute; inset:0; background:var(--danger); display:flex; align-items:center; justify-content:flex-end; padding-right:22px; color:#fff; font-size:13px; font-weight:600; cursor:pointer; }
+  .entry-row .delete-bg.dual{ padding-right:0; justify-content:flex-end; gap:0; }
+  .entry-row .delete-bg.dual .swipe-edit-btn{ background:var(--plum-deep); color:#fff; border:none; height:100%; width:70px; font-size:18px; cursor:pointer; }
+  .entry-row .delete-bg.dual .swipe-delete-btn{ background:var(--danger); color:#fff; border:none; height:100%; width:70px; font-size:13px; font-weight:600; cursor:pointer; }
   .entry-card{ position:relative; background:var(--entry-bg); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border:1px solid rgba(255,255,255,0.6); border-radius:var(--radius-md); padding:14px 16px; display:flex; flex-direction:column; gap:3px; transition:transform .18s ease; touch-action:pan-y; user-select:none; box-shadow:0 4px 16px -6px rgba(0,0,0,0.14); }
 
   .feedback-msg{ max-width:80%; padding:9px 13px; border-radius:16px; font-size:13.5px; line-height:1.45; }
@@ -422,18 +436,43 @@
     </div>
 
     <div class="section">
-      <div class="section-label"><span data-i18n="recentlyAddedLabel">Recently Added</span></div>
-      <div id="recentList"></div>
+      <div class="section-tabs" id="sectionTabsBar">
+      </div>
+      <div id="recentTabContent">
+        <div id="recentList"></div>
+      </div>
+      <div id="myTagsTabContent" style="display:none;">
+        <div id="myTagsList"></div>
+      </div>
+      <div id="mySpotsTabContent" style="display:none;">
+        <div id="mySpotsList"></div>
+      </div>
+      <div id="upcomingDatesTabContent" style="display:none;">
+        <div id="upcomingDatesList"></div>
+        <button type="button" class="text-btn" id="viewAllRemindersBtn" style="margin-top:6px;" data-i18n="viewAllReminders">View all reminders</button>
+      </div>
     </div>
   </div>
 
   <button class="fab" id="fabAdd">+</button>
 </div>
 
+<div class="sheet-overlay" id="tabManageOverlay" style="z-index:450;">
+  <div class="sheet" style="max-width:380px;">
+    <h2 data-i18n="manageTabsTitle">Choose Tabs</h2>
+    <div id="tabManageList" style="display:flex; flex-direction:column; gap:10px;"></div>
+    <button class="primary-btn" id="tabManageDoneBtn" style="margin-top:18px;" data-i18n="done">Done</button>
+  </div>
+</div>
+
 <!-- Add / Edit Sheet -->
-<div class="sheet-overlay" id="addOverlay">
+<div class="sheet-overlay" id="addOverlay" style="z-index:480;">
   <div class="sheet">
     <h2 id="addSheetTitle" data-i18n="addSheetTitleNew">New Entry</h2>
+    <div id="presetTagBanner" style="display:none; align-items:center; gap:8px; background:var(--plum-tint); color:var(--plum-deep); border-radius:12px; padding:9px 12px; margin-bottom:14px; font-size:12.5px; font-weight:600;">
+      <span>🏷️</span>
+      <span id="presetTagBannerText"></span>
+    </div>
     <label class="field-label" data-i18n="titleLabel">Title</label>
     <input class="field" id="inputTitle" type="text" placeholder="Give it a name">
     <label class="field-label" data-i18n="contentLabel">Content</label>
@@ -519,7 +558,7 @@
 </div>
 
 <!-- Detail Sheet -->
-<div class="sheet-overlay" id="detailOverlay">
+<div class="sheet-overlay" id="detailOverlay" style="z-index:455;">
   <div class="sheet">
     <div class="detail-header">
       <div style="flex:1; min-width:0;">
@@ -575,6 +614,7 @@
       </button>
     </div>
 
+    <div id="detailTagsRow" style="display:none; flex-wrap:wrap; gap:6px; margin-top:12px;"></div>
     <button class="info-toggle" id="infoToggle" data-i18n="infoToggle">ⓘ Details</button>
     <div class="info-box" id="infoBox"></div>
 
@@ -587,7 +627,7 @@
 </div>
 
 <!-- Share link modal -->
-<div class="sheet-overlay" id="shareOverlay" style="z-index:450;">
+<div class="sheet-overlay" id="shareOverlay" style="z-index:485;">
   <div class="sheet" style="max-width:400px;">
     <h2 data-i18n="shareLinkTitle">Share this note</h2>
 
@@ -606,7 +646,6 @@
     <label class="field-label" data-i18n="shareExternal">Share to</label>
     <div style="display:flex; gap:10px; margin:10px 0 4px; flex-wrap:wrap;">
       <button class="attach-btn" id="shareWhatsappBtn" style="flex:1; min-width:80px;">WhatsApp</button>
-      <button class="attach-btn" id="shareWeChatBtn" style="flex:1; min-width:80px;">WeChat</button>
       <button class="attach-btn" id="shareLineBtn" style="flex:1; min-width:80px;">Line</button>
       <button class="attach-btn" id="shareMoreBtn" style="flex:1; min-width:80px;" data-i18n="moreApps">More…</button>
     </div>
@@ -692,7 +731,7 @@
 </div>
 
 <!-- Delete tag choice -->
-<div class="sheet-overlay" id="tagDeleteChoiceOverlay" style="z-index:460;">
+<div class="sheet-overlay" id="tagDeleteChoiceOverlay" style="z-index:490;">
   <div class="sheet" style="max-width:360px;">
     <h2 data-i18n="deleteTagTitle">Delete this tag?</h2>
     <p style="font-size:13.5px; color:var(--ink-soft); margin:0 0 16px;" data-i18n="deleteTagExplain">Choose what happens to notes that already have this tag.</p>
@@ -706,7 +745,7 @@
 </div>
 
 <!-- Location picker -->
-<div class="sheet-overlay" id="locationPickerOverlay" style="z-index:460;">
+<div class="sheet-overlay" id="locationPickerOverlay" style="z-index:490;">
   <div class="sheet" style="max-width:400px;">
     <h2 data-i18n="addLocationTitle">Add Location</h2>
     <button class="primary-btn" id="useCurrentLocationBtn" style="margin-top:0;" data-i18n="useCurrentLocation">📍 Use current location</button>
@@ -718,12 +757,12 @@
 </div>
 
 <!-- Open in maps chooser -->
-<div class="sheet-overlay" id="openMapsChooserOverlay" style="z-index:460;">
+<div class="sheet-overlay" id="openMapsChooserOverlay" style="z-index:495;">
   <div class="sheet" style="max-width:360px;">
     <h2 data-i18n="openLocationTitle">Open Location</h2>
     <button class="primary-btn" id="openGoogleMapsBtn" style="margin-top:0;" data-i18n="openInGoogleMaps">Open in Google Maps</button>
     <button class="primary-btn" id="openAppleMapsBtn" style="margin-top:10px;" data-i18n="openInAppleMaps">Open in Apple Maps</button>
-    <button class="primary-btn" id="copyCoordinatesBtn" style="margin-top:10px;" data-i18n="copyCoordinates">Copy Coordinates</button>
+    <button class="primary-btn" id="copyCoordinatesBtn" style="margin-top:10px;" data-i18n="copyAddress">Copy Address</button>
     <button class="text-btn" id="closeMapsChooserBtn" data-i18n="cancel">Cancel</button>
   </div>
 </div>
@@ -848,6 +887,34 @@
   </div>
 </div>
 
+<div class="sheet-overlay" id="tagDetailOverlay" style="z-index:450;">
+  <div class="sheet" style="max-width:420px; padding-bottom:14px;">
+    <div class="detail-header">
+      <div class="detail-title" id="tagDetailTitle" style="word-break:break-word;"></div>
+      <div style="position:relative; flex-shrink:0;">
+        <button type="button" id="tagSortIconBtn" title="Sort" style="width:34px; height:34px; border-radius:10px; border:1px solid var(--line); background:var(--paper-raised); color:var(--ink-soft); cursor:pointer; display:flex; align-items:center; justify-content:center;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h13M3 12h9M3 17h5"/><path d="M17 4v16M17 4l-3 3M17 4l3 3"/></svg>
+        </button>
+        <div class="more-menu" id="tagSortMenu" style="min-width:140px;">
+          <button type="button" id="tagSortRecentBtn" data-i18n="sortRecent">Recently Added</button>
+          <button type="button" id="tagSortAlphaBtn" data-i18n="sortAlpha">A–Z</button>
+        </div>
+      </div>
+    </div>
+    <div class="search-wrap" style="margin:14px 0 0;">
+      <input id="tagDetailSearchInput" type="text" data-i18n-placeholder="tagSearchPlaceholder" placeholder="Search in this tag…" autocomplete="off">
+      <button class="icon clear-btn" id="tagDetailClearSearchBtn" style="display:none;">✕</button>
+      <span class="icon search-icon" id="tagDetailSearchIcon">⌕</span>
+    </div>
+    <div id="tagDetailList" style="display:flex; flex-direction:column; gap:8px; margin-top:14px;"></div>
+    <div id="tagDetailEmpty" class="empty-note" style="display:none;" data-i18n="noNotesInTag">No notes here yet.</div>
+    <div style="position:sticky; bottom:0; margin-top:14px; padding-top:10px; background:linear-gradient(to top, var(--paper) 60%, transparent);">
+      <button class="primary-btn" id="tagDetailAddBtn" style="margin-top:0;">+ Add</button>
+    </div>
+    <button class="text-btn" id="closeTagDetailBtn" data-i18n="close">Close</button>
+  </div>
+</div>
+
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
   import {
@@ -893,6 +960,7 @@
   const INDEX_KEY = 'mind-search-index';
   const LEGACY_KEY = 'mind-search-entries';
   const TAGS_KEY = 'mind-search-tags';
+  const TAB_PREFS_KEY = 'mind-search-tab-prefs';
   const mediaKey = (id) => 'entry-media:' + id;
 
   let allTags = [];
@@ -996,6 +1064,30 @@
       frequentlyForgottenLabel: "常忘",
       randomLabel: "随机",
       recentlyAddedLabel: "最近添加或查看",
+      myTagsLabel: "我的标签",
+      recentTabLabel: "最近",
+      upcomingDatesLabel: "重要日子",
+      manageTabsTitle: "选择标签页",
+      done: "完成",
+      toastKeepOneTab: "至少要保留一个标签页",
+      allFilterLabel: "全部",
+      untaggedFilterLabel: "未分类",
+      noSpotsYet: "还没有加过定位的笔记",
+      viewAllReminders: "查看全部提醒",
+      todayLabel: "今天",
+      tomorrowLabel: "明天",
+      inNDaysLabel: (n) => `${n}天后`,
+      inNWeeksLabel: (n) => `${n}周后`,
+      moreThanMonthLabel: "1个月后",
+      moreThanYearLabel: "1年后",
+      sortRecent: "最近添加",
+      sortAlpha: "按字母",
+      tagSearchPlaceholder: "在这个标签下搜索…",
+      noNotesInTag: "这里还没有笔记",
+      mySpotsLabel: "我的地点",
+      noTagsYet: "还没有标签，编辑笔记时可以添加",
+      presetTagBannerText: (tag) => `正在添加到"${tag}"，这条笔记会自动带上这个标签`,
+      addToTagAction: (tag) => `+ 添加到"${tag}"`,
       shuffleBtn: "⟳ 再来一个",
       addSheetTitleNew: "记一笔",
       titleLabel: "标题",
@@ -1044,6 +1136,7 @@
       created: "创建于",
       lastEdited: "最后编辑",
       tagsLabel: "标签：",
+      confirmRemoveTagFromNote: (tag) => `把这条笔记从"${tag}"标签里移除吗？`,
       addReminderAction: "+ 设置提醒日期",
       reminderLabelShort: "提醒日期",
       reminderLabel: "提醒日期：",
@@ -1121,6 +1214,9 @@
       openInGoogleMaps: "在 Google 地图打开",
       openInAppleMaps: "在苹果地图打开",
       copyCoordinates: "复制坐标",
+      copyAddress: "复制地址",
+      manualCopyPrompt: "复制不了？长按下面的文字手动复制：",
+      toastWeChatMapsBlocked: "微信可能会拦截跳转，如果没反应，用「复制地址」这个选项试试",
       toastLocationNotSupported: "你的浏览器不支持定位",
       toastLocationFailed: "获取位置失败，检查一下是不是拒绝了定位权限",
       toastCoordinatesCopied: "坐标已复制",
@@ -1202,6 +1298,30 @@
       contentLabel: "內容",
       titlePlaceholder: "給它起個名字",
       contentPlaceholder: "寫下你想記住的東西…",
+      myTagsLabel: "我的標籤",
+      recentTabLabel: "最近",
+      upcomingDatesLabel: "重要日子",
+      manageTabsTitle: "選擇標籤頁",
+      done: "完成",
+      toastKeepOneTab: "至少要保留一個標籤頁",
+      allFilterLabel: "全部",
+      untaggedFilterLabel: "未分類",
+      noSpotsYet: "還沒有加過定位的筆記",
+      viewAllReminders: "查看全部提醒",
+      todayLabel: "今天",
+      tomorrowLabel: "明天",
+      inNDaysLabel: (n) => `${n}天後`,
+      inNWeeksLabel: (n) => `${n}週後`,
+      moreThanMonthLabel: "1個月後",
+      moreThanYearLabel: "1年後",
+      sortRecent: "最近新增",
+      sortAlpha: "按字母",
+      noNotesInTag: "這裡還沒有筆記",
+      tagSearchPlaceholder: "在這個標籤下搜尋…",
+      mySpotsLabel: "我的地點",
+      noTagsYet: "還沒有標籤，編輯筆記時可以新增",
+      presetTagBannerText: (tag) => `正在新增到「${tag}」，這則筆記會自動帶上這個標籤`,
+      addToTagAction: (tag) => `+ 新增到「${tag}」`,
       photosLabel: "照片",
       photosHint: "最多 5 張",
       attachmentsLabel: "附件",
@@ -1246,6 +1366,7 @@
       sharedByLabel: "分享自：",
       tagsLabel: "標籤：",
       close: "關閉",
+      confirmRemoveTagFromNote: (tag) => `把這則筆記從「${tag}」標籤裡移除嗎？`,
       addReminderAction: "+ 設定提醒日期",
       reminderLabelShort: "提醒日期",
       reminderLabel: "提醒日期：",
@@ -1324,6 +1445,9 @@
       openInAppleMaps: "在蘋果地圖開啟",
       copyCoordinates: "複製座標",
       toastLocationNotSupported: "你的瀏覽器不支援定位",
+      copyAddress: "複製地址",
+      manualCopyPrompt: "複製不了？長按下面的文字手動複製：",
+      toastWeChatMapsBlocked: "微信可能會攔截跳轉，如果沒反應，用「複製地址」這個選項試試",
       toastLocationFailed: "取得位置失敗，檢查一下是不是拒絕了定位權限",
       toastCoordinatesCopied: "座標已複製",
       noTagsYet: "還沒有標籤",
@@ -1408,6 +1532,30 @@
       toastFileNeedsAccount: "Sign in to attach files",
       toastMaxFiles: "You can add up to 10 files",
       toastFileWrongType: "Supported: PDF, Word, Excel, PPT, RTF, TXT",
+      myTagsLabel: "My Tags",
+      recentTabLabel: "Recent",
+      upcomingDatesLabel: "Upcoming Dates",
+      manageTabsTitle: "Choose Tabs",
+      done: "Done",
+      toastKeepOneTab: "You need to keep at least one tab",
+      allFilterLabel: "All",
+      untaggedFilterLabel: "Untagged",
+      noSpotsYet: "No notes with a location yet.",
+      viewAllReminders: "View all reminders",
+      todayLabel: "Today",
+      tomorrowLabel: "Tomorrow",
+      inNDaysLabel: (n) => `In ${n} days`,
+      inNWeeksLabel: (n) => `In ${n} week${n>1?'s':''}`,
+      moreThanMonthLabel: "More than 1 month",
+      moreThanYearLabel: "More than 1 year",
+      sortRecent: "Recently Added",
+      sortAlpha: "A–Z",
+      noNotesInTag: "No notes here yet.",
+      mySpotsLabel: "My Spots",
+      tagSearchPlaceholder: "Search in this tag…",
+      noTagsYet: "No tags yet — you can add one while editing a note.",
+      presetTagBannerText: (tag) => `Adding to "${tag}" — this note will automatically get that tag`,
+      addToTagAction: (tag) => `+ Add to "${tag}"`,
       toastFileTooLarge: "File can't be larger than 10MB",
       toastFileUploadFail: "File upload failed, please try again",
       uploadingFiles: "Uploading…",
@@ -1448,6 +1596,7 @@
       tagsLabel: "Tags:",
       starTitle: "Review often",
       decideLaterTitle: "Decide later",
+      confirmRemoveTagFromNote: (tag) => `Remove this note from the "${tag}" tag?`,
       addReminderAction: "+ Set reminder date",
       reminderLabelShort: "Reminder date",
       reminderLabel: "Reminder date:",
@@ -1526,6 +1675,9 @@
       copyCoordinates: "Copy Coordinates",
       toastLocationNotSupported: "Your browser doesn't support location",
       toastLocationFailed: "Couldn't get your location — check if location access was denied",
+      copyAddress: "Copy Address",
+      manualCopyPrompt: "Can't copy automatically? Long-press the text below to copy it manually:",
+      toastWeChatMapsBlocked: "WeChat may block this — if nothing happens, try \"Copy Address\" instead",
       toastCoordinatesCopied: "Coordinates copied",
       addNewTagChip: "+ New Tag",
       newTagPrompt: "What should the new tag be called?",
@@ -1748,6 +1900,9 @@
     renderRandom();
     renderForgotten();
     checkRemindersDue();
+    if(typeof getActiveTabId === 'function' && $('sectionTabsBar').children.length){
+      tabRenderFn(getActiveTabId())();
+    }
   }
 
   function todayDateStr(){
@@ -1906,6 +2061,65 @@
     return years + (years===1?' year ago':' years ago');
   }
 
+  const BADGE_ICON_PHOTO = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="15" rx="2.5"/><circle cx="8.5" cy="10.5" r="1.7"/><path d="M21 16.5l-5-5-9 9"/></svg>';
+  const BADGE_ICON_VIDEO = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="14" height="12" rx="2.3"/><path d="M16.5 10.5l5-3v9l-5-3z"/></svg>';
+  const BADGE_ICON_VOICE = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v4"/></svg>';
+  const BADGE_ICON_FILE = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 12.5l-8.4 8.4a5 5 0 01-7.1-7.1l9-9a3.5 3.5 0 015 5l-9 9a2 2 0 01-2.8-2.8l8-8"/></svg>';
+  const BADGE_ICON_LOCATION = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0119 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.3"/></svg>';
+  const ICON_TAG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.6 2H4a2 2 0 00-2 2v8.6a2 2 0 00.59 1.41l9.4 9.4a2 2 0 002.82 0l8.6-8.6a2 2 0 000-2.82l-9.4-9.4A2 2 0 0012.6 2z"/><circle cx="8" cy="8" r="1.3"/></svg>';
+  const ICON_LOCATION_LG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0119 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.3"/></svg>';
+  const ICON_ALL = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>';
+  const ICON_UNTAGGED = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.6 2H4a2 2 0 00-2 2v8.6a2 2 0 00.59 1.41l9.4 9.4a2 2 0 002.82 0l8.6-8.6a2 2 0 000-2.82l-9.4-9.4A2 2 0 0012.6 2z" stroke-dasharray="3 3"/></svg>';
+  const BADGE_ICON_SHARED = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>';
+
+  function buildEntryRow(entry){
+    const row = document.createElement('div');
+    row.className = 'entry-row';
+    const photoBadge = entry.imageCount ? `<span class="badge">${BADGE_ICON_PHOTO}${entry.imageCount>1 ? '×'+entry.imageCount : ''}</span>` : '';
+    const videoBadge = entry.video ? `<span class="badge">${BADGE_ICON_VIDEO}</span>` : '';
+    const audioBadge = entry.hasAudio ? `<span class="badge">${BADGE_ICON_VOICE}</span>` : '';
+    const pdfBadge = (entry.files && entry.files.length) ? `<span class="badge">${BADGE_ICON_FILE}</span>` : '';
+    const locationBadge = entry.location ? `<span class="badge">${BADGE_ICON_LOCATION}</span>` : '';
+    const sharedBadge = entry.sharedId ? `<span class="badge">${BADGE_ICON_SHARED}</span>` : '';
+    row.innerHTML = `
+      <div class="delete-bg">${T().deleteSwipeLabel}</div>
+      <div class="entry-card" data-id="${entry.id}">
+        <div class="etitle">${escapeHtml(entry.title)}</div>
+        <div class="esnippet">${escapeHtml(snippet(entry))}</div>
+        <div class="ebadges">${photoBadge}${videoBadge}${audioBadge}${pdfBadge}${locationBadge}${sharedBadge}</div>
+      </div>`;
+    return row;
+  }
+
+  // Simpler row style (title + snippet only, no badge icons) matching Search Results' cleaner look.
+  // Used for tag-detail lists, with swipe-to-delete wired in since organizing tags benefits from quick cleanup.
+  function buildSimpleEntryRow(entry, withEdit){
+    const row = document.createElement('div');
+    row.className = 'entry-row';
+    const deleteBgHtml = withEdit
+      ? `<div class="delete-bg dual"><button type="button" class="swipe-edit-btn">✏️</button><button type="button" class="swipe-delete-btn">${T().deleteSwipeLabel}</button></div>`
+      : `<div class="delete-bg">${T().deleteSwipeLabel}</div>`;
+    row.innerHTML = `
+      ${deleteBgHtml}
+      <div class="entry-card" data-id="${entry.id}" style="margin-bottom:10px;">
+        <div class="etitle">${escapeHtml(entry.title)}</div>
+        <div class="esnippet">${escapeHtml(snippet(entry))}</div>
+      </div>`;
+    return row;
+  }
+
+  // Plain, swipe-free row (click to open only) — matches Search Results exactly, no red delete background.
+  function buildPlainEntryRow(entry){
+    const card = document.createElement('div');
+    card.className = 'entry-row';
+    card.innerHTML = `<div class="entry-card" data-id="${entry.id}" style="margin-bottom:10px;">
+      <div class="etitle">${escapeHtml(entry.title)}</div>
+      <div class="esnippet">${escapeHtml(snippet(entry))}</div>
+    </div>`;
+    card.querySelector('.entry-card').addEventListener('click', ()=> openDetail(entry.id));
+    return card;
+  }
+
   function renderRecent(){
     const list = $('recentList');
     list.innerHTML = '';
@@ -1914,36 +2128,304 @@
       return;
     }
     const sorted = [...entries].sort((a,b)=> Math.max(b.updatedAt, b.lastViewedAt||0) - Math.max(a.updatedAt, a.lastViewedAt||0)).slice(0,8);
-    const BADGE_ICON_PHOTO = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="15" rx="2.5"/><circle cx="8.5" cy="10.5" r="1.7"/><path d="M21 16.5l-5-5-9 9"/></svg>';
-    const BADGE_ICON_VIDEO = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="14" height="12" rx="2.3"/><path d="M16.5 10.5l5-3v9l-5-3z"/></svg>';
-    const BADGE_ICON_VOICE = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v4"/></svg>';
-    const BADGE_ICON_FILE = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 12.5l-8.4 8.4a5 5 0 01-7.1-7.1l9-9a3.5 3.5 0 015 5l-9 9a2 2 0 01-2.8-2.8l8-8"/></svg>';
-    const BADGE_ICON_LOCATION = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0119 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.3"/></svg>';
-    const BADGE_ICON_SHARED = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>';
     sorted.forEach(entry => {
-      const row = document.createElement('div');
-      row.className = 'entry-row';
-      const photoBadge = entry.imageCount ? `<span class="badge">${BADGE_ICON_PHOTO}${entry.imageCount>1 ? '×'+entry.imageCount : ''}</span>` : '';
-      const videoBadge = entry.video ? `<span class="badge">${BADGE_ICON_VIDEO}</span>` : '';
-      const audioBadge = entry.hasAudio ? `<span class="badge">${BADGE_ICON_VOICE}</span>` : '';
-      const pdfBadge = (entry.files && entry.files.length) ? `<span class="badge">${BADGE_ICON_FILE}</span>` : '';
-      const locationBadge = entry.location ? `<span class="badge">${BADGE_ICON_LOCATION}</span>` : '';
-      const sharedBadge = entry.sharedId ? `<span class="badge">${BADGE_ICON_SHARED}</span>` : '';
-      row.innerHTML = `
-        <div class="delete-bg">${T().deleteSwipeLabel}</div>
-        <div class="entry-card" data-id="${entry.id}">
-          <div class="etitle">${escapeHtml(entry.title)}</div>
-          <div class="esnippet">${escapeHtml(snippet(entry))}</div>
-          <div class="ebadges">${photoBadge}${videoBadge}${audioBadge}${pdfBadge}${locationBadge}${sharedBadge}</div>
-        </div>`;
+      const row = buildEntryRow(entry);
       list.appendChild(row);
       attachSwipe(row, entry.id);
     });
   }
 
+  // ---------- My Tags tab ----------
+  let currentTagDetailContext = null; // { title, filterFn, presetTag }
+  let tabPreferences = ['recent', 'myTags']; // default enabled tabs, in canonical order
+  const TAB_ORDER = ['recent', 'myTags', 'mySpots', 'upcoming'];
+
+  function tabLabel(tabId){
+    return { recent: T().recentTabLabel, myTags: T().myTagsLabel, mySpots: T().mySpotsLabel, upcoming: T().upcomingDatesLabel }[tabId];
+  }
+  function tabContentEl(tabId){
+    return { recent: $('recentTabContent'), myTags: $('myTagsTabContent'), mySpots: $('mySpotsTabContent'), upcoming: $('upcomingDatesTabContent') }[tabId];
+  }
+  function tabRenderFn(tabId){
+    return { recent: renderRecent, myTags: renderMyTagsList, mySpots: renderMySpotsList, upcoming: renderUpcomingDatesTab }[tabId];
+  }
+
+  function renderTabsBar(){
+    const bar = $('sectionTabsBar');
+    const previouslyActive = bar.querySelector('.section-tab.active');
+    const preserveTab = previouslyActive ? previouslyActive.dataset.tab : null;
+    bar.innerHTML = '';
+    const enabled = TAB_ORDER.filter(t => tabPreferences.includes(t));
+    if(enabled.length === 0){ enabled.push('recent'); } // never allow zero tabs
+    const activeTab = (preserveTab && enabled.includes(preserveTab)) ? preserveTab : enabled[0];
+    enabled.forEach((tabId) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'section-tab' + (tabId === activeTab ? ' active' : '');
+      btn.textContent = tabLabel(tabId);
+      btn.dataset.tab = tabId;
+      btn.addEventListener('click', ()=> switchToTab(tabId));
+      bar.appendChild(btn);
+    });
+    const addBtn = document.createElement('button');
+    addBtn.type = 'button';
+    addBtn.className = 'section-tab-add';
+    addBtn.textContent = '+';
+    addBtn.title = T().manageTabsTitle;
+    addBtn.addEventListener('click', openTabManage);
+    bar.appendChild(addBtn);
+
+    TAB_ORDER.forEach(t => { tabContentEl(t).style.display = 'none'; });
+    tabContentEl(activeTab).style.display = 'block';
+    tabRenderFn(activeTab)();
+  }
+
+  function switchToTab(tabId){
+    $('sectionTabsBar').querySelectorAll('.section-tab').forEach(b => {
+      b.classList.toggle('active', b.dataset.tab === tabId);
+    });
+    TAB_ORDER.forEach(t => { tabContentEl(t).style.display = (t === tabId) ? 'block' : 'none'; });
+    tabRenderFn(tabId)();
+  }
+
+  function getActiveTabId(){
+    const activeBtn = $('sectionTabsBar').querySelector('.section-tab.active');
+    return activeBtn ? activeBtn.dataset.tab : 'recent';
+  }
+
+  async function loadTabPreferences(){
+    try{
+      const res = await storageAdapter.get(TAB_PREFS_KEY, false);
+      if(res && res.value){ tabPreferences = JSON.parse(res.value); }
+    }catch(e){ /* keep default */ }
+    renderTabsBar();
+  }
+  function saveTabPreferences(){
+    storageAdapter.set(TAB_PREFS_KEY, JSON.stringify(tabPreferences), false).catch(()=>{});
+  }
+
+  function openTabManage(){
+    const list = $('tabManageList');
+    list.innerHTML = '';
+    TAB_ORDER.forEach(tabId => {
+      const row = document.createElement('label');
+      row.style.cssText = 'display:flex; align-items:center; gap:10px; font-size:14px; color:var(--ink); cursor:pointer;';
+      const checked = tabPreferences.includes(tabId);
+      row.innerHTML = `<input type="checkbox" ${checked?'checked':''} style="width:18px; height:18px;"> <span>${tabLabel(tabId)}</span>`;
+      row.querySelector('input').addEventListener('change', (e)=>{
+        if(e.target.checked){
+          if(!tabPreferences.includes(tabId)) tabPreferences.push(tabId);
+        } else {
+          if(tabPreferences.length <= 1){ e.target.checked = true; showToast(T().toastKeepOneTab); return; }
+          tabPreferences = tabPreferences.filter(t => t !== tabId);
+        }
+      });
+      list.appendChild(row);
+    });
+    $('tabManageOverlay').classList.add('open');
+  }
+  $('tabManageDoneBtn').addEventListener('click', ()=>{
+    $('tabManageOverlay').classList.remove('open');
+    saveTabPreferences();
+    renderTabsBar();
+  });
+  $('tabManageOverlay').addEventListener('click', (e)=>{ if(e.target.id==='tabManageOverlay') $('tabManageOverlay').classList.remove('open'); });
+
+  function renderMyTagsList(){
+    const list = $('myTagsList');
+    list.innerHTML = '';
+    const tagCounts = allTags.map(tag => ({
+      tag,
+      count: entries.filter(e => e.tags && e.tags.includes(tag)).length
+    })).sort((a,b) => b.count - a.count);
+
+    tagCounts.forEach(({tag, count}) => {
+      const row = document.createElement('div');
+      row.className = 'tag-row';
+      row.innerHTML = `<span>${ICON_TAG}</span><span class="tag-name">${escapeHtml(tag)}</span><span class="tag-count">${count}</span>`;
+      row.addEventListener('click', ()=> openTagDetail({
+        title: tag,
+        filterFn: (es) => es.filter(e => e.tags && e.tags.includes(tag)),
+        presetTag: tag
+      }));
+      list.appendChild(row);
+    });
+
+    if(tagCounts.length === 0){
+      list.innerHTML = `<div class="empty-note">${T().noTagsYet}</div>`;
+    }
+  }
+
+  // ---------- My Spots tab ----------
+  function renderMySpotsList(){
+    const list = $('mySpotsList');
+    list.innerHTML = '';
+    const spots = entries.filter(e => e.location);
+    if(spots.length === 0){
+      list.innerHTML = `<div class="empty-note">${T().noSpotsYet}</div>`;
+      return;
+    }
+
+    const allRow = document.createElement('div');
+    allRow.className = 'tag-row';
+    allRow.innerHTML = `<span>${ICON_ALL}</span><span class="tag-name">${T().allFilterLabel}</span><span class="tag-count">${spots.length}</span>`;
+    allRow.addEventListener('click', ()=> openTagDetail({
+      title: T().mySpotsLabel,
+      filterFn: (es) => es.filter(e => e.location),
+      presetTag: null
+    }));
+    list.appendChild(allRow);
+
+    const spotTagCounts = {};
+    let untaggedCount = 0;
+    spots.forEach(e => {
+      if(e.tags && e.tags.length){ e.tags.forEach(t => { spotTagCounts[t] = (spotTagCounts[t]||0) + 1; }); }
+      else { untaggedCount++; }
+    });
+
+    Object.keys(spotTagCounts).sort().forEach(tag => {
+      const row = document.createElement('div');
+      row.className = 'tag-row';
+      row.innerHTML = `<span>${ICON_TAG}</span><span class="tag-name">${escapeHtml(tag)}</span><span class="tag-count">${spotTagCounts[tag]}</span>`;
+      row.addEventListener('click', ()=> openTagDetail({
+        title: tag,
+        filterFn: (es) => es.filter(e => e.location && e.tags && e.tags.includes(tag)),
+        presetTag: tag
+      }));
+      list.appendChild(row);
+    });
+
+    if(untaggedCount > 0){
+      const row = document.createElement('div');
+      row.className = 'tag-row';
+      row.innerHTML = `<span>${ICON_UNTAGGED}</span><span class="tag-name">${T().untaggedFilterLabel}</span><span class="tag-count">${untaggedCount}</span>`;
+      row.addEventListener('click', ()=> openTagDetail({
+        title: T().untaggedFilterLabel,
+        filterFn: (es) => es.filter(e => e.location && (!e.tags || e.tags.length === 0)),
+        presetTag: null
+      }));
+      list.appendChild(row);
+    }
+  }
+
+  // ---------- Upcoming Dates tab ----------
+  function relativeDateLabel(dateStr){
+    const today = new Date(todayDateStr() + 'T00:00:00');
+    const target = new Date(dateStr + 'T00:00:00');
+    const diffDays = Math.round((target - today) / 86400000);
+    if(diffDays < 0) return T().reminderDueNow;
+    if(diffDays === 0) return T().todayLabel;
+    if(diffDays === 1) return T().tomorrowLabel;
+    if(diffDays < 7) return T().inNDaysLabel(diffDays);
+    if(diffDays < 30) return T().inNWeeksLabel(Math.round(diffDays / 7));
+    if(diffDays < 365) return T().moreThanMonthLabel;
+    return T().moreThanYearLabel;
+  }
+
+  const UPCOMING_DATES_LIMIT = 5;
+  function renderUpcomingDatesTab(){
+    const all = getAllReminderEntries();
+    const list = $('upcomingDatesList');
+    list.innerHTML = '';
+    if(all.length === 0){
+      list.innerHTML = `<div class="empty-note">${T().noRemindersYet}</div>`;
+      $('viewAllRemindersBtn').style.display = 'none';
+      return;
+    }
+    all.slice(0, UPCOMING_DATES_LIMIT).forEach(entry => {
+      const row = document.createElement('div');
+      row.className = 'reminder-row';
+      row.innerHTML = `<span>⏰</span><span class="reminder-title">${escapeHtml(entry.title)}</span><span class="reminder-when">${relativeDateLabel(entry.reminderDate)}</span>`;
+      row.addEventListener('click', ()=> openDetail(entry.id));
+      list.appendChild(row);
+    });
+    $('viewAllRemindersBtn').style.display = all.length > 0 ? 'block' : 'none';
+  }
+  $('viewAllRemindersBtn').addEventListener('click', ()=>{
+    renderRemindersList();
+    $('remindersListOverlay').classList.add('open');
+  });
+
+  let tagDetailSortMode = 'recent';
+  let tagDetailSearchQuery = '';
+
+  function renderTagDetailList(){
+    if(!currentTagDetailContext) return;
+    let filtered = currentTagDetailContext.filterFn(entries);
+    if(tagDetailSearchQuery){
+      const q = tagDetailSearchQuery.toLowerCase();
+      filtered = filtered.filter(e =>
+        e.title.toLowerCase().includes(q) || e.content.toLowerCase().includes(q)
+      );
+    }
+    const sorted = tagDetailSortMode === 'alpha'
+      ? [...filtered].sort((a,b)=> a.title.localeCompare(b.title))
+      : [...filtered].sort((a,b)=> Math.max(b.updatedAt, b.lastViewedAt||0) - Math.max(a.updatedAt, a.lastViewedAt||0));
+    const list = $('tagDetailList');
+    list.innerHTML = '';
+    sorted.forEach(entry => {
+      const row = buildPlainEntryRow(entry);
+      list.appendChild(row);
+    });
+    $('tagDetailEmpty').style.display = sorted.length === 0 ? 'block' : 'none';
+    $('tagSortRecentBtn').classList.toggle('selected', tagDetailSortMode === 'recent');
+    $('tagSortAlphaBtn').classList.toggle('selected', tagDetailSortMode === 'alpha');
+  }
+  $('tagSortIconBtn').addEventListener('click', (e)=>{
+    e.stopPropagation();
+    $('tagSortMenu').classList.toggle('open');
+  });
+  document.addEventListener('click', (e)=>{
+    if($('tagSortMenu').classList.contains('open') && !$('tagSortMenu').contains(e.target) && e.target !== $('tagSortIconBtn')){
+      $('tagSortMenu').classList.remove('open');
+    }
+  });
+  $('tagSortRecentBtn').addEventListener('click', ()=>{ tagDetailSortMode = 'recent'; $('tagSortMenu').classList.remove('open'); renderTagDetailList(); });
+  $('tagSortAlphaBtn').addEventListener('click', ()=>{ tagDetailSortMode = 'alpha'; $('tagSortMenu').classList.remove('open'); renderTagDetailList(); });
+
+  $('tagDetailSearchInput').addEventListener('input', (e)=>{
+    tagDetailSearchQuery = e.target.value.trim();
+    $('tagDetailClearSearchBtn').style.display = tagDetailSearchQuery ? 'flex' : 'none';
+    $('tagDetailSearchIcon').style.display = tagDetailSearchQuery ? 'none' : '';
+    renderTagDetailList();
+  });
+  $('tagDetailClearSearchBtn').addEventListener('click', ()=>{
+    $('tagDetailSearchInput').value = '';
+    tagDetailSearchQuery = '';
+    $('tagDetailClearSearchBtn').style.display = 'none';
+    $('tagDetailSearchIcon').style.display = '';
+    renderTagDetailList();
+  });
+
+  // config: { title, filterFn(entries)=>filtered[], presetTag: string|null }
+  function openTagDetail(config){
+    currentTagDetailContext = config;
+    tagDetailSortMode = 'recent';
+    tagDetailSearchQuery = '';
+    $('tagDetailSearchInput').value = '';
+    $('tagDetailClearSearchBtn').style.display = 'none';
+    $('tagDetailSearchIcon').style.display = '';
+    $('tagSortMenu').classList.remove('open');
+    $('tagDetailTitle').textContent = config.title;
+    renderTagDetailList();
+    $('tagDetailAddBtn').style.display = config.presetTag ? 'block' : 'none';
+    if(config.presetTag){ $('tagDetailAddBtn').textContent = T().addToTagAction(config.presetTag); }
+    $('tagDetailOverlay').classList.add('open');
+  }
+
+  $('tagDetailAddBtn').addEventListener('click', ()=>{
+    if(!currentTagDetailContext || !currentTagDetailContext.presetTag) return;
+    $('tagDetailOverlay').classList.remove('open');
+    openAddSheet(currentTagDetailContext.presetTag);
+  });
+  $('closeTagDetailBtn').addEventListener('click', ()=> $('tagDetailOverlay').classList.remove('open'));
+  $('tagDetailOverlay').addEventListener('click', (e)=>{ if(e.target.id==='tagDetailOverlay') $('tagDetailOverlay').classList.remove('open'); });
+
   function attachSwipe(row, id){
     const card = row.querySelector('.entry-card');
     const deleteBg = row.querySelector('.delete-bg');
+    const isDual = deleteBg.classList.contains('dual');
+    const revealDistance = isDual ? -140 : -90;
     let startX = 0, currentX = 0, dragging = false, revealed = false, justToggled = false;
 
     function onStart(x){ startX = x; dragging = true; }
@@ -1952,11 +2434,11 @@
       currentX = x - startX;
       if(currentX < 0){
         row.dataset.swiping = 'true';
-        card.style.transform = `translateX(${Math.max(currentX,-90)}px)`;
+        card.style.transform = `translateX(${Math.max(currentX, revealDistance)}px)`;
       }
     }
     function reveal(){
-      card.style.transform = 'translateX(-90px)';
+      card.style.transform = `translateX(${revealDistance}px)`;
       revealed = true;
       justToggled = true;
     }
@@ -2001,13 +2483,28 @@
       openDetail(id);
     });
 
-    deleteBg.addEventListener('click', ()=>{
-      if(confirm(T().confirmDeleteEntry)){
-        deleteEntry(id);
-      } else {
+    if(isDual){
+      deleteBg.querySelector('.swipe-edit-btn').addEventListener('click', ()=>{
         close();
-      }
-    });
+        const entry = entries.find(e => e.id === id);
+        if(entry) openEditSheet(entry);
+      });
+      deleteBg.querySelector('.swipe-delete-btn').addEventListener('click', ()=>{
+        if(confirm(T().confirmDeleteEntry)){
+          deleteEntry(id);
+        } else {
+          close();
+        }
+      });
+    } else {
+      deleteBg.addEventListener('click', ()=>{
+        if(confirm(T().confirmDeleteEntry)){
+          deleteEntry(id);
+        } else {
+          close();
+        }
+      });
+    }
   }
 
   function pickRandomEntry(){
@@ -2222,12 +2719,19 @@
     $('recordingStatusLine').style.display = 'none';
     $('uploadProgressWrap').style.display = 'none';
     $('uploadProgressFill').style.width = '0%';
+    $('presetTagBanner').style.display = 'none';
     editingId = null;
   }
 
-  function openAddSheet(){
+  function openAddSheet(presetTag){
     resetAddForm();
     $('addSheetTitle').textContent = T().addSheetTitleNew;
+    if(presetTag){
+      pendingTags = [presetTag];
+      renderTagPicker();
+      $('presetTagBannerText').textContent = T().presetTagBannerText(presetTag);
+      $('presetTagBanner').style.display = 'flex';
+    }
     $('addOverlay').classList.add('open');
   }
 
@@ -2267,7 +2771,7 @@
     $('addOverlay').classList.add('open');
   }
 
-  $('fabAdd').addEventListener('click', openAddSheet);
+  $('fabAdd').addEventListener('click', ()=> openAddSheet());
   $('cancelAddBtn').addEventListener('click', ()=> $('addOverlay').classList.remove('open'));
 
   function compressVideoMediaRecorderFallback(file, onProgress){
@@ -2909,32 +3413,80 @@
   });
 
   let locationSearchDebounce = null;
+  async function nominatimSearch(q, extraParams){
+    const params = 'q=' + encodeURIComponent(q) + '&format=json&limit=6' + (extraParams || '');
+    const res = await fetch('https://nominatim.openstreetmap.org/search?' + params, {
+      headers: { 'Accept-Language': currentLang === 'en' ? 'en' : 'zh' }
+    });
+    return res.json();
+  }
+
+  function looksLikePostalCode(q){
+    // North American ZIP (12345, 12345-6789) or Canadian postal code (A1A 1A1)
+    return /^\d{5}(-\d{4})?$/.test(q) || /^[A-Za-z]\d[A-Za-z]\s?\d[A-Za-z]\d$/.test(q);
+  }
+
+  function renderLocationResults(results){
+    const wrap = $('locationSearchResults');
+    wrap.innerHTML = '';
+    results.forEach(r => {
+      const row = document.createElement('div');
+      row.className = 'file-chip-row';
+      row.style.cursor = 'pointer';
+      row.innerHTML = '<span>📍</span><span class="file-chip-name">' + escapeHtml(r.display_name) + '</span>';
+      row.addEventListener('click', ()=>{
+        pendingLocation = { lat: parseFloat(r.lat), lng: parseFloat(r.lon), label: r.display_name };
+        renderLocationPreview();
+        $('locationPickerOverlay').classList.remove('open');
+      });
+      wrap.appendChild(row);
+    });
+  }
+
+  function runLocationSearch(q){
+    clearTimeout(locationSearchDebounce);
+    if(!q){ $('locationSearchResults').innerHTML = ''; return; }
+    (async () => {
+      try{
+        // A postal/zip code often needs the structured param to resolve well as free text
+        if(looksLikePostalCode(q)){
+          const postalResults = await nominatimSearch(q, '&postalcode=' + encodeURIComponent(q));
+          if(postalResults.length){ renderLocationResults(postalResults); return; }
+        }
+
+        let results = await nominatimSearch(q);
+        if(results.length){ renderLocationResults(results); return; }
+
+        // Nothing matched — the query may include extra descriptive words
+        // (e.g. "X off leash dog trail") that aren't part of the actual place name.
+        // Progressively trim trailing words and retry.
+        let words = q.split(/\s+/);
+        while(results.length === 0 && words.length > 1){
+          words = words.slice(0, -1);
+          results = await nominatimSearch(words.join(' '));
+        }
+        renderLocationResults(results);
+      }catch(e){ console.error('address search failed', e); }
+    })();
+  }
+
   $('locationSearchInput').addEventListener('input', (e)=>{
     clearTimeout(locationSearchDebounce);
     const q = e.target.value.trim();
     if(!q){ $('locationSearchResults').innerHTML = ''; return; }
-    locationSearchDebounce = setTimeout(async () => {
-      try{
-        const res = await fetch('https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(q) + '&format=json&limit=6', {
-          headers: { 'Accept-Language': currentLang === 'en' ? 'en' : 'zh' }
-        });
-        const results = await res.json();
-        const wrap = $('locationSearchResults');
-        wrap.innerHTML = '';
-        results.forEach(r => {
-          const row = document.createElement('div');
-          row.className = 'file-chip-row';
-          row.style.cursor = 'pointer';
-          row.innerHTML = '<span>📍</span><span class="file-chip-name">' + escapeHtml(r.display_name) + '</span>';
-          row.addEventListener('click', ()=>{
-            pendingLocation = { lat: parseFloat(r.lat), lng: parseFloat(r.lon), label: r.display_name };
-            renderLocationPreview();
-            $('locationPickerOverlay').classList.remove('open');
-          });
-          wrap.appendChild(row);
-        });
-      }catch(e){ console.error('address search failed', e); }
-    }, 400);
+    locationSearchDebounce = setTimeout(() => runLocationSearch(q), 400);
+  });
+  // Pasting a full address (e.g. copied from Google Maps) doesn't always fire a
+  // reliable 'input' event in every mobile browser, so handle paste explicitly too.
+  $('locationSearchInput').addEventListener('paste', ()=>{
+    setTimeout(() => runLocationSearch($('locationSearchInput').value.trim()), 30);
+  });
+  // Pressing Enter/Go should search immediately rather than waiting on the debounce.
+  $('locationSearchInput').addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter'){
+      e.preventDefault();
+      runLocationSearch(e.target.value.trim());
+    }
   });
 
   $('removeLocationBtn').addEventListener('click', ()=>{
@@ -3055,24 +3607,41 @@
   $('openMapsChooserOverlay').addEventListener('click', (e)=>{ if(e.target.id==='openMapsChooserOverlay') $('openMapsChooserOverlay').classList.remove('open'); });
   $('openGoogleMapsBtn').addEventListener('click', ()=>{
     if(!currentDetailLocation) return;
+    if(isWeChatBrowser()){ showToast(T().toastWeChatMapsBlocked); }
     const q = currentDetailLocation.label ? encodeURIComponent(currentDetailLocation.label) : (currentDetailLocation.lat + ',' + currentDetailLocation.lng);
-    window.location.href = 'https://www.google.com/maps/search/?api=1&query=' + q;
+    window.open('https://www.google.com/maps/search/?api=1&query=' + q, '_blank');
     $('openMapsChooserOverlay').classList.remove('open');
   });
   $('openAppleMapsBtn').addEventListener('click', ()=>{
     if(!currentDetailLocation) return;
+    if(isWeChatBrowser()){ showToast(T().toastWeChatMapsBlocked); }
     const params = [];
     if(currentDetailLocation.label){ params.push('q=' + encodeURIComponent(currentDetailLocation.label)); }
     params.push('ll=' + currentDetailLocation.lat + ',' + currentDetailLocation.lng);
-    window.location.href = 'https://maps.apple.com/?' + params.join('&');
+    window.open('https://maps.apple.com/?' + params.join('&'), '_blank');
     $('openMapsChooserOverlay').classList.remove('open');
   });
+  function isWeChatBrowser(){
+    return /MicroMessenger/i.test(navigator.userAgent);
+  }
+
+  async function copyTextWithFallback(text){
+    try{
+      await navigator.clipboard.writeText(text);
+      return true;
+    }catch(e){
+      // Clipboard API is blocked in some restricted in-app browsers (e.g. WeChat's built-in browser).
+      // window.prompt still works there and lets the user manually select & copy the text.
+      window.prompt(T().manualCopyPrompt, text);
+      return false;
+    }
+  }
+
   $('copyCoordinatesBtn').addEventListener('click', async ()=>{
     if(!currentDetailLocation) return;
-    try{
-      await navigator.clipboard.writeText(currentDetailLocation.lat + ', ' + currentDetailLocation.lng);
-      showToast(T().toastCoordinatesCopied);
-    }catch(e){ showToast(T().toastCoordinatesCopied); }
+    const text = currentDetailLocation.label || (currentDetailLocation.lat + ', ' + currentDetailLocation.lng);
+    const copied = await copyTextWithFallback(text);
+    if(copied){ showToast(T().toastCoordinatesCopied); }
     $('openMapsChooserOverlay').classList.remove('open');
   });
 
@@ -3306,7 +3875,13 @@
       renderRecent();
       renderRandom();
       renderForgotten();
+      if($('sectionTabsBar').children.length){
+        tabRenderFn(getActiveTabId())();
+      }
       showToast(T().toastSaved);
+      if(editingId){
+        openDetail(entry.id); // return to the note so the user can see what they just changed, instead of losing track of it
+      }
 
       persistIndex();
       persistMediaFor(entry);
@@ -3452,10 +4027,7 @@
       const displayName = nickname || entry.sharedBy;
       sharedLine = `<br><br>${T().sharedByLabel} ${escapeHtml(displayName)}<br>${formatDate(entry.sharedAt || entry.createdAt)}`;
     }
-    let tagsLine = '';
-    if(entry.tags && entry.tags.length){
-      tagsLine = `<br><br>${T().tagsLabel} ${escapeHtml(entry.tags.join('、'))}`;
-    }
+    renderDetailTagsRow(entry);
     if(entry.reminderDate){
       $('detailReminderLabel').textContent = formatReminderDate(entry.reminderDate);
       $('detailReminderDateInput').value = entry.reminderDate;
@@ -3463,8 +4035,34 @@
     } else {
       $('detailReminderWrap').style.display = 'none';
     }
-    $('infoBox').innerHTML = `${T().created}:<br>${formatDate(entry.createdAt)}<br><br>${T().lastEdited}:<br>${formatDate(entry.updatedAt)}${tagsLine}${sharedLine}`;
+    $('infoBox').innerHTML = `${T().created}:<br>${formatDate(entry.createdAt)}<br><br>${T().lastEdited}:<br>${formatDate(entry.updatedAt)}${sharedLine}`;
     $('detailOverlay').classList.add('open');
+  }
+
+  function renderDetailTagsRow(entry){
+    const row = $('detailTagsRow');
+    if(!entry.tags || entry.tags.length === 0){
+      row.style.display = 'none';
+      return;
+    }
+    row.innerHTML = '';
+    entry.tags.forEach(tag => {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'tag-chip';
+      chip.style.cssText = 'display:inline-flex; align-items:center; gap:5px; font-size:11.5px; padding:4px 10px;';
+      chip.innerHTML = `<span>${escapeHtml(tag)}</span><span style="opacity:0.55;">✕</span>`;
+      chip.addEventListener('click', ()=>{
+        if(confirm(T().confirmRemoveTagFromNote(tag))){
+          entry.tags = entry.tags.filter(t => t !== tag);
+          persistIndex();
+          renderDetailTagsRow(entry);
+          if($('sectionTabsBar').children.length){ tabRenderFn(getActiveTabId())(); }
+        }
+      });
+      row.appendChild(chip);
+    });
+    row.style.display = 'flex';
   }
 
   $('closeDetailBtn').addEventListener('click', ()=> $('detailOverlay').classList.remove('open'));
@@ -3756,12 +4354,6 @@
     const url = $('shareLinkInput').value;
     if(!url) return;
     window.open('https://social-plugins.line.me/lineit/share?url=' + encodeURIComponent(url), '_blank');
-  });
-  $('shareWeChatBtn').addEventListener('click', async ()=>{
-    const url = $('shareLinkInput').value;
-    if(!url) return;
-    try{ await navigator.clipboard.writeText(url); }catch(e){}
-    showToast(T().shareWeChatCopied);
   });
   $('shareMoreBtn').addEventListener('click', async ()=>{
     const url = $('shareLinkInput').value;
@@ -4460,6 +5052,12 @@
     renderRecent();
     renderRandom();
     renderForgotten();
+    if($('tagDetailOverlay').classList.contains('open') && currentTagDetailContext){
+      renderTagDetailList();
+    }
+    if($('sectionTabsBar').children.length){
+      tabRenderFn(getActiveTabId())();
+    }
     showToast(T().toastDeleted);
     persistIndex();
     storageAdapter.delete(mediaKey(id), false).catch(()=>{});
@@ -4561,6 +5159,7 @@
     renderRecent();
     renderRandom();
     renderForgotten();
+    if($('sectionTabsBar').children.length){ renderTabsBar(); }
     const q = $('searchInput').value.trim().toLowerCase();
     if(q !== ''){ runSearch(q); }
   }
@@ -4773,11 +5372,15 @@
       recentForgottenIds = [];
       loadEntries();
       loadTags();
+      loadTheme();
+      loadLanguage();
+      loadTabPreferences();
     });
   }
 
   loadTheme();
   loadLanguage();
+  loadTabPreferences();
 
   if('serviceWorker' in navigator){
     navigator.serviceWorker.register('sw.js').catch(e => console.error('service worker registration failed', e));
