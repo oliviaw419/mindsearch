@@ -440,16 +440,21 @@
       </div>
       <div id="recentTabContent">
         <div id="recentList"></div>
+        <button type="button" class="text-btn back-to-top-btn" style="margin-top:6px;" data-i18n="backToTop">Back to top</button>
       </div>
       <div id="myTagsTabContent" style="display:none;">
         <div id="myTagsList"></div>
+        <button type="button" class="text-btn" id="manageMyTabsBtn" style="margin-top:6px;" data-i18n="manageMyTabsAction">Manage my tabs</button>
+        <button type="button" class="text-btn back-to-top-btn" style="margin-top:6px;" data-i18n="backToTop">Back to top</button>
       </div>
       <div id="mySpotsTabContent" style="display:none;">
         <div id="mySpotsList"></div>
+        <button type="button" class="text-btn back-to-top-btn" style="margin-top:6px;" data-i18n="backToTop">Back to top</button>
       </div>
       <div id="upcomingDatesTabContent" style="display:none;">
         <div id="upcomingDatesList"></div>
         <button type="button" class="text-btn" id="viewAllRemindersBtn" style="margin-top:6px;" data-i18n="viewAllReminders">View all reminders</button>
+        <button type="button" class="text-btn back-to-top-btn" style="margin-top:6px;" data-i18n="backToTop">Back to top</button>
       </div>
     </div>
   </div>
@@ -1074,6 +1079,8 @@
       untaggedFilterLabel: "未分类",
       noSpotsYet: "还没有加过定位的笔记",
       viewAllReminders: "查看全部提醒",
+      backToTop: "回到顶部",
+      manageMyTabsAction: "管理我的标签页",
       todayLabel: "今天",
       tomorrowLabel: "明天",
       inNDaysLabel: (n) => `${n}天后`,
@@ -1309,6 +1316,8 @@
       noSpotsYet: "還沒有加過定位的筆記",
       viewAllReminders: "查看全部提醒",
       todayLabel: "今天",
+      backToTop: "回到頂部",
+      manageMyTabsAction: "管理我的標籤頁",
       tomorrowLabel: "明天",
       inNDaysLabel: (n) => `${n}天後`,
       inNWeeksLabel: (n) => `${n}週後`,
@@ -1544,6 +1553,8 @@
       viewAllReminders: "View all reminders",
       todayLabel: "Today",
       tomorrowLabel: "Tomorrow",
+      backToTop: "Back to top",
+      manageMyTabsAction: "Manage my tabs",
       inNDaysLabel: (n) => `In ${n} days`,
       inNWeeksLabel: (n) => `In ${n} week${n>1?'s':''}`,
       moreThanMonthLabel: "More than 1 month",
@@ -2345,6 +2356,14 @@
     renderRemindersList();
     $('remindersListOverlay').classList.add('open');
   });
+
+  document.querySelectorAll('.back-to-top-btn').forEach(btn => {
+    btn.addEventListener('click', ()=>{
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  });
+
+  $('manageMyTabsBtn').addEventListener('click', openTabManage);
 
   let tagDetailSortMode = 'recent';
   let tagDetailSearchQuery = '';
