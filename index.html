@@ -440,21 +440,25 @@
       </div>
       <div id="recentTabContent">
         <div id="recentList"></div>
-        <button type="button" class="text-btn back-to-top-btn" style="margin-top:6px;" data-i18n="backToTop">Back to top</button>
+        <button type="button" class="text-btn back-to-top-btn" style="margin-top:6px; display:block;" data-i18n="backToTop">↑ Back to top</button>
+        <div style="height:70px;"></div>
       </div>
       <div id="myTagsTabContent" style="display:none;">
         <div id="myTagsList"></div>
-        <button type="button" class="text-btn" id="manageMyTabsBtn" style="margin-top:6px;" data-i18n="manageMyTabsAction">Manage my tabs</button>
-        <button type="button" class="text-btn back-to-top-btn" style="margin-top:6px;" data-i18n="backToTop">Back to top</button>
+        <button type="button" class="text-btn" id="manageMyTabsBtn" style="margin-top:6px; display:block;" data-i18n="manageMyTabsAction">Manage my tabs</button>
+        <button type="button" class="text-btn back-to-top-btn" style="margin-top:6px; display:block;" data-i18n="backToTop">↑ Back to top</button>
+        <div style="height:70px;"></div>
       </div>
       <div id="mySpotsTabContent" style="display:none;">
         <div id="mySpotsList"></div>
-        <button type="button" class="text-btn back-to-top-btn" style="margin-top:6px;" data-i18n="backToTop">Back to top</button>
+        <button type="button" class="text-btn back-to-top-btn" style="margin-top:6px; display:block;" data-i18n="backToTop">↑ Back to top</button>
+        <div style="height:70px;"></div>
       </div>
       <div id="upcomingDatesTabContent" style="display:none;">
         <div id="upcomingDatesList"></div>
-        <button type="button" class="text-btn" id="viewAllRemindersBtn" style="margin-top:6px;" data-i18n="viewAllReminders">View all reminders</button>
-        <button type="button" class="text-btn back-to-top-btn" style="margin-top:6px;" data-i18n="backToTop">Back to top</button>
+        <button type="button" class="text-btn" id="viewAllRemindersBtn" style="margin-top:6px; display:block;" data-i18n="viewAllReminders">View all reminders</button>
+        <button type="button" class="text-btn back-to-top-btn" style="margin-top:6px; display:block;" data-i18n="backToTop">↑ Back to top</button>
+        <div style="height:70px;"></div>
       </div>
     </div>
   </div>
@@ -795,6 +799,7 @@
       </div>
     </div>
     <div class="detail-content" id="inboxItemContent"></div>
+    <div id="inboxItemBundleList" style="display:none; flex-direction:column; gap:6px; margin-top:8px;"></div>
     <div id="inboxItemVideoWrap" style="display:none; margin-top:12px;">
       <video id="inboxItemVideo" controls style="width:100%; border-radius:14px; display:block; background:#000;"></video>
     </div>
@@ -896,13 +901,18 @@
   <div class="sheet" style="max-width:420px; padding-bottom:14px;">
     <div class="detail-header">
       <div class="detail-title" id="tagDetailTitle" style="word-break:break-word;"></div>
-      <div style="position:relative; flex-shrink:0;">
+      <div style="display:flex; gap:8px; flex-shrink:0;">
+        <button type="button" id="tagShareIconBtn" title="Share" style="width:34px; height:34px; border-radius:10px; border:1px solid var(--line); background:var(--paper-raised); color:var(--ink-soft); cursor:pointer; display:flex; align-items:center; justify-content:center;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 10.5l6.8-3.9M8.6 13.5l6.8 3.9"/></svg>
+        </button>
+        <div style="position:relative;">
         <button type="button" id="tagSortIconBtn" title="Sort" style="width:34px; height:34px; border-radius:10px; border:1px solid var(--line); background:var(--paper-raised); color:var(--ink-soft); cursor:pointer; display:flex; align-items:center; justify-content:center;">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h13M3 12h9M3 17h5"/><path d="M17 4v16M17 4l-3 3M17 4l3 3"/></svg>
         </button>
         <div class="more-menu" id="tagSortMenu" style="min-width:140px;">
           <button type="button" id="tagSortRecentBtn" data-i18n="sortRecent">Recently Added</button>
           <button type="button" id="tagSortAlphaBtn" data-i18n="sortAlpha">A–Z</button>
+        </div>
         </div>
       </div>
     </div>
@@ -917,6 +927,18 @@
       <button class="primary-btn" id="tagDetailAddBtn" style="margin-top:0;">+ Add</button>
     </div>
     <button class="text-btn" id="closeTagDetailBtn" data-i18n="close">Close</button>
+  </div>
+</div>
+
+<div class="sheet-overlay" id="shareTagOverlay" style="z-index:465;">
+  <div class="sheet" style="max-width:380px;">
+    <h2 id="shareTagTitle" data-i18n="shareTagTitle">Share this tag</h2>
+    <p id="shareTagSubtitle" style="font-size:12.5px; color:var(--ink-soft); margin:-10px 0 14px;"></p>
+    <label class="field-label" data-i18n="sendToLabel">Send to</label>
+    <div id="shareTagContactChipRow" style="display:flex; gap:8px; flex-wrap:wrap; margin:8px 0 10px;"></div>
+    <input class="field" id="shareTagEmailInput" type="email" data-i18n-placeholder="orEnterEmail" placeholder="or enter an email">
+    <button class="primary-btn" id="shareTagSendBtn" style="margin-top:14px;" data-i18n="sendAction">Send</button>
+    <button class="text-btn" id="closeShareTagBtn" data-i18n="cancel">Cancel</button>
   </div>
 </div>
 
@@ -1079,7 +1101,7 @@
       untaggedFilterLabel: "未分类",
       noSpotsYet: "还没有加过定位的笔记",
       viewAllReminders: "查看全部提醒",
-      backToTop: "回到顶部",
+      backToTop: "↑ 回到顶部",
       manageMyTabsAction: "管理我的标签页",
       todayLabel: "今天",
       tomorrowLabel: "明天",
@@ -1259,6 +1281,18 @@
       mailtoSubject: (title) => `${title} —— 来自 Mind Search 的分享`,
       mailtoBody: (fromEmail, url) => `${fromEmail} 用 Mind Search 给你分享了一条笔记：\n\n${url}\n\n打开链接就能看到内容。如果你也想记录和搜索自己的知识，可以顺手注册一个 Mind Search 账号，注册后我们分享的笔记就能直接同步到你自己的账号里啦。`,
       savedFromInbox: "已存进你的库",
+      shareTagTitle: "分享这个标签",
+      sendToLabel: "发送给",
+      orEnterEmail: "或输入邮箱",
+      sendAction: "发送",
+      shareTagSubtitle: (tag, n) => `把"${tag}"标签下的 ${n} 条笔记打包分享`,
+      toastTagBundleTooLarge: "这个标签下的笔记太多/太大了，打包不了，试试分成几批分享",
+      toastRecipientNotRegistered: "对方还没有注册 Mind Search 账号，没法直接分享",
+      shareTagSent: (n) => `已分享 ${n} 条笔记`,
+      tagBundleInboxTitle: (n, tag) => `分享了 ${n} 条"${tag}"标签下的笔记给你`,
+      tagBundleInboxHint: "点「保存」会把这些笔记加进你的库，并自动打上这个标签。",
+      confirmMergeTagBundle: (tag) => `你已经有一个叫"${tag}"的标签了，要把这些笔记合并进去吗？（选择"取消"会用一个新名字单独保留）`,
+      savedTagBundle: (n, tag) => `已保存 ${n} 条笔记到"${tag}"`,
       discardedFromInbox: "已丢弃",
       contactAdded: "已添加",
       contactRemoved: "已移除",
@@ -1316,7 +1350,7 @@
       noSpotsYet: "還沒有加過定位的筆記",
       viewAllReminders: "查看全部提醒",
       todayLabel: "今天",
-      backToTop: "回到頂部",
+      backToTop: "↑ 回到頂部",
       manageMyTabsAction: "管理我的標籤頁",
       tomorrowLabel: "明天",
       inNDaysLabel: (n) => `${n}天後`,
@@ -1490,6 +1524,18 @@
       mailtoBody: (fromEmail, url) => `${fromEmail} 用 Mind Search 給你分享了一則筆記：\n\n${url}\n\n打開連結就能看到內容。如果你也想記錄和搜尋自己的知識，可以順手註冊一個 Mind Search 帳號，註冊後我們分享的筆記就能直接同步到你自己的帳號裡囉。`,
       savedFromInbox: "已存進你的庫",
       discardedFromInbox: "已丟棄",
+      shareTagTitle: "分享這個標籤",
+      sendToLabel: "傳送給",
+      orEnterEmail: "或輸入信箱",
+      sendAction: "傳送",
+      shareTagSubtitle: (tag, n) => `把「${tag}」標籤下的 ${n} 則筆記打包分享`,
+      toastTagBundleTooLarge: "這個標籤下的筆記太多/太大了，打包不了，試試分成幾批分享",
+      toastRecipientNotRegistered: "對方還沒有註冊 Mind Search 帳號，沒法直接分享",
+      shareTagSent: (n) => `已分享 ${n} 則筆記`,
+      tagBundleInboxTitle: (n, tag) => `分享了 ${n} 則「${tag}」標籤下的筆記給你`,
+      tagBundleInboxHint: "點「儲存」會把這些筆記加進你的庫，並自動貼上這個標籤。",
+      confirmMergeTagBundle: (tag) => `你已經有一個叫「${tag}」的標籤了，要把這些筆記合併進去嗎？（選擇「取消」會用一個新名字單獨保留）`,
+      savedTagBundle: (n, tag) => `已儲存 ${n} 則筆記到「${tag}」`,
       contactAdded: "已新增",
       contactRemoved: "已移除",
       confirmDiscardInboxItem: "確定不要這則分享的筆記嗎？",
@@ -1553,7 +1599,7 @@
       viewAllReminders: "View all reminders",
       todayLabel: "Today",
       tomorrowLabel: "Tomorrow",
-      backToTop: "Back to top",
+      backToTop: "↑ Back to top",
       manageMyTabsAction: "Manage my tabs",
       inNDaysLabel: (n) => `In ${n} days`,
       inNWeeksLabel: (n) => `In ${n} week${n>1?'s':''}`,
@@ -1721,6 +1767,18 @@
       savedFromInbox: "Saved to your library",
       discardedFromInbox: "Discarded",
       contactAdded: "Added",
+      shareTagTitle: "Share this tag",
+      sendToLabel: "Send to",
+      orEnterEmail: "or enter an email",
+      sendAction: "Send",
+      shareTagSubtitle: (tag, n) => `Bundle ${n} notes under "${tag}" and share them`,
+      toastTagBundleTooLarge: "This tag has too many/too large notes to bundle — try sharing in smaller batches",
+      toastRecipientNotRegistered: "This person doesn't have a Mind Search account yet, so this can't be shared directly",
+      shareTagSent: (n) => `Shared ${n} notes`,
+      tagBundleInboxTitle: (n, tag) => `Shared ${n} notes under "${tag}" with you`,
+      tagBundleInboxHint: "Tapping Save will add these notes to your library, automatically tagged.",
+      confirmMergeTagBundle: (tag) => `You already have a tag called "${tag}" — merge these notes into it? (Choose Cancel to keep them under a new tag name instead)`,
+      savedTagBundle: (n, tag) => `Saved ${n} notes to "${tag}"`,
       contactRemoved: "Removed",
       confirmDiscardInboxItem: "Discard this shared note?",
       confirmRemoveContact: "Remove this friend?",
@@ -1913,6 +1971,9 @@
     checkRemindersDue();
     if(typeof getActiveTabId === 'function' && $('sectionTabsBar').children.length){
       tabRenderFn(getActiveTabId())();
+    }
+    if(entries.some(e => e.reminderDate) && isSignedIn && window.Notification && Notification.permission === 'granted'){
+      ensurePushSubscriptionSaved(); // safe to do silently — permission was already granted, no new prompt involved
     }
   }
 
@@ -2429,8 +2490,11 @@
     renderTagDetailList();
     $('tagDetailAddBtn').style.display = config.presetTag ? 'block' : 'none';
     if(config.presetTag){ $('tagDetailAddBtn').textContent = T().addToTagAction(config.presetTag); }
+    $('tagShareIconBtn').style.display = config.presetTag ? 'flex' : 'none';
     $('tagDetailOverlay').classList.add('open');
   }
+
+  $('tagShareIconBtn').addEventListener('click', ()=> openShareTagSheet());
 
   $('tagDetailAddBtn').addEventListener('click', ()=>{
     if(!currentTagDetailContext || !currentTagDetailContext.presetTag) return;
@@ -3393,13 +3457,15 @@
     $('locationPreviewWrap').style.display = 'block';
   }
 
+  const GOOGLE_PLACES_API_KEY = 'AIzaSyC4eqza9CzCrAJzcuGUZd-Lr4KbR-BAVac';
+
   async function reverseGeocode(lat, lng){
     try{
-      const res = await fetch('https://nominatim.openstreetmap.org/reverse?lat=' + lat + '&lon=' + lng + '&format=json', {
-        headers: { 'Accept-Language': currentLang === 'en' ? 'en' : 'zh' }
-      });
+      const lang = currentLang === 'en' ? 'en' : 'zh-CN';
+      const res = await fetch('https://maps.googleapis.com/maps/api/geocode/json?latlng=' + lat + ',' + lng + '&key=' + GOOGLE_PLACES_API_KEY + '&language=' + lang);
       const data = await res.json();
-      return data && data.display_name ? data.display_name : null;
+      if(data.results && data.results.length){ return data.results[0].formatted_address; }
+      return null;
     }catch(e){ return null; }
   }
 
@@ -3432,17 +3498,29 @@
   });
 
   let locationSearchDebounce = null;
-  async function nominatimSearch(q, extraParams){
-    const params = 'q=' + encodeURIComponent(q) + '&format=json&limit=6' + (extraParams || '');
-    const res = await fetch('https://nominatim.openstreetmap.org/search?' + params, {
-      headers: { 'Accept-Language': currentLang === 'en' ? 'en' : 'zh' }
-    });
-    return res.json();
-  }
 
-  function looksLikePostalCode(q){
-    // North American ZIP (12345, 12345-6789) or Canadian postal code (A1A 1A1)
-    return /^\d{5}(-\d{4})?$/.test(q) || /^[A-Za-z]\d[A-Za-z]\s?\d[A-Za-z]\d$/.test(q);
+  async function placesTextSearch(q){
+    try{
+      const res = await fetch('https://places.googleapis.com/v1/places:searchText', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Goog-Api-Key': GOOGLE_PLACES_API_KEY,
+          'X-Goog-FieldMask': 'places.displayName,places.formattedAddress,places.location'
+        },
+        body: JSON.stringify({ textQuery: q })
+      });
+      const data = await res.json();
+      if(!data.places) return [];
+      return data.places.map(p => ({
+        lat: p.location.latitude,
+        lon: p.location.longitude,
+        display_name: (p.displayName && p.displayName.text ? p.displayName.text + ' — ' : '') + (p.formattedAddress || '')
+      }));
+    }catch(e){
+      console.error('Places API search failed', e);
+      return [];
+    }
   }
 
   function renderLocationResults(results){
@@ -3465,28 +3543,7 @@
   function runLocationSearch(q){
     clearTimeout(locationSearchDebounce);
     if(!q){ $('locationSearchResults').innerHTML = ''; return; }
-    (async () => {
-      try{
-        // A postal/zip code often needs the structured param to resolve well as free text
-        if(looksLikePostalCode(q)){
-          const postalResults = await nominatimSearch(q, '&postalcode=' + encodeURIComponent(q));
-          if(postalResults.length){ renderLocationResults(postalResults); return; }
-        }
-
-        let results = await nominatimSearch(q);
-        if(results.length){ renderLocationResults(results); return; }
-
-        // Nothing matched — the query may include extra descriptive words
-        // (e.g. "X off leash dog trail") that aren't part of the actual place name.
-        // Progressively trim trailing words and retry.
-        let words = q.split(/\s+/);
-        while(results.length === 0 && words.length > 1){
-          words = words.slice(0, -1);
-          results = await nominatimSearch(words.join(' '));
-        }
-        renderLocationResults(results);
-      }catch(e){ console.error('address search failed', e); }
-    })();
+    placesTextSearch(q).then(renderLocationResults);
   }
 
   $('locationSearchInput').addEventListener('input', (e)=>{
@@ -3611,6 +3668,7 @@
     $('detailReminderLabel').textContent = formatReminderDate(entry.reminderDate);
     checkRemindersDue();
     showToast(T().toastSaved);
+    maybeEnablePushNotifications();
   });
   $('detailRemoveReminderBtn').addEventListener('click', ()=>{
     const entry = entries.find(en => en.id === currentDetailId);
@@ -4317,6 +4375,90 @@
 
   let currentShareEntry = null;
 
+  function toEntrySnapshot(entry){
+    return {
+      title: entry.title, content: entry.content,
+      images: entry.images || [], audio: entry.audio || null,
+      files: entry.files || [], video: entry.video || null,
+      location: entry.location || null
+    };
+  }
+
+  async function openShareTagSheet(){
+    if(!isSignedIn){
+      showToast(T().toastFileNeedsAccount);
+      showAuthOverlay();
+      return;
+    }
+    if(!currentTagDetailContext || !currentTagDetailContext.presetTag) return;
+    const tagName = currentTagDetailContext.presetTag;
+    const notes = currentTagDetailContext.filterFn(entries);
+    $('shareTagSubtitle').textContent = T().shareTagSubtitle(tagName, notes.length);
+    $('shareTagEmailInput').value = '';
+    const row = $('shareTagContactChipRow');
+    row.innerHTML = '';
+    const contacts = await listContacts();
+    contacts.forEach(c => {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'tag-chip';
+      chip.textContent = c.nickname || c.email;
+      chip.addEventListener('click', async ()=>{
+        const ok = await shareTagBundleToEmail(tagName, notes, c.email);
+        if(ok){ $('shareTagOverlay').classList.remove('open'); }
+      });
+      row.appendChild(chip);
+    });
+    $('shareTagOverlay').classList.add('open');
+  }
+
+  async function shareTagBundleToEmail(tagName, notes, email){
+    const fb = window.__firebase;
+    const me = fb.auth.currentUser;
+    if(!me) return false;
+    if(notes.length === 0) return false;
+    const snapshots = notes.map(toEntrySnapshot);
+    const payloadSize = JSON.stringify(snapshots).length;
+    if(payloadSize > 900000){
+      showToast(T().toastTagBundleTooLarge);
+      return false;
+    }
+    const recipientUid = await lookupUidByEmail(email);
+    if(!recipientUid){
+      showToast(T().toastRecipientNotRegistered);
+      return false;
+    }
+    const itemId = cryptoId();
+    try{
+      await fb.setDoc(fb.doc(fb.db, 'users', recipientUid, 'inbox', itemId), {
+        type: 'tagBundle',
+        fromEmail: me.email,
+        tagName: tagName,
+        notes: snapshots,
+        noteCount: snapshots.length,
+        createdAt: Date.now()
+      });
+      touchContactSharedAt(email);
+      showToast(T().shareTagSent(snapshots.length));
+      return true;
+    }catch(e){
+      console.error('share tag bundle failed', e);
+      showToast(T().shareCreateFail);
+      return false;
+    }
+  }
+
+  $('shareTagSendBtn').addEventListener('click', async ()=>{
+    const email = $('shareTagEmailInput').value.trim();
+    if(!email || !currentTagDetailContext || !currentTagDetailContext.presetTag) return;
+    const tagName = currentTagDetailContext.presetTag;
+    const notes = currentTagDetailContext.filterFn(entries);
+    const ok = await shareTagBundleToEmail(tagName, notes, email);
+    if(ok){ $('shareTagOverlay').classList.remove('open'); }
+  });
+  $('closeShareTagBtn').addEventListener('click', ()=> $('shareTagOverlay').classList.remove('open'));
+  $('shareTagOverlay').addEventListener('click', (e)=>{ if(e.target.id==='shareTagOverlay') $('shareTagOverlay').classList.remove('open'); });
+
   async function renderContactChips(){
     const row = $('contactChipRow');
     row.innerHTML = '';
@@ -4487,7 +4629,7 @@
   $('contactsOverlay').addEventListener('click', (e)=>{ if(e.target.id==='contactsOverlay') $('contactsOverlay').classList.remove('open'); });
 
   // ---------- Help & Feedback ----------
-  const ADMIN_EMAIL = 'yuyamiya@gmail.com';
+  const ADMIN_EMAIL = 'oliviaw419@gmail.com';
   let currentFeedbackThreadUid = null;
 
   function isAdmin(){
@@ -4776,10 +4918,17 @@
       const nickname = item.fromEmail ? await getContactNickname(item.fromEmail) : null;
       const row = document.createElement('div');
       row.style.cssText = 'padding:12px 14px; background:var(--paper-raised); border-radius:12px; border:1px solid var(--line); cursor:pointer;';
-      row.innerHTML = `
-        <div style="font-size:12px; color:var(--ink-soft); margin-bottom:2px;">${escapeHtml(nickname || item.fromEmail || '')}</div>
-        <div style="font-family:'Fraunces',serif; font-size:15px; font-weight:500; color:var(--ink);">${escapeHtml(item.title)}</div>
-      `;
+      if(item.type === 'tagBundle'){
+        row.innerHTML = `
+          <div style="font-size:12px; color:var(--ink-soft); margin-bottom:2px;">${escapeHtml(nickname || item.fromEmail || '')}</div>
+          <div style="font-family:'Fraunces',serif; font-size:15px; font-weight:500; color:var(--ink);">${T().tagBundleInboxTitle(item.noteCount, item.tagName)}</div>
+        `;
+      } else {
+        row.innerHTML = `
+          <div style="font-size:12px; color:var(--ink-soft); margin-bottom:2px;">${escapeHtml(nickname || item.fromEmail || '')}</div>
+          <div style="font-family:'Fraunces',serif; font-size:15px; font-weight:500; color:var(--ink);">${escapeHtml(item.title)}</div>
+        `;
+      }
       row.addEventListener('click', ()=> openInboxItemDetail(item));
       list.appendChild(row);
     }
@@ -4800,6 +4949,28 @@
     currentInboxItem = item;
     const nickname = item.fromEmail ? await getContactNickname(item.fromEmail) : null;
     $('inboxItemFrom').textContent = nickname || item.fromEmail || '';
+
+    if(item.type === 'tagBundle'){
+      $('inboxItemTitle').textContent = T().tagBundleInboxTitle(item.noteCount, item.tagName);
+      $('inboxItemContent').textContent = T().tagBundleInboxHint;
+      $('inboxItemVideoWrap').style.display = 'none';
+      $('inboxItemAudioRow').style.display = 'none';
+      $('inboxItemPhotos').style.display = 'none';
+      $('inboxItemFilesList').innerHTML = '';
+      const bundleList = $('inboxItemBundleList');
+      bundleList.innerHTML = '';
+      (item.notes || []).forEach(n => {
+        const row = document.createElement('div');
+        row.className = 'file-chip-row';
+        row.innerHTML = `<span>📄</span><span class="file-chip-name">${escapeHtml(n.title)}</span>`;
+        bundleList.appendChild(row);
+      });
+      bundleList.style.display = 'flex';
+      $('inboxItemOverlay').classList.add('open');
+      return;
+    }
+    $('inboxItemBundleList').style.display = 'none';
+
     $('inboxItemTitle').textContent = item.title || '';
     $('inboxItemContent').textContent = item.content || '';
     if(item.video){
@@ -4862,10 +5033,15 @@
   });
 
   async function saveInboxItemToLibrary(item){
+    if(item.type === 'tagBundle'){
+      await saveTagBundleToLibrary(item);
+      return;
+    }
     const newEntry = {
       id: cryptoId(), title: item.title, content: item.content || '',
       forgetCount:0, pinned:false,
       images: item.images||[], audio: item.audio||null, files: item.files||[],
+      video: item.video || null, location: item.location || null,
       imageCount: (item.images||[]).length, hasAudio: !!item.audio,
       sharedBy: item.fromEmail || null,
       sharedAt: item.createdAt || Date.now(),
@@ -4882,6 +5058,46 @@
     persistMediaFor(newEntry);
     await removeInboxItem(item.id);
     showToast(T().savedFromInbox);
+  }
+
+  async function saveTagBundleToLibrary(item){
+    let tagName = item.tagName;
+    const alreadyHasTag = allTags.includes(tagName);
+    if(alreadyHasTag){
+      const merge = confirm(T().confirmMergeTagBundle(tagName));
+      if(!merge){
+        // keep them separate by giving the incoming notes a distinct tag name
+        let suffix = 2;
+        let candidate = `${tagName} (${suffix})`;
+        while(allTags.includes(candidate)){ suffix++; candidate = `${tagName} (${suffix})`; }
+        tagName = candidate;
+      }
+    }
+    if(!allTags.includes(tagName)){
+      allTags.push(tagName);
+      persistTags();
+    }
+    const now = Date.now();
+    (item.notes || []).forEach(n => {
+      const newEntry = {
+        id: cryptoId(), title: n.title, content: n.content || '',
+        forgetCount:0, pinned:false,
+        images: n.images||[], audio: n.audio||null, files: n.files||[],
+        video: n.video || null, location: n.location || null,
+        imageCount: (n.images||[]).length, hasAudio: !!n.audio,
+        tags: [tagName],
+        sharedBy: item.fromEmail || null,
+        sharedAt: item.createdAt || now,
+        createdAt: now, updatedAt: now
+      };
+      entries.push(newEntry);
+      persistMediaFor(newEntry);
+    });
+    renderRecent(); renderRandom(); renderForgotten();
+    if($('sectionTabsBar').children.length){ tabRenderFn(getActiveTabId())(); }
+    persistIndex();
+    await removeInboxItem(item.id);
+    showToast(T().savedTagBundle((item.notes||[]).length, tagName));
   }
 
   async function removeInboxItem(itemId){
