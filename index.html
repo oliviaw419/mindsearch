@@ -5889,21 +5889,11 @@
     updateAuthModeUI();
   });
 
-  function isStandalonePWA(){
-    return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-  }
-
   $('googleSignInBtn').addEventListener('click', async ()=>{
     clearAuthError();
     const fb = window.__firebase;
     try{
-      if(isStandalonePWA()){
-        // Popup-based sign-in is unreliable inside an installed/standalone PWA (no real browser
-        // chrome to host the popup window), so use a full-page redirect there instead.
-        await fb.signInWithRedirect(fb.auth, new fb.GoogleAuthProvider());
-      } else {
-        await fb.signInWithPopup(fb.auth, new fb.GoogleAuthProvider());
-      }
+      await fb.signInWithPopup(fb.auth, new fb.GoogleAuthProvider());
     }catch(e){
       console.error(e);
       showAuthError(mapAuthError(e));
