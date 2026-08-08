@@ -918,7 +918,12 @@
 <div class="sheet-overlay" id="tagDetailOverlay" style="z-index:450;">
   <div class="sheet" style="max-width:420px; padding-bottom:14px;">
     <div class="detail-header">
-      <div class="detail-title" id="tagDetailTitle" style="word-break:break-word;"></div>
+      <div style="display:flex; align-items:center; gap:6px; flex:1; min-width:0;">
+        <div class="detail-title" id="tagDetailTitle" style="word-break:break-word;"></div>
+        <button type="button" id="tagRenameIconBtn" title="Rename" style="display:none; flex-shrink:0; width:24px; height:24px; border:none; background:none; color:var(--ink-soft); opacity:0.6; cursor:pointer; align-items:center; justify-content:center;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4z"/></svg>
+        </button>
+      </div>
       <div style="display:flex; gap:8px; flex-shrink:0;">
         <button type="button" id="tagShareIconBtn" title="Share" style="width:34px; height:34px; border-radius:10px; border:1px solid var(--line); background:var(--paper-raised); color:var(--ink-soft); cursor:pointer; display:flex; align-items:center; justify-content:center;">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"/><path d="M7.5 8.5L12 4l4.5 4.5"/><path d="M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>
@@ -971,7 +976,8 @@
   import {
     getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult,
     createUserWithEmailAndPassword, signInWithEmailAndPassword,
-    sendPasswordResetEmail, onAuthStateChanged, signOut
+    sendPasswordResetEmail, onAuthStateChanged, signOut,
+    setPersistence, indexedDBLocalPersistence, browserLocalPersistence
   } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
   import {
     getFirestore, doc, getDoc, setDoc, deleteDoc,
@@ -994,6 +1000,10 @@
   const auth = getAuth(app);
   const db = getFirestore(app);
   const storage = getStorage(app);
+
+  setPersistence(auth, indexedDBLocalPersistence).catch(() => {
+    setPersistence(auth, browserLocalPersistence).catch((e) => console.error('setPersistence failed', e));
+  });
 
   window.__firebase = {
     auth, db, storage, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult,
@@ -1217,8 +1227,9 @@
       viaPublicLink: "（通过公开链接）",
       unsendAction: "撤回",
       confirmUnsendShare: (who) => `撤回分享给 ${who} 的这份？`,
-      toastUnsendSuccess: "已撤回",
-      toastUnsendAlreadyProcessed: "对方已经处理过了，没法撤回",
+      unsendSuccessMessage: (who) => `已经撤回分享给 ${who} 的这份笔记，对方收件箱里不会再看到它。`,
+      unsendFailedSavedMessage: (who) => `没法撤回——${who} 已经把这条笔记保存到自己的库里了，撤回只能作用于对方还没处理的分享。`,
+      unsendFailedDiscardedMessage: (who) => `没法撤回——${who} 已经看过这条笔记（选择了丢弃，没有保存）。内容已经展示给对方看过，如果担心信息被截图或记下，建议直接联系对方确认。`,
       allowEditLabel: "允许对方也能编辑这条笔记",
       sharedOwnerBadge: "共同编辑中，对方改动会同步给你",
       sharedCollabBadge: (who) => who ? `与 ${who} 共同编辑` : `共同编辑中`,
@@ -1469,8 +1480,9 @@
       viaPublicLink: "（透過公開連結）",
       unsendAction: "撤回",
       confirmUnsendShare: (who) => `撤回分享給 ${who} 的這份？`,
-      toastUnsendSuccess: "已撤回",
-      toastUnsendAlreadyProcessed: "對方已經處理過了，沒法撤回",
+      unsendSuccessMessage: (who) => `已經撤回分享給 ${who} 的這份筆記，對方收件匣裡不會再看到它。`,
+      unsendFailedSavedMessage: (who) => `沒法撤回——${who} 已經把這則筆記儲存到自己的庫裡了，撤回只能作用於對方還沒處理的分享。`,
+      unsendFailedDiscardedMessage: (who) => `沒法撤回——${who} 已經看過這則筆記（選擇了丟棄，沒有儲存）。內容已經展示給對方看過，如果擔心資訊被截圖或記下，建議直接聯絡對方確認。`,
       remindersDueBannerText: (n) => `你有 ${n} 則筆記快到提醒日子了`,
       remindersDueTitle: "提醒日期到了",
       goToReminders: "去看看",
@@ -1731,8 +1743,9 @@
       viaPublicLink: "(via public link)",
       unsendAction: "Unsend",
       confirmUnsendShare: (who) => `Unsend the copy shared with ${who}?`,
-      toastUnsendSuccess: "Unsent",
-      toastUnsendAlreadyProcessed: "This has already been processed on their end — can't unsend",
+      unsendSuccessMessage: (who) => `Unsent — the copy shared with ${who} has been removed from their inbox.`,
+      unsendFailedSavedMessage: (who) => `Can't unsend — ${who} already saved this note to their own library. Unsending only works before the other person has acted on it.`,
+      unsendFailedDiscardedMessage: (who) => `Can't unsend — ${who} already viewed this note (they discarded it without saving). The content was shown to them already; if you're worried it was screenshotted or noted down, it may be worth reaching out to them directly.`,
       reminderLabelShort: "Reminder date",
       reminderLabel: "Reminder date:",
       remindersDueBannerText: (n) => `You have ${n} notes with reminders due`,
@@ -2576,8 +2589,7 @@
     $('tagDetailSearchIcon').style.display = '';
     $('tagSortMenu').classList.remove('open');
     $('tagDetailTitle').textContent = config.title;
-    $('tagDetailTitle').style.cursor = config.presetTag ? 'text' : '';
-    $('tagDetailTitle').title = config.presetTag ? T().dblClickToRenameHint : '';
+    $('tagRenameIconBtn').style.display = config.presetTag ? 'flex' : 'none';
     renderTagDetailList();
     $('tagDetailAddBtn').style.display = config.presetTag ? 'block' : 'none';
     if(config.presetTag){ $('tagDetailAddBtn').textContent = T().addToTagAction(config.presetTag); }
@@ -2585,34 +2597,62 @@
     $('tagDetailOverlay').classList.add('open');
   }
 
-  $('tagDetailTitle').addEventListener('dblclick', ()=>{
+  function beginInlineTagRename(){
     if(!currentTagDetailContext || !currentTagDetailContext.presetTag) return;
     const oldName = currentTagDetailContext.presetTag;
-    const input = prompt(T().renameTagPrompt, oldName);
-    if(input === null) return;
-    const newName = input.trim();
-    if(!newName || newName === oldName) return;
-    if(allTags.includes(newName)){
-      showToast(T().toastTagNameTaken);
-      return;
-    }
-    allTags = allTags.map(t => t === oldName ? newName : t);
-    persistTags();
-    entries.forEach(e => {
-      if(e.tags && e.tags.includes(oldName)){
-        e.tags = e.tags.map(t => t === oldName ? newName : t);
+    const titleEl = $('tagDetailTitle');
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = oldName;
+    input.className = 'detail-title';
+    input.style.cssText = 'word-break:break-word; border:none; border-bottom:2px solid var(--plum-deep); background:transparent; padding:0; width:100%; font:inherit; color:inherit; outline:none;';
+    titleEl.replaceWith(input);
+    input.focus();
+    input.select();
+
+    let settled = false;
+    function commit(){
+      if(settled) return;
+      settled = true;
+      const newName = input.value.trim();
+      input.replaceWith(titleEl);
+      if(!newName || newName === oldName){ titleEl.textContent = oldName; return; }
+      if(allTags.includes(newName)){
+        showToast(T().toastTagNameTaken);
+        titleEl.textContent = oldName;
+        return;
       }
+      allTags = allTags.map(t => t === oldName ? newName : t);
+      persistTags();
+      entries.forEach(e => {
+        if(e.tags && e.tags.includes(oldName)){
+          e.tags = e.tags.map(t => t === oldName ? newName : t);
+        }
+      });
+      persistIndex();
+      showToast(T().toastTagRenamed);
+      if($('sectionTabsBar').children.length){ tabRenderFn(getActiveTabId())(); }
+      openTagDetail({
+        title: newName,
+        filterFn: (es) => es.filter(e => e.tags && e.tags.includes(newName)),
+        presetTag: newName
+      });
+    }
+    function cancel(){
+      if(settled) return;
+      settled = true;
+      input.replaceWith(titleEl);
+      titleEl.textContent = oldName;
+    }
+    input.addEventListener('blur', commit);
+    input.addEventListener('keydown', (e)=>{
+      if(e.key === 'Enter'){ e.preventDefault(); input.blur(); }
+      if(e.key === 'Escape'){ e.preventDefault(); cancel(); }
     });
-    persistIndex();
-    showToast(T().toastTagRenamed);
-    if($('sectionTabsBar').children.length){ tabRenderFn(getActiveTabId())(); }
-    // rebuild the detail view's filter to use the new name and refresh in place
-    openTagDetail({
-      title: newName,
-      filterFn: (es) => es.filter(e => e.tags && e.tags.includes(newName)),
-      presetTag: newName
-    });
-  });
+  }
+
+  $('tagRenameIconBtn').addEventListener('click', beginInlineTagRename);
+  $('tagDetailTitle').addEventListener('dblclick', beginInlineTagRename);
 
   $('tagShareIconBtn').addEventListener('click', ()=> openShareTagSheet());
 
@@ -4320,11 +4360,15 @@
           entry.sharedTo = entry.sharedTo.filter((s,i) => i !== idx);
           persistIndex();
           renderDetailSharedTo(entry);
-          showToast(T().toastUnsendSuccess);
-        } else if(result.reason === 'alreadyProcessed'){
-          showToast(T().toastUnsendAlreadyProcessed);
+          alert(T().unsendSuccessMessage(who));
+        } else if(result.reason === 'saved'){
+          alert(T().unsendFailedSavedMessage(who));
+        } else if(result.reason === 'discarded'){
+          alert(T().unsendFailedDiscardedMessage(who));
+        } else if(result.reason === 'notFound'){
+          alert(T().unsendFailedSavedMessage(who));
         } else {
-          showToast(T().shareCreateFail);
+          alert(T().shareCreateFail);
         }
       });
       wrap.appendChild(row);
@@ -4605,7 +4649,14 @@
         const itemRef = fb.doc(fb.db, 'users', shareRecord.recipientUid, 'inbox', shareRecord.targetId);
         const snap = await fb.getDoc(itemRef);
         if(!snap.exists()){
-          return { ok:false, reason:'alreadyProcessed' };
+          return { ok:false, reason:'notFound' }; // very old share, predates status tracking
+        }
+        const status = snap.data().status;
+        if(status === 'saved'){
+          return { ok:false, reason:'saved' };
+        }
+        if(status === 'discarded'){
+          return { ok:false, reason:'discarded' };
         }
         await fb.deleteDoc(itemRef);
         return { ok:true };
@@ -5227,7 +5278,7 @@
     try{
       const q = fb.query(fb.collection(fb.db, 'users', fb.auth.currentUser.uid, 'inbox'), fb.orderBy('createdAt', 'desc'));
       const snap = await fb.getDocs(q);
-      return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      return snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(item => !item.status || item.status === 'pending');
     }catch(e){ console.error('list inbox failed', e); return []; }
   }
 
@@ -5390,7 +5441,7 @@
     renderRecent(); renderRandom(); renderForgotten();
     persistIndex();
     persistMediaFor(newEntry);
-    await removeInboxItem(item.id);
+    await markInboxItemStatus(item.id, 'saved');
     showToast(T().savedFromInbox);
   }
 
@@ -5430,7 +5481,7 @@
     renderRecent(); renderRandom(); renderForgotten();
     if($('sectionTabsBar').children.length){ tabRenderFn(getActiveTabId())(); }
     persistIndex();
-    await removeInboxItem(item.id);
+    await markInboxItemStatus(item.id, 'saved');
     showToast(T().savedTagBundle((item.notes||[]).length, tagName));
   }
 
@@ -5460,10 +5511,10 @@
   });
   $('tagBundleConflictOverlay').addEventListener('click', (e)=>{ if(e.target.id==='tagBundleConflictOverlay'){ $('tagBundleConflictOverlay').classList.remove('open'); pendingTagBundleItem = null; } });
 
-  async function removeInboxItem(itemId){
+  async function markInboxItemStatus(itemId, status){
     const fb = window.__firebase;
     if(!fb.auth.currentUser) return;
-    try{ await fb.deleteDoc(fb.doc(fb.db, 'users', fb.auth.currentUser.uid, 'inbox', itemId)); }catch(e){}
+    try{ await fb.setDoc(fb.doc(fb.db, 'users', fb.auth.currentUser.uid, 'inbox', itemId), { status }, { merge: true }); }catch(e){ console.error('markInboxItemStatus failed', e); }
     refreshInboxBadge();
   }
 
@@ -5478,7 +5529,7 @@
   $('inboxItemDiscardBtn').addEventListener('click', async ()=>{
     if(!currentInboxItem) return;
     if(!confirm(T().confirmDiscardInboxItem)) return;
-    await removeInboxItem(currentInboxItem.id);
+    await markInboxItemStatus(currentInboxItem.id, 'discarded');
     showToast(T().discardedFromInbox);
     renderInboxList();
     afterInboxItemHandled();
@@ -5946,8 +5997,14 @@
   function initAuth(){
     const fb = window.__firebase;
     updateAuthModeUI();
-    fb.getRedirectResult(fb.auth).catch((e) => {
-      console.error('redirect sign-in failed', e);
+    fb.getRedirectResult(fb.auth).then((result) => {
+      if(result && result.user){
+        console.log('redirect sign-in succeeded for', result.user.email);
+      } else {
+        console.log('getRedirectResult resolved with no pending redirect (this is normal on a fresh page load with no sign-in attempt in progress)');
+      }
+    }).catch((e) => {
+      console.error('redirect sign-in failed', e.code, e.message);
       showAuthError(mapAuthError(e));
     });
     fb.onAuthStateChanged(fb.auth, async (user) => {
