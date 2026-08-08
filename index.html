@@ -128,6 +128,8 @@
   .section-label{ display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
   .section-tabs{ display:flex; gap:6px; margin-bottom:14px; background:var(--paper-raised); border-radius:12px; padding:4px; }
   .section-tab{ flex:1; border:none; background:none; padding:8px 10px; border-radius:9px; font-size:13px; font-weight:600; color:var(--ink-soft); opacity:0.55; cursor:pointer; font-family:inherit; transition:background .15s ease, color .15s ease, opacity .15s ease; }
+  .section-tabs.compact{ gap:3px; }
+  .section-tabs.compact .section-tab{ padding:8px 4px; font-size:11.5px; }
   .section-tab.active{ background:var(--paper); color:var(--ink); opacity:1; box-shadow:0 2px 8px -3px rgba(0,0,0,0.15); }
   .section-tab-add{ flex:0 0 auto; width:32px; border:none; background:none; color:var(--ink-soft); opacity:0.6; font-size:16px; font-weight:700; cursor:pointer; border-radius:9px; font-family:inherit; }
   .section-tab-add:hover{ opacity:1; }
@@ -454,6 +456,15 @@
         <button type="button" class="text-btn back-to-top-btn" style="margin-top:6px; display:block;" data-i18n="backToTop">↑ Back to top</button>
         <div style="height:70px;"></div>
       </div>
+      <div id="myFavoritesTabContent" style="display:none;">
+        <div id="myFavoritesList"></div>
+        <button type="button" class="text-btn back-to-top-btn" style="margin-top:6px; display:block;" data-i18n="backToTop">↑ Back to top</button>
+        <div style="height:70px;"></div>
+      </div>
+      <div id="sharedTabContent" style="display:none;">
+        <div id="sharedTabList"></div>
+        <div style="height:70px;"></div>
+      </div>
       <div id="upcomingDatesTabContent" style="display:none;">
         <div id="upcomingDatesList"></div>
         <button type="button" class="text-btn" id="viewAllRemindersBtn" style="margin-top:6px; display:block;" data-i18n="viewAllReminders">View all reminders</button>
@@ -624,9 +635,9 @@
     </div>
 
     <div id="detailTagsRow" style="display:none; flex-wrap:wrap; gap:6px; margin-top:12px;"></div>
+    <div id="detailSharedToWrap" style="display:none; margin-top:12px; flex-direction:column; gap:8px;"></div>
     <button class="info-toggle" id="infoToggle" data-i18n="infoToggle">ⓘ Details</button>
     <div class="info-box" id="infoBox"></div>
-    <div id="detailSharedToWrap" style="display:none; margin-top:10px; flex-direction:column; gap:8px;"></div>
 
     <button class="text-btn" id="closeDetailBtn" data-i18n="close">Close</button>
   </div>
@@ -639,11 +650,11 @@
 <!-- Share link modal -->
 <div class="sheet-overlay" id="shareOverlay" style="z-index:485;">
   <div class="sheet" style="max-width:400px; position:relative;">
-    <div id="shareSuccessFlash" style="display:none; position:absolute; inset:0; background:var(--paper); border-radius:26px; align-items:center; justify-content:center; flex-direction:column; gap:12px; z-index:10; animation:popIn .2s ease;">
-      <div style="width:60px; height:60px; border-radius:50%; background:var(--green); display:flex; align-items:center; justify-content:center; box-shadow:0 8px 20px -6px var(--green-shadow);">
-        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>
+    <div id="shareSuccessFlash" style="display:none; position:absolute; inset:0; background:var(--paper); border-radius:26px; align-items:center; justify-content:center; flex-direction:column; gap:10px; z-index:10; animation:popIn .2s ease;">
+      <div style="width:44px; height:44px; border-radius:50%; background:var(--green); display:flex; align-items:center; justify-content:center; box-shadow:0 8px 20px -6px var(--green-shadow);">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>
       </div>
-      <div id="shareSuccessFlashText" style="font-size:15px; font-weight:600; color:var(--ink); text-align:center; padding:0 20px;"></div>
+      <div id="shareSuccessFlashText" style="font-size:13.5px; font-weight:600; color:var(--ink); text-align:center; padding:0 20px;"></div>
     </div>
     <h2 data-i18n="shareLinkTitle">Share this note</h2>
 
@@ -757,6 +768,26 @@
     </button>
     <button class="primary-btn" id="tagDeleteEverywhereBtn" style="margin-top:10px; background:var(--danger);" data-i18n="deleteTagEverywhere">Remove from tag list and all notes</button>
     <button class="text-btn" id="cancelTagDeleteBtn" data-i18n="cancel">Cancel</button>
+  </div>
+</div>
+
+<!-- Unsend feedback -->
+<div class="sheet-overlay" id="sharedHistoryOverlay" style="z-index:450;">
+  <div class="sheet" style="max-width:420px; padding-bottom:14px;">
+    <div class="detail-header">
+      <div class="detail-title" id="sharedHistoryTitle" style="word-break:break-word;"></div>
+    </div>
+    <div id="sharedHistoryList" style="display:flex; flex-direction:column; gap:8px; margin-top:14px;"></div>
+    <div id="sharedHistoryEmpty" class="empty-note" style="display:none;"></div>
+    <button class="text-btn" id="closeSharedHistoryBtn" data-i18n="close">Close</button>
+  </div>
+</div>
+
+<div class="sheet-overlay" id="unsendFlashOverlay" style="z-index:495;">
+  <div class="sheet" style="max-width:280px; display:flex; flex-direction:column; align-items:center; gap:10px; padding:22px 20px; text-align:center;">
+    <div id="unsendFlashIcon" style="width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0;"></div>
+    <div id="unsendFlashText" style="font-size:13px; color:var(--ink); line-height:1.5;"></div>
+    <button type="button" class="text-btn" id="unsendFlashCloseBtn" style="margin-top:2px;" data-i18n="close">Close</button>
   </div>
 </div>
 
@@ -918,10 +949,10 @@
 <div class="sheet-overlay" id="tagDetailOverlay" style="z-index:450;">
   <div class="sheet" style="max-width:420px; padding-bottom:14px;">
     <div class="detail-header">
-      <div style="display:flex; align-items:center; gap:6px; flex:1; min-width:0;">
-        <div class="detail-title" id="tagDetailTitle" style="word-break:break-word;"></div>
-        <button type="button" id="tagRenameIconBtn" title="Rename" style="display:none; flex-shrink:0; width:24px; height:24px; border:none; background:none; color:var(--ink-soft); opacity:0.6; cursor:pointer; align-items:center; justify-content:center;">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4z"/></svg>
+      <div style="display:flex; align-items:center; gap:4px; flex:1; min-width:0; overflow:hidden;">
+        <div class="detail-title" id="tagDetailTitle" style="word-break:break-word; flex:0 1 auto; min-width:0;"></div>
+        <button type="button" id="tagRenameIconBtn" title="Rename" style="display:none; flex-shrink:0; width:22px; height:22px; border:none; background:none; color:var(--ink-soft); opacity:0.6; cursor:pointer; align-items:center; justify-content:center; padding:0;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4z"/></svg>
         </button>
       </div>
       <div style="display:flex; gap:8px; flex-shrink:0;">
@@ -955,11 +986,11 @@
 
 <div class="sheet-overlay" id="shareTagOverlay" style="z-index:465;">
   <div class="sheet" style="max-width:380px; position:relative;">
-    <div id="shareTagSuccessFlash" style="display:none; position:absolute; inset:0; background:var(--paper); border-radius:26px; align-items:center; justify-content:center; flex-direction:column; gap:12px; z-index:10; animation:popIn .2s ease;">
-      <div style="width:60px; height:60px; border-radius:50%; background:var(--green); display:flex; align-items:center; justify-content:center; box-shadow:0 8px 20px -6px var(--green-shadow);">
-        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>
+    <div id="shareTagSuccessFlash" style="display:none; position:absolute; inset:0; background:var(--paper); border-radius:26px; align-items:center; justify-content:center; flex-direction:column; gap:10px; z-index:10; animation:popIn .2s ease;">
+      <div style="width:44px; height:44px; border-radius:50%; background:var(--green); display:flex; align-items:center; justify-content:center; box-shadow:0 8px 20px -6px var(--green-shadow);">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>
       </div>
-      <div id="shareTagSuccessFlashText" style="font-size:15px; font-weight:600; color:var(--ink); text-align:center; padding:0 20px;"></div>
+      <div id="shareTagSuccessFlashText" style="font-size:13.5px; font-weight:600; color:var(--ink); text-align:center; padding:0 20px;"></div>
     </div>
     <h2 id="shareTagTitle" data-i18n="shareTagTitle">Share this tag</h2>
     <p id="shareTagSubtitle" style="font-size:12.5px; color:var(--ink-soft); margin:-10px 0 14px;"></p>
@@ -1126,7 +1157,7 @@
       frequentlyForgottenLabel: "常忘",
       randomLabel: "随机",
       recentlyAddedLabel: "最近添加或查看",
-      myTagsLabel: "我的标签",
+      myTagsLabel: "我的\n标签",
       recentTabLabel: "最近",
       upcomingDatesLabel: "重要日子",
       manageTabsTitle: "选择标签页",
@@ -1148,7 +1179,19 @@
       sortAlpha: "按字母",
       tagSearchPlaceholder: "在这个标签下搜索…",
       noNotesInTag: "这里还没有笔记",
-      mySpotsLabel: "我的地点",
+      mySpotsLabel: "我的\n地点",
+      myFavoritesLabel: "我的\n收藏",
+      noFavoritesYet: "还没有收藏过的笔记，点笔记详情页的星标试试",
+      sharedTabLabel: "分享",
+      sharedWithMeLabel: "别人分享给我的",
+      sharedByMeLabel: "我分享出去的",
+      unknownSender: "未知用户",
+      statusSaved: "已保存",
+      statusDiscarded: "已丢弃",
+      statusPending: "还没处理",
+      noSharedWithMeYet: "还没有人分享过东西给你",
+      noSharedByMeYet: "你还没分享过东西",
+      tagBundleShareSummary: (n, tag) => `打包了 ${n} 条"${tag}"标签下的笔记`,
       noTagsYet: "还没有标签，编辑笔记时可以添加",
       presetTagBannerText: (tag) => `正在添加到"${tag}"，这条笔记会自动带上这个标签`,
       addToTagAction: (tag) => `+ 添加到"${tag}"`,
@@ -1297,7 +1340,8 @@
       toastWeChatMapsBlocked: "微信可能会拦截跳转，如果没反应，用「复制地址」这个选项试试",
       toastLocationNotSupported: "你的浏览器不支持定位",
       toastLocationFailed: "获取位置失败，检查一下是不是拒绝了定位权限",
-      toastCoordinatesCopied: "坐标已复制",
+      toastCoordinatesCopied: "地址已复制",
+      toastRawCoordinatesCopied: "坐标已复制（没搜到具体地址文字）",
       newTagInputPlaceholder: "新标签名称",
       noTagsYet: "还没有标签",
       addNewTagChip: "+ 新建标签",
@@ -1395,7 +1439,7 @@
       contentLabel: "內容",
       titlePlaceholder: "給它起個名字",
       contentPlaceholder: "寫下你想記住的東西…",
-      myTagsLabel: "我的標籤",
+      myTagsLabel: "我的\n標籤",
       recentTabLabel: "最近",
       upcomingDatesLabel: "重要日子",
       manageTabsTitle: "選擇標籤頁",
@@ -1417,9 +1461,11 @@
       sortAlpha: "按字母",
       noNotesInTag: "這裡還沒有筆記",
       tagSearchPlaceholder: "在這個標籤下搜尋…",
-      mySpotsLabel: "我的地點",
+      mySpotsLabel: "我的\n地點",
       noTagsYet: "還沒有標籤，編輯筆記時可以新增",
       presetTagBannerText: (tag) => `正在新增到「${tag}」，這則筆記會自動帶上這個標籤`,
+      myFavoritesLabel: "我的\n收藏",
+      noFavoritesYet: "還沒有收藏過的筆記，點筆記詳情頁的星標試試",
       addToTagAction: (tag) => `+ 新增到「${tag}」`,
       photosLabel: "照片",
       photosHint: "最多 5 張",
@@ -1430,6 +1476,16 @@
       toastFileTooLarge: "檔案不能超過 10MB",
       toastFileUploadFail: "檔案上傳失敗，請重試",
       uploadingFiles: "上傳中…",
+      sharedTabLabel: "分享",
+      sharedWithMeLabel: "別人分享給我的",
+      sharedByMeLabel: "我分享出去的",
+      unknownSender: "未知使用者",
+      statusSaved: "已儲存",
+      statusDiscarded: "已丟棄",
+      statusPending: "還沒處理",
+      noSharedWithMeYet: "還沒有人分享過東西給你",
+      noSharedByMeYet: "你還沒分享過東西",
+      tagBundleShareSummary: (n, tag) => `打包了 ${n} 則「${tag}」標籤下的筆記`,
       toastVideoNotSupported: "你的瀏覽器不支援影片壓縮，換個新一點的瀏覽器試試",
       confirmReplaceVideo: "取代掉現在這個影片？",
       toastVideoTooLarge: "影片檔案太大了，換個小一點的試試",
@@ -1562,8 +1618,9 @@
       manualCopyPrompt: "複製不了？長按下面的文字手動複製：",
       toastWeChatMapsBlocked: "微信可能會攔截跳轉，如果沒反應，用「複製地址」這個選項試試",
       toastLocationFailed: "取得位置失敗，檢查一下是不是拒絕了定位權限",
-      toastCoordinatesCopied: "座標已複製",
+      toastCoordinatesCopied: "地址已複製",
       noTagsYet: "還沒有標籤",
+      toastRawCoordinatesCopied: "座標已複製（沒搜到具體地址文字）",
       addNewTagChip: "+ 新增標籤",
       newTagPrompt: "新標籤叫什麼？",
       deleteTagTitle: "刪除這個標籤？",
@@ -1690,6 +1747,8 @@
       noTagsYet: "No tags yet — you can add one while editing a note.",
       presetTagBannerText: (tag) => `Adding to "${tag}" — this note will automatically get that tag`,
       addToTagAction: (tag) => `+ Add to "${tag}"`,
+      myFavoritesLabel: "My Favorites",
+      noFavoritesYet: "No favorites yet — tap the star on a note to add one.",
       toastFileTooLarge: "File can't be larger than 10MB",
       toastFileUploadFail: "File upload failed, please try again",
       uploadingFiles: "Uploading…",
@@ -1711,6 +1770,16 @@
       save: "Save",
       cancel: "Cancel",
       editAction: "Edit",
+      sharedTabLabel: "Shared",
+      sharedWithMeLabel: "Shared with me",
+      sharedByMeLabel: "Shared by me",
+      unknownSender: "Unknown sender",
+      statusSaved: "Saved",
+      statusDiscarded: "Discarded",
+      statusPending: "Not yet handled",
+      noSharedWithMeYet: "No one has shared anything with you yet.",
+      noSharedByMeYet: "You haven't shared anything yet.",
+      tagBundleShareSummary: (n, tag) => `Bundled ${n} notes under "${tag}"`,
       deleteAction: "Delete",
       infoToggle: "ⓘ Details",
       fileLabel: "File",
@@ -1826,9 +1895,10 @@
       copyAddress: "Copy Address",
       manualCopyPrompt: "Can't copy automatically? Long-press the text below to copy it manually:",
       toastWeChatMapsBlocked: "WeChat may block this — if nothing happens, try \"Copy Address\" instead",
-      toastCoordinatesCopied: "Coordinates copied",
+      toastCoordinatesCopied: "Address copied",
       addNewTagChip: "+ New Tag",
       newTagPrompt: "What should the new tag be called?",
+      toastRawCoordinatesCopied: "Coordinates copied (no address text was found)",
       deleteTagTitle: "Delete this tag?",
       deleteTagExplain: "Choose what happens to notes that already have this tag.",
       deleteTagLibraryOnlyMain: "Only remove from tag list",
@@ -2240,6 +2310,7 @@
   const ICON_LOCATION_LG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0119 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.3"/></svg>';
   const ICON_ALL = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>';
   const ICON_UNTAGGED = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.6 2H4a2 2 0 00-2 2v8.6a2 2 0 00.59 1.41l9.4 9.4a2 2 0 002.82 0l8.6-8.6a2 2 0 000-2.82l-9.4-9.4A2 2 0 0012.6 2z" stroke-dasharray="3 3"/></svg>';
+  const ICON_STAR = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2.5l2.9 6.5 7.1.7-5.4 4.7 1.6 7-6.2-3.7-6.2 3.7 1.6-7-5.4-4.7 7.1-.7z"/></svg>';
   const BADGE_ICON_SHARED = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>';
 
   function buildEntryRow(entry){
@@ -2308,16 +2379,16 @@
   // ---------- My Tags tab ----------
   let currentTagDetailContext = null; // { title, filterFn, presetTag }
   let tabPreferences = ['recent', 'myTags']; // default enabled tabs, in canonical order
-  const TAB_ORDER = ['recent', 'myTags', 'mySpots', 'upcoming'];
+  const TAB_ORDER = ['recent', 'myTags', 'mySpots', 'myFavorites', 'shared', 'upcoming'];
 
   function tabLabel(tabId){
-    return { recent: T().recentTabLabel, myTags: T().myTagsLabel, mySpots: T().mySpotsLabel, upcoming: T().upcomingDatesLabel }[tabId];
+    return { recent: T().recentTabLabel, myTags: T().myTagsLabel, mySpots: T().mySpotsLabel, myFavorites: T().myFavoritesLabel, shared: T().sharedTabLabel, upcoming: T().upcomingDatesLabel }[tabId];
   }
   function tabContentEl(tabId){
-    return { recent: $('recentTabContent'), myTags: $('myTagsTabContent'), mySpots: $('mySpotsTabContent'), upcoming: $('upcomingDatesTabContent') }[tabId];
+    return { recent: $('recentTabContent'), myTags: $('myTagsTabContent'), mySpots: $('mySpotsTabContent'), myFavorites: $('myFavoritesTabContent'), shared: $('sharedTabContent'), upcoming: $('upcomingDatesTabContent') }[tabId];
   }
   function tabRenderFn(tabId){
-    return { recent: renderRecent, myTags: renderMyTagsList, mySpots: renderMySpotsList, upcoming: renderUpcomingDatesTab }[tabId];
+    return { recent: renderRecent, myTags: renderMyTagsList, mySpots: renderMySpotsList, myFavorites: renderMyFavoritesList, shared: renderSharedTab, upcoming: renderUpcomingDatesTab }[tabId];
   }
 
   function renderTabsBar(){
@@ -2327,12 +2398,16 @@
     bar.innerHTML = '';
     const enabled = TAB_ORDER.filter(t => tabPreferences.includes(t));
     if(enabled.length === 0){ enabled.push('recent'); } // never allow zero tabs
+    const compactThreshold = currentLang === 'en' ? 6 : 7;
+    bar.classList.toggle('compact', enabled.length >= compactThreshold);
     const activeTab = (preserveTab && enabled.includes(preserveTab)) ? preserveTab : enabled[0];
+    const needsForcedBreak = enabled.length >= 5;
     enabled.forEach((tabId) => {
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'section-tab' + (tabId === activeTab ? ' active' : '');
-      btn.textContent = tabLabel(tabId);
+      const rawLabel = escapeHtml(tabLabel(tabId));
+      btn.innerHTML = needsForcedBreak ? rawLabel.replace(/\n/g, '<br>') : rawLabel.replace(/\n/g, '');
       btn.dataset.tab = tabId;
       btn.addEventListener('click', ()=> switchToTab(tabId));
       bar.appendChild(btn);
@@ -2478,6 +2553,172 @@
     }
   }
 
+  // ---------- My Favorites tab ----------
+  function renderMyFavoritesList(){
+    const list = $('myFavoritesList');
+    list.innerHTML = '';
+    const favs = entries.filter(e => e.pinned);
+    if(favs.length === 0){
+      list.innerHTML = `<div class="empty-note">${T().noFavoritesYet}</div>`;
+      return;
+    }
+
+    const allRow = document.createElement('div');
+    allRow.className = 'tag-row';
+    allRow.innerHTML = `<span>${ICON_STAR}</span><span class="tag-name">${T().allFilterLabel}</span><span class="tag-count">${favs.length}</span>`;
+    allRow.addEventListener('click', ()=> openTagDetail({
+      title: T().myFavoritesLabel,
+      filterFn: (es) => es.filter(e => e.pinned),
+      presetTag: null
+    }));
+    list.appendChild(allRow);
+
+    const favTagCounts = {};
+    let untaggedCount = 0;
+    favs.forEach(e => {
+      if(e.tags && e.tags.length){ e.tags.forEach(t => { favTagCounts[t] = (favTagCounts[t]||0) + 1; }); }
+      else { untaggedCount++; }
+    });
+
+    Object.keys(favTagCounts).sort().forEach(tag => {
+      const row = document.createElement('div');
+      row.className = 'tag-row';
+      row.innerHTML = `<span>${ICON_TAG}</span><span class="tag-name">${escapeHtml(tag)}</span><span class="tag-count">${favTagCounts[tag]}</span>`;
+      row.addEventListener('click', ()=> openTagDetail({
+        title: tag,
+        filterFn: (es) => es.filter(e => e.pinned && e.tags && e.tags.includes(tag)),
+        presetTag: tag
+      }));
+      list.appendChild(row);
+    });
+
+    if(untaggedCount > 0){
+      const row = document.createElement('div');
+      row.className = 'tag-row';
+      row.innerHTML = `<span>${ICON_UNTAGGED}</span><span class="tag-name">${T().untaggedFilterLabel}</span><span class="tag-count">${untaggedCount}</span>`;
+      row.addEventListener('click', ()=> openTagDetail({
+        title: T().untaggedFilterLabel,
+        filterFn: (es) => es.filter(e => e.pinned && (!e.tags || e.tags.length === 0)),
+        presetTag: null
+      }));
+      list.appendChild(row);
+    }
+  }
+
+  // ---------- Shared tab ----------
+  const ICON_INBOX = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/></svg>';
+  const ICON_SHARE_OUT = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"/><path d="M7.5 8.5L12 4l4.5 4.5"/><path d="M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>';
+
+  let sharedHistoryItemsCache = [];
+
+  function renderSharedTab(){
+    const list = $('sharedTabList');
+    list.innerHTML = '';
+    const withMeRow = document.createElement('div');
+    withMeRow.className = 'tag-row';
+    withMeRow.innerHTML = `<span>${ICON_INBOX}</span><span class="tag-name">${T().sharedWithMeLabel}</span>`;
+    withMeRow.addEventListener('click', ()=> openSharedGroups('withMe'));
+    list.appendChild(withMeRow);
+
+    const byMeRow = document.createElement('div');
+    byMeRow.className = 'tag-row';
+    byMeRow.innerHTML = `<span>${ICON_SHARE_OUT}</span><span class="tag-name">${T().sharedByMeLabel}</span>`;
+    byMeRow.addEventListener('click', ()=> openSharedGroups('byMe'));
+    list.appendChild(byMeRow);
+  }
+
+  async function openSharedGroups(mode){
+    $('sharedHistoryTitle').textContent = mode === 'withMe' ? T().sharedWithMeLabel : T().sharedByMeLabel;
+    const list = $('sharedHistoryList');
+    list.innerHTML = '';
+    $('sharedHistoryEmpty').style.display = 'none';
+    $('sharedHistoryOverlay').classList.add('open');
+
+    const items = mode === 'withMe' ? await listInboxHistory() : await listMyShares();
+    sharedHistoryItemsCache = items;
+
+    const groups = {};
+    for(const item of items){
+      let key, label;
+      if(mode === 'withMe'){
+        key = item.fromEmail || 'unknown';
+        label = (await getContactNickname(item.fromEmail)) || item.fromEmail || T().unknownSender;
+      } else {
+        key = item.toEmail || '__link__';
+        label = item.toEmail ? ((await getContactNickname(item.toEmail)) || item.toEmail) : T().viaPublicLink;
+      }
+      if(!groups[key]){ groups[key] = { label, count: 0 }; }
+      groups[key].count++;
+    }
+
+    list.innerHTML = '';
+    const keys = Object.keys(groups);
+    if(keys.length === 0){
+      $('sharedHistoryEmpty').textContent = mode === 'withMe' ? T().noSharedWithMeYet : T().noSharedByMeYet;
+      $('sharedHistoryEmpty').style.display = 'block';
+      return;
+    }
+    keys.forEach(key => {
+      const row = document.createElement('div');
+      row.className = 'tag-row';
+      row.innerHTML = `<span>👤</span><span class="tag-name">${escapeHtml(groups[key].label)}</span><span class="tag-count">${groups[key].count}</span>`;
+      row.addEventListener('click', ()=> openSharedGroupItems(mode, key, groups[key].label));
+      list.appendChild(row);
+    });
+  }
+
+  function openSharedGroupItems(mode, groupKey, groupLabel){
+    $('sharedHistoryTitle').textContent = groupLabel;
+    const items = sharedHistoryItemsCache.filter(item => {
+      if(mode === 'withMe'){ return (item.fromEmail || 'unknown') === groupKey; }
+      return (item.toEmail || '__link__') === groupKey;
+    }).sort((a,b) => b.createdAt - a.createdAt);
+
+    const list = $('sharedHistoryList');
+    list.innerHTML = '';
+    items.forEach(item => {
+      const row = document.createElement('div');
+      row.className = 'file-chip-row';
+      const isBundle = item.type === 'tagBundle' || item.kind === 'tagBundle';
+      let title, statusText;
+      if(mode === 'withMe'){
+        title = isBundle ? T().tagBundleInboxTitle(item.noteCount, item.tagName) : item.title;
+        statusText = item.status === 'saved' ? T().statusSaved : (item.status === 'discarded' ? T().statusDiscarded : T().statusPending);
+      } else {
+        title = isBundle ? T().tagBundleShareSummary(item.noteCount, item.tagName) : item.entryTitle;
+        statusText = formatDate(item.createdAt);
+      }
+      row.innerHTML = `<span>${isBundle ? '📦' : '📄'}</span><div style="flex:1; min-width:0;"><div class="file-chip-name">${escapeHtml(title || '')}</div><div style="font-size:11px; color:var(--ink-soft);">${escapeHtml(statusText || '')}</div></div>`;
+      if(mode === 'byMe'){
+        const unsendBtn = document.createElement('button');
+        unsendBtn.type = 'button';
+        unsendBtn.textContent = T().unsendAction;
+        unsendBtn.style.cssText = 'color:var(--danger); font-weight:600; font-size:12px; background:none; border:none; cursor:pointer; flex-shrink:0;';
+        unsendBtn.addEventListener('click', async ()=>{
+          const who = item.toEmail || T().viaPublicLink;
+          if(!confirm(T().confirmUnsendShare(who))) return;
+          const result = await revokeShare(item);
+          if(result.ok){
+            showUnsendFlash(true, T().unsendSuccessMessage(who));
+            openSharedGroupItems(mode, groupKey, groupLabel);
+          } else if(result.reason === 'saved'){
+            showUnsendFlash(false, T().unsendFailedSavedMessage(who));
+          } else if(result.reason === 'discarded'){
+            showUnsendFlash(false, T().unsendFailedDiscardedMessage(who));
+          } else {
+            showUnsendFlash(false, T().shareCreateFail);
+          }
+        });
+        row.appendChild(unsendBtn);
+      }
+      list.appendChild(row);
+    });
+    $('sharedHistoryEmpty').style.display = items.length === 0 ? 'block' : 'none';
+  }
+
+  $('closeSharedHistoryBtn').addEventListener('click', ()=> $('sharedHistoryOverlay').classList.remove('open'));
+  $('sharedHistoryOverlay').addEventListener('click', (e)=>{ if(e.target.id==='sharedHistoryOverlay') $('sharedHistoryOverlay').classList.remove('open'); });
+
   // ---------- Upcoming Dates tab ----------
   function relativeDateLabel(dateStr){
     const today = new Date(todayDateStr() + 'T00:00:00');
@@ -2605,7 +2846,7 @@
     input.type = 'text';
     input.value = oldName;
     input.className = 'detail-title';
-    input.style.cssText = 'word-break:break-word; border:none; border-bottom:2px solid var(--plum-deep); background:transparent; padding:0; width:100%; font:inherit; color:inherit; outline:none;';
+    input.style.cssText = 'font:inherit; color:inherit; width:100%; min-width:0; box-sizing:border-box; background:var(--paper); border:1.5px solid var(--plum-deep); border-radius:8px; padding:3px 8px; outline:none; box-shadow:inset 0 1px 3px rgba(0,0,0,0.08);';
     titleEl.replaceWith(input);
     input.focus();
     input.select();
@@ -3091,9 +3332,23 @@
           const canvasStream = canvas.captureStream(30);
           let audioTracks = [];
           try{
-            const capture = sourceVideo.captureStream ? sourceVideo.captureStream() : (sourceVideo.mozCaptureStream ? sourceVideo.mozCaptureStream() : null);
-            if(capture){ audioTracks = capture.getAudioTracks(); }
-          }catch(e){ /* proceed video-only if audio capture isn't available */ }
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            const audioCtx = new AudioCtx();
+            if(audioCtx.state === 'suspended'){ audioCtx.resume(); }
+            const sourceNode = audioCtx.createMediaElementSource(sourceVideo);
+            const destNode = audioCtx.createMediaStreamDestination();
+            sourceNode.connect(destNode);
+            // deliberately not connecting to audioCtx.destination — nothing should play out loud;
+            // this Web Audio tap carries real decoded audio regardless of sourceVideo.muted,
+            // since .muted only gates the final speaker output, not the Web Audio graph.
+            audioTracks = destNode.stream.getAudioTracks();
+          }catch(e){
+            console.error('audio graph setup failed, falling back to captureStream (may be silent)', e);
+            try{
+              const capture = sourceVideo.captureStream ? sourceVideo.captureStream() : (sourceVideo.mozCaptureStream ? sourceVideo.mozCaptureStream() : null);
+              if(capture){ audioTracks = capture.getAudioTracks(); }
+            }catch(e2){ /* proceed video-only if audio capture isn't available at all */ }
+          }
           const combinedStream = new MediaStream([...canvasStream.getVideoTracks(), ...audioTracks]);
 
           let mimeType = 'video/webm;codecs=vp9,opus';
@@ -3650,8 +3905,12 @@
       const res = await fetch('https://maps.googleapis.com/maps/api/geocode/json?latlng=' + lat + ',' + lng + '&key=' + GOOGLE_PLACES_API_KEY + '&language=' + lang);
       const data = await res.json();
       if(data.results && data.results.length){ return data.results[0].formatted_address; }
+      console.error('Geocoding API returned no results, status:', data.status, data.error_message || '');
       return null;
-    }catch(e){ return null; }
+    }catch(e){
+      console.error('reverseGeocode request failed', e);
+      return null;
+    }
   }
 
   $('locationToolbarBtn').addEventListener('click', ()=>{
@@ -3901,9 +4160,10 @@
 
   $('copyCoordinatesBtn').addEventListener('click', async ()=>{
     if(!currentDetailLocation) return;
+    const hasLabel = !!currentDetailLocation.label;
     const text = currentDetailLocation.label || (currentDetailLocation.lat + ', ' + currentDetailLocation.lng);
     const copied = await copyTextWithFallback(text);
-    if(copied){ showToast(T().toastCoordinatesCopied); }
+    if(copied){ showToast(hasLabel ? T().toastCoordinatesCopied : T().toastRawCoordinatesCopied); }
     $('openMapsChooserOverlay').classList.remove('open');
   });
 
@@ -4334,16 +4594,27 @@
     row.style.display = 'flex';
   }
 
+  const ICON_CHECK = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>';
+  const ICON_INFO = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v.01M12 11v5"/></svg>';
+
+  function showUnsendFlash(success, text){
+    const icon = $('unsendFlashIcon');
+    icon.style.background = success ? 'var(--green)' : 'var(--amber-deep)';
+    icon.innerHTML = success ? ICON_CHECK : ICON_INFO;
+    $('unsendFlashText').textContent = text;
+    $('unsendFlashOverlay').classList.add('open');
+  }
+  $('unsendFlashCloseBtn').addEventListener('click', ()=> $('unsendFlashOverlay').classList.remove('open'));
+  $('unsendFlashOverlay').addEventListener('click', (e)=>{ if(e.target.id==='unsendFlashOverlay') $('unsendFlashOverlay').classList.remove('open'); });
+
   function renderDetailSharedTo(entry){
     const wrap = $('detailSharedToWrap');
     wrap.innerHTML = '';
     const shares = entry.sharedTo || [];
     if(shares.length === 0){
-      wrap.dataset.hasContent = 'false';
       wrap.style.display = 'none';
       return;
     }
-    wrap.dataset.hasContent = 'true';
     const label = document.createElement('div');
     label.style.cssText = 'font-size:12px; font-weight:600; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.06em;';
     label.textContent = T().sharedToLabel;
@@ -4360,27 +4631,24 @@
           entry.sharedTo = entry.sharedTo.filter((s,i) => i !== idx);
           persistIndex();
           renderDetailSharedTo(entry);
-          alert(T().unsendSuccessMessage(who));
+          showUnsendFlash(true, T().unsendSuccessMessage(who));
         } else if(result.reason === 'saved'){
-          alert(T().unsendFailedSavedMessage(who));
+          showUnsendFlash(false, T().unsendFailedSavedMessage(who));
         } else if(result.reason === 'discarded'){
-          alert(T().unsendFailedDiscardedMessage(who));
+          showUnsendFlash(false, T().unsendFailedDiscardedMessage(who));
         } else if(result.reason === 'notFound'){
-          alert(T().unsendFailedSavedMessage(who));
+          showUnsendFlash(false, T().unsendFailedSavedMessage(who));
         } else {
-          alert(T().shareCreateFail);
+          showUnsendFlash(false, T().shareCreateFail);
         }
       });
       wrap.appendChild(row);
     });
-    wrap.style.display = $('infoBox').classList.contains('open') ? 'flex' : 'none';
+    wrap.style.display = 'flex';
   }
 
   $('closeDetailBtn').addEventListener('click', ()=> $('detailOverlay').classList.remove('open'));
-  $('infoToggle').addEventListener('click', ()=>{
-    $('infoBox').classList.toggle('open');
-    $('detailSharedToWrap').style.display = $('infoBox').classList.contains('open') && $('detailSharedToWrap').dataset.hasContent === 'true' ? 'flex' : 'none';
-  });
+  $('infoToggle').addEventListener('click', ()=> $('infoBox').classList.toggle('open'));
 
   $('starBtn').addEventListener('click', ()=>{
     const entry = entries.find(e=>e.id === currentDetailId);
@@ -5280,6 +5548,26 @@
       const snap = await fb.getDocs(q);
       return snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(item => !item.status || item.status === 'pending');
     }catch(e){ console.error('list inbox failed', e); return []; }
+  }
+
+  async function listInboxHistory(){
+    const fb = window.__firebase;
+    if(!fb.auth.currentUser) return [];
+    try{
+      const q = fb.query(fb.collection(fb.db, 'users', fb.auth.currentUser.uid, 'inbox'), fb.orderBy('createdAt', 'desc'));
+      const snap = await fb.getDocs(q);
+      return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    }catch(e){ console.error('list inbox history failed', e); return []; }
+  }
+
+  async function listMyShares(){
+    const fb = window.__firebase;
+    if(!fb.auth.currentUser) return [];
+    try{
+      const q = fb.query(fb.collection(fb.db, 'users', fb.auth.currentUser.uid, 'myShares'), fb.orderBy('createdAt', 'desc'));
+      const snap = await fb.getDocs(q);
+      return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    }catch(e){ console.error('list my shares failed', e); return []; }
   }
 
   function refreshInboxBadgeFromCount(n){
