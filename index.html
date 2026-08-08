@@ -130,6 +130,7 @@
   .section-tab{ flex:1; border:none; background:none; padding:8px 10px; border-radius:9px; font-size:13px; font-weight:600; color:var(--ink-soft); opacity:0.55; cursor:pointer; font-family:inherit; transition:background .15s ease, color .15s ease, opacity .15s ease; }
   .section-tabs.compact{ gap:3px; }
   .section-tabs.compact .section-tab{ padding:8px 4px; font-size:11.5px; }
+  .section-tabs.tiny .section-tab{ padding:6px 2px; font-size:10px; line-height:1.25; }
   .section-tab.active{ background:var(--paper); color:var(--ink); opacity:1; box-shadow:0 2px 8px -3px rgba(0,0,0,0.15); }
   .section-tab-add{ flex:0 0 auto; width:32px; border:none; background:none; color:var(--ink-soft); opacity:0.6; font-size:16px; font-weight:700; cursor:pointer; border-radius:9px; font-family:inherit; }
   .section-tab-add:hover{ opacity:1; }
@@ -238,13 +239,13 @@
     padding:12px 14px; font-size:15px; font-family:'Inter',sans-serif; color:var(--ink); outline:none; resize:vertical;
   }
   input.field:focus, textarea.field:focus{ border-color:var(--plum); }
-  textarea.field{ min-height:110px; line-height:1.5; }
+  textarea.field{ min-height:170px; line-height:1.5; }
 
   .attach-row{ display:flex; gap:10px; margin-top:12px; }
-  .attach-toolbar{ display:flex; gap:10px; margin-top:12px; }
+  .attach-toolbar{ display:flex; gap:8px; margin-top:4px; }
   .toolbar-icon-btn{
-    width:42px; height:42px; border-radius:50%; border:1px solid var(--line);
-    background:var(--paper-raised); font-size:18px; cursor:pointer;
+    width:34px; height:34px; border-radius:50%; border:1px solid var(--line);
+    background:var(--paper-raised); font-size:15px; cursor:pointer;
     display:flex; align-items:center; justify-content:center; color:var(--ink);
   }
   .toolbar-icon-btn.active{ border-color:var(--plum); background:var(--plum-tint); }
@@ -513,7 +514,7 @@
       <input type="date" id="reminderDateInput" style="width:100%; box-sizing:border-box; border:1px solid var(--line); border-radius:10px; padding:9px 12px; font-size:13px; background:var(--paper-raised); color:var(--ink); font-family:inherit;">
     </div>
 
-    <label class="field-label" data-i18n="attachmentsLabel" style="margin-top:14px;">Attachments</label>
+    <label class="field-label" data-i18n="attachmentsLabel" style="margin:14px 0 2px;">Attachments</label>
     <div id="videoPreviewWrap" style="display:none; margin-top:8px;">
       <video id="videoPreview" controls style="width:100%; border-radius:14px; display:block; background:#000;"></video>
       <div style="display:flex; align-items:center; justify-content:space-between; margin-top:6px;">
@@ -2398,10 +2399,12 @@
     bar.innerHTML = '';
     const enabled = TAB_ORDER.filter(t => tabPreferences.includes(t));
     if(enabled.length === 0){ enabled.push('recent'); } // never allow zero tabs
-    const compactThreshold = currentLang === 'en' ? 6 : 7;
+    const compactThreshold = currentLang === 'en' ? 5 : 6;
+    const tinyThreshold = currentLang === 'en' ? 999 : 6; // English never needed this tier in testing; Chinese does at 6
     bar.classList.toggle('compact', enabled.length >= compactThreshold);
+    bar.classList.toggle('tiny', enabled.length >= tinyThreshold);
     const activeTab = (preserveTab && enabled.includes(preserveTab)) ? preserveTab : enabled[0];
-    const needsForcedBreak = enabled.length >= 5;
+    const needsForcedBreak = enabled.length >= 4; // only affects labels that actually contain a \n marker (Chinese "My X" labels)
     enabled.forEach((tabId) => {
       const btn = document.createElement('button');
       btn.type = 'button';
@@ -3302,9 +3305,15 @@
       const fail = (err) => {
         if(finished) return;
         finished = true;
+        clearTimeout(hangGuard);
         cleanup();
         reject(err);
       };
+
+      // Safety net: this re-record pipeline should finish in roughly the source video's duration.
+      // If it's still going after 8 minutes (well beyond our 5-minute cap plus generous overhead),
+      // something has silently wedged — bail out instead of hanging forever.
+      const hangGuard = setTimeout(() => fail(new Error('video re-record timed out (likely stuck)')), 8 * 60 * 1000);
 
       sourceVideo.onerror = () => fail(new Error('video load failed'));
 
@@ -3332,23 +3341,9 @@
           const canvasStream = canvas.captureStream(30);
           let audioTracks = [];
           try{
-            const AudioCtx = window.AudioContext || window.webkitAudioContext;
-            const audioCtx = new AudioCtx();
-            if(audioCtx.state === 'suspended'){ audioCtx.resume(); }
-            const sourceNode = audioCtx.createMediaElementSource(sourceVideo);
-            const destNode = audioCtx.createMediaStreamDestination();
-            sourceNode.connect(destNode);
-            // deliberately not connecting to audioCtx.destination — nothing should play out loud;
-            // this Web Audio tap carries real decoded audio regardless of sourceVideo.muted,
-            // since .muted only gates the final speaker output, not the Web Audio graph.
-            audioTracks = destNode.stream.getAudioTracks();
-          }catch(e){
-            console.error('audio graph setup failed, falling back to captureStream (may be silent)', e);
-            try{
-              const capture = sourceVideo.captureStream ? sourceVideo.captureStream() : (sourceVideo.mozCaptureStream ? sourceVideo.mozCaptureStream() : null);
-              if(capture){ audioTracks = capture.getAudioTracks(); }
-            }catch(e2){ /* proceed video-only if audio capture isn't available at all */ }
-          }
+            const capture = sourceVideo.captureStream ? sourceVideo.captureStream() : (sourceVideo.mozCaptureStream ? sourceVideo.mozCaptureStream() : null);
+            if(capture){ audioTracks = capture.getAudioTracks(); }
+          }catch(e){ /* proceed video-only if audio capture isn't available */ }
           const combinedStream = new MediaStream([...canvasStream.getVideoTracks(), ...audioTracks]);
 
           let mimeType = 'video/webm;codecs=vp9,opus';
@@ -3369,6 +3364,7 @@
           recorder.onstop = () => {
             if(finished) return;
             finished = true;
+            clearTimeout(hangGuard);
             sourceVideo.pause();
             cleanup();
             const blob = new Blob(chunks, { type: mimeType.split(';')[0] });
@@ -3429,8 +3425,13 @@
       const finish = (err, result) => {
         if(settled) return;
         settled = true;
+        clearTimeout(webCodecsHangGuard);
         if(err){ reject(err); } else { resolve(result); }
       };
+      // Safety net: WebCodecs has never actually completed successfully in testing so far —
+      // if it silently wedges instead of failing cleanly, don't let it block the MediaRecorder
+      // fallback (or the raw-upload fallback) from ever being tried.
+      const webCodecsHangGuard = setTimeout(() => finish(new Error('WebCodecs pipeline timed out (likely stuck)')), 20000);
 
       mp4boxFile.onError = (e) => finish(new Error('mp4box error: ' + e));
 
@@ -3899,10 +3900,12 @@
 
   const GOOGLE_PLACES_API_KEY = 'AIzaSyDWV_FabMHA8HO4e43e7554h0YOUglPTbg';
 
+  const GOOGLE_GEOCODING_API_KEY = 'AIzaSyBO79XIQFwUMCjmG5UHVAHe2wiqF-v_UiE';
+
   async function reverseGeocode(lat, lng){
     try{
       const lang = currentLang === 'en' ? 'en' : 'zh-CN';
-      const res = await fetch('https://maps.googleapis.com/maps/api/geocode/json?latlng=' + lat + ',' + lng + '&key=' + GOOGLE_PLACES_API_KEY + '&language=' + lang);
+      const res = await fetch('https://maps.googleapis.com/maps/api/geocode/json?latlng=' + lat + ',' + lng + '&key=' + GOOGLE_GEOCODING_API_KEY + '&language=' + lang);
       const data = await res.json();
       if(data.results && data.results.length){ return data.results[0].formatted_address; }
       console.error('Geocoding API returned no results, status:', data.status, data.error_message || '');
