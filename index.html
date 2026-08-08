@@ -445,7 +445,7 @@
       </div>
       <div id="myTagsTabContent" style="display:none;">
         <div id="myTagsList"></div>
-        <button type="button" class="text-btn" id="manageMyTabsBtn" style="margin-top:6px; display:block;" data-i18n="manageMyTabsAction">Manage my tabs</button>
+        <button type="button" class="text-btn" id="manageMyTabsBtn" style="margin-top:6px; display:block;" data-i18n="manageMyTagsAction">Manage My Tags</button>
         <button type="button" class="text-btn back-to-top-btn" style="margin-top:6px; display:block;" data-i18n="backToTop">↑ Back to top</button>
         <div style="height:70px;"></div>
       </div>
@@ -626,6 +626,7 @@
     <div id="detailTagsRow" style="display:none; flex-wrap:wrap; gap:6px; margin-top:12px;"></div>
     <button class="info-toggle" id="infoToggle" data-i18n="infoToggle">ⓘ Details</button>
     <div class="info-box" id="infoBox"></div>
+    <div id="detailSharedToWrap" style="display:none; margin-top:10px; flex-direction:column; gap:8px;"></div>
 
     <button class="text-btn" id="closeDetailBtn" data-i18n="close">Close</button>
   </div>
@@ -637,7 +638,13 @@
 
 <!-- Share link modal -->
 <div class="sheet-overlay" id="shareOverlay" style="z-index:485;">
-  <div class="sheet" style="max-width:400px;">
+  <div class="sheet" style="max-width:400px; position:relative;">
+    <div id="shareSuccessFlash" style="display:none; position:absolute; inset:0; background:var(--paper); border-radius:26px; align-items:center; justify-content:center; flex-direction:column; gap:12px; z-index:10; animation:popIn .2s ease;">
+      <div style="width:60px; height:60px; border-radius:50%; background:var(--green); display:flex; align-items:center; justify-content:center; box-shadow:0 8px 20px -6px var(--green-shadow);">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>
+      </div>
+      <div id="shareSuccessFlashText" style="font-size:15px; font-weight:600; color:var(--ink); text-align:center; padding:0 20px;"></div>
+    </div>
     <h2 data-i18n="shareLinkTitle">Share this note</h2>
 
     <label style="display:flex; align-items:center; gap:8px; margin:4px 2px 12px; font-size:13px; color:var(--ink); cursor:pointer;">
@@ -750,6 +757,17 @@
     </button>
     <button class="primary-btn" id="tagDeleteEverywhereBtn" style="margin-top:10px; background:var(--danger);" data-i18n="deleteTagEverywhere">Remove from tag list and all notes</button>
     <button class="text-btn" id="cancelTagDeleteBtn" data-i18n="cancel">Cancel</button>
+  </div>
+</div>
+
+<!-- Tag bundle naming conflict -->
+<div class="sheet-overlay" id="tagBundleConflictOverlay" style="z-index:490;">
+  <div class="sheet" style="max-width:360px;">
+    <h2 data-i18n="tagBundleConflictTitle">You already have this tag</h2>
+    <p id="tagBundleConflictExplain" style="font-size:13.5px; color:var(--ink-soft); margin:0 0 16px;"></p>
+    <button class="primary-btn" id="tagBundleMergeBtn" style="margin-top:0;" data-i18n="mergeTagAction">Merge into existing tag</button>
+    <button class="primary-btn" id="tagBundleRenameBtn" style="margin-top:10px;" data-i18n="renameAndSaveAction">Rename and save separately</button>
+    <button class="text-btn" id="cancelTagBundleConflictBtn" data-i18n="cancel">Cancel</button>
   </div>
 </div>
 
@@ -903,7 +921,7 @@
       <div class="detail-title" id="tagDetailTitle" style="word-break:break-word;"></div>
       <div style="display:flex; gap:8px; flex-shrink:0;">
         <button type="button" id="tagShareIconBtn" title="Share" style="width:34px; height:34px; border-radius:10px; border:1px solid var(--line); background:var(--paper-raised); color:var(--ink-soft); cursor:pointer; display:flex; align-items:center; justify-content:center;">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 10.5l6.8-3.9M8.6 13.5l6.8 3.9"/></svg>
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"/><path d="M7.5 8.5L12 4l4.5 4.5"/><path d="M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>
         </button>
         <div style="position:relative;">
         <button type="button" id="tagSortIconBtn" title="Sort" style="width:34px; height:34px; border-radius:10px; border:1px solid var(--line); background:var(--paper-raised); color:var(--ink-soft); cursor:pointer; display:flex; align-items:center; justify-content:center;">
@@ -931,7 +949,13 @@
 </div>
 
 <div class="sheet-overlay" id="shareTagOverlay" style="z-index:465;">
-  <div class="sheet" style="max-width:380px;">
+  <div class="sheet" style="max-width:380px; position:relative;">
+    <div id="shareTagSuccessFlash" style="display:none; position:absolute; inset:0; background:var(--paper); border-radius:26px; align-items:center; justify-content:center; flex-direction:column; gap:12px; z-index:10; animation:popIn .2s ease;">
+      <div style="width:60px; height:60px; border-radius:50%; background:var(--green); display:flex; align-items:center; justify-content:center; box-shadow:0 8px 20px -6px var(--green-shadow);">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>
+      </div>
+      <div id="shareTagSuccessFlashText" style="font-size:15px; font-weight:600; color:var(--ink); text-align:center; padding:0 20px;"></div>
+    </div>
     <h2 id="shareTagTitle" data-i18n="shareTagTitle">Share this tag</h2>
     <p id="shareTagSubtitle" style="font-size:12.5px; color:var(--ink-soft); margin:-10px 0 14px;"></p>
     <label class="field-label" data-i18n="sendToLabel">Send to</label>
@@ -945,7 +969,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
   import {
-    getAuth, GoogleAuthProvider, signInWithPopup,
+    getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult,
     createUserWithEmailAndPassword, signInWithEmailAndPassword,
     sendPasswordResetEmail, onAuthStateChanged, signOut
   } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
@@ -972,7 +996,7 @@
   const storage = getStorage(app);
 
   window.__firebase = {
-    auth, db, storage, GoogleAuthProvider, signInWithPopup,
+    auth, db, storage, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult,
     createUserWithEmailAndPassword, signInWithEmailAndPassword,
     sendPasswordResetEmail, onAuthStateChanged, signOut,
     doc, getDoc, setDoc, deleteDoc,
@@ -1102,7 +1126,7 @@
       noSpotsYet: "还没有加过定位的笔记",
       viewAllReminders: "查看全部提醒",
       backToTop: "↑ 回到顶部",
-      manageMyTabsAction: "管理我的标签页",
+      manageMyTagsAction: "管理我的标签",
       todayLabel: "今天",
       tomorrowLabel: "明天",
       inNDaysLabel: (n) => `${n}天后`,
@@ -1161,6 +1185,10 @@
       toastCoEditingStopped: "已退出共同编辑，这条笔记现在是你自己的独立笔记了",
       toastCoEditingEnded: "共同编辑已结束，这条笔记现在是你自己的独立笔记了",
       deleteAction: "删除",
+      renameAction: "重命名",
+      renameTagPrompt: "输入新的标签名字：",
+      toastTagNameTaken: "已经有一个同名标签了，换个名字试试",
+      toastTagRenamed: "标签已重命名",
       infoToggle: "ⓘ 详情",
       created: "创建于",
       lastEdited: "最后编辑",
@@ -1181,6 +1209,12 @@
       toastReminderDiscarded: "已取消这条提醒",
       goToReminders: "去看看",
       sharedByLabel: "分享自：",
+      sharedToLabel: "分享给了",
+      viaPublicLink: "（通过公开链接）",
+      unsendAction: "撤回",
+      confirmUnsendShare: (who) => `撤回分享给 ${who} 的这份？`,
+      toastUnsendSuccess: "已撤回",
+      toastUnsendAlreadyProcessed: "对方已经处理过了，没法撤回",
       allowEditLabel: "允许对方也能编辑这条笔记",
       sharedOwnerBadge: "共同编辑中，对方改动会同步给你",
       sharedCollabBadge: (who) => who ? `与 ${who} 共同编辑` : `共同编辑中`,
@@ -1276,6 +1310,8 @@
       discardAction: "不要了",
       inboxMenuLabel: "别人分享给你的",
       shareSentToContact: "已分享",
+      shareSentFlashText: (email) => `已经分享给 ${email} 啦！`,
+      shareTagSentFlashText: (n, email) => `已经把 ${n} 条笔记分享给 ${email} 啦！`,
       shareRecipientNotFound: "这个邮箱还没注册 Mind Search，试试直接复制链接分享给ta",
       shareOpenedEmail: "已帮你打开邮件 App，写好邀请链接了，确认发送就行",
       mailtoSubject: (title) => `${title} —— 来自 Mind Search 的分享`,
@@ -1293,6 +1329,11 @@
       tagBundleInboxHint: "点「保存」会把这些笔记加进你的库，并自动打上这个标签。",
       confirmMergeTagBundle: (tag) => `你已经有一个叫"${tag}"的标签了，要把这些笔记合并进去吗？（选择"取消"会用一个新名字单独保留）`,
       savedTagBundle: (n, tag) => `已保存 ${n} 条笔记到"${tag}"`,
+      tagBundleConflictTitle: "你已经有这个标签了",
+      tagBundleConflictExplain: (tag) => `你已经有一个叫"${tag}"的标签，要怎么处理这批新收到的笔记？`,
+      mergeTagAction: "合并进现有标签",
+      renameAndSaveAction: "换个名字单独保存",
+      renameTagBundlePrompt: "给这批笔记的标签起个新名字：",
       discardedFromInbox: "已丢弃",
       contactAdded: "已添加",
       contactRemoved: "已移除",
@@ -1351,7 +1392,7 @@
       viewAllReminders: "查看全部提醒",
       todayLabel: "今天",
       backToTop: "↑ 回到頂部",
-      manageMyTabsAction: "管理我的標籤頁",
+      manageMyTagsAction: "管理我的標籤",
       tomorrowLabel: "明天",
       inNDaysLabel: (n) => `${n}天後`,
       inNWeeksLabel: (n) => `${n}週後`,
@@ -1406,6 +1447,10 @@
       infoToggle: "ⓘ 詳情",
       created: "建立於",
       lastEdited: "最後編輯",
+      renameAction: "重新命名",
+      renameTagPrompt: "輸入新的標籤名字：",
+      toastTagNameTaken: "已經有一個同名標籤了，換個名字試試",
+      toastTagRenamed: "標籤已重新命名",
       sharedByLabel: "分享自：",
       tagsLabel: "標籤：",
       close: "關閉",
@@ -1413,6 +1458,12 @@
       addReminderAction: "+ 設定提醒日期",
       reminderLabelShort: "提醒日期",
       reminderLabel: "提醒日期：",
+      sharedToLabel: "分享給了",
+      viaPublicLink: "（透過公開連結）",
+      unsendAction: "撤回",
+      confirmUnsendShare: (who) => `撤回分享給 ${who} 的這份？`,
+      toastUnsendSuccess: "已撤回",
+      toastUnsendAlreadyProcessed: "對方已經處理過了，沒法撤回",
       remindersDueBannerText: (n) => `你有 ${n} 則筆記快到提醒日子了`,
       remindersDueTitle: "提醒日期到了",
       goToReminders: "去看看",
@@ -1520,6 +1571,8 @@
       shareSentToContact: "已分享",
       shareRecipientNotFound: "這個電子郵件還沒註冊 Mind Search，試試直接複製連結分享給對方",
       shareOpenedEmail: "已幫你打開郵件 App，寫好邀請連結了，確認傳送就行",
+      shareSentFlashText: (email) => `已經分享給 ${email} 囉！`,
+      shareTagSentFlashText: (n, email) => `已經把 ${n} 則筆記分享給 ${email} 囉！`,
       mailtoSubject: (title) => `${title} —— 來自 Mind Search 的分享`,
       mailtoBody: (fromEmail, url) => `${fromEmail} 用 Mind Search 給你分享了一則筆記：\n\n${url}\n\n打開連結就能看到內容。如果你也想記錄和搜尋自己的知識，可以順手註冊一個 Mind Search 帳號，註冊後我們分享的筆記就能直接同步到你自己的帳號裡囉。`,
       savedFromInbox: "已存進你的庫",
@@ -1542,6 +1595,11 @@
       confirmRemoveContact: "移除這個好友備註？",
       pendingSharesSummary: (n) => `你有 ${n} 則分享筆記待處理`,
       goToInbox: "去看看",
+      tagBundleConflictTitle: "你已經有這個標籤了",
+      tagBundleConflictExplain: (tag) => `你已經有一個叫「${tag}」的標籤，要怎麼處理這批新收到的筆記？`,
+      mergeTagAction: "合併進現有標籤",
+      renameAndSaveAction: "換個名字單獨儲存",
+      renameTagBundlePrompt: "給這批筆記的標籤取個新名字：",
       toastSaveFail: "儲存失敗，請重試",
       toastMediaFail: "附件儲存失敗，請重試",
       toastPinned: "已加入「常復習」",
@@ -1600,7 +1658,7 @@
       todayLabel: "Today",
       tomorrowLabel: "Tomorrow",
       backToTop: "↑ Back to top",
-      manageMyTabsAction: "Manage my tabs",
+      manageMyTagsAction: "Manage My Tags",
       inNDaysLabel: (n) => `In ${n} days`,
       inNWeeksLabel: (n) => `In ${n} week${n>1?'s':''}`,
       moreThanMonthLabel: "More than 1 month",
@@ -1639,6 +1697,10 @@
       fileLabel: "File",
       addFile: "Add PDF",
       stopCoEditingAction: "Stop co-editing",
+      renameAction: "Rename",
+      renameTagPrompt: "Enter a new name for this tag:",
+      toastTagNameTaken: "A tag with that name already exists — try a different name",
+      toastTagRenamed: "Tag renamed",
       confirmStopCoEditing: "You'll keep your own independent copy and stop syncing with the others — anyone else still co-editing will carry on. Continue?",
       toastCoEditingStopped: "You've left — this is now your own independent note",
       toastCoEditingEnded: "Co-editing has ended — this is now your own independent note",
@@ -1655,6 +1717,12 @@
       decideLaterTitle: "Decide later",
       confirmRemoveTagFromNote: (tag) => `Remove this note from the "${tag}" tag?`,
       addReminderAction: "+ Set reminder date",
+      sharedToLabel: "Shared to",
+      viaPublicLink: "(via public link)",
+      unsendAction: "Unsend",
+      confirmUnsendShare: (who) => `Unsend the copy shared with ${who}?`,
+      toastUnsendSuccess: "Unsent",
+      toastUnsendAlreadyProcessed: "This has already been processed on their end — can't unsend",
       reminderLabelShort: "Reminder date",
       reminderLabel: "Reminder date:",
       remindersDueBannerText: (n) => `You have ${n} notes with reminders due`,
@@ -1764,6 +1832,8 @@
       shareOpenedEmail: "Opened your email app with an invite link ready to send",
       mailtoSubject: (title) => `${title} — shared from Mind Search`,
       mailtoBody: (fromEmail, url) => `${fromEmail} shared a note with you on Mind Search:\n\n${url}\n\nOpen the link to see it. If you'd like to keep and search your own notes too, sign up for Mind Search — once you do, this note will sync straight into your account.`,
+      shareSentFlashText: (email) => `Shared with ${email}!`,
+      shareTagSentFlashText: (n, email) => `Shared ${n} notes with ${email}!`,
       savedFromInbox: "Saved to your library",
       discardedFromInbox: "Discarded",
       contactAdded: "Added",
@@ -1791,6 +1861,11 @@
       toastAudioDeleted: "Recording deleted",
       toastDeleted: "Deleted",
       toastSaved: "Saved",
+      tagBundleConflictTitle: "You already have this tag",
+      tagBundleConflictExplain: (tag) => `You already have a tag called "${tag}" — what should we do with these new notes?`,
+      mergeTagAction: "Merge into existing tag",
+      renameAndSaveAction: "Rename and save separately",
+      renameTagBundlePrompt: "Enter a new tag name for these notes:",
       toastNeedFields: "At least give it a title",
       toastMicFail: "Couldn't access the microphone (may not work in preview)",
       toastMaxPhotos: "You can add up to 10 photos",
@@ -2424,7 +2499,11 @@
     });
   });
 
-  $('manageMyTabsBtn').addEventListener('click', openTabManage);
+  $('manageMyTabsBtn').addEventListener('click', ()=>{
+    $('newTagInput').value = '';
+    renderTagsManageList();
+    $('manageTagsOverlay').classList.add('open');
+  });
 
   let tagDetailSortMode = 'recent';
   let tagDetailSearchQuery = '';
@@ -3955,6 +4034,11 @@
       if($('sectionTabsBar').children.length){
         tabRenderFn(getActiveTabId())();
       }
+      if($('tagDetailOverlay').classList.contains('open') && currentTagDetailContext){
+        renderTagDetailList();
+      }
+      const activeSearchQuery = $('searchInput').value.trim().toLowerCase();
+      if(activeSearchQuery !== ''){ runSearch(activeSearchQuery); }
       showToast(T().toastSaved);
       if(editingId){
         openDetail(entry.id); // return to the note so the user can see what they just changed, instead of losing track of it
@@ -4105,6 +4189,7 @@
       sharedLine = `<br><br>${T().sharedByLabel} ${escapeHtml(displayName)}<br>${formatDate(entry.sharedAt || entry.createdAt)}`;
     }
     renderDetailTagsRow(entry);
+    renderDetailSharedTo(entry);
     if(entry.reminderDate){
       $('detailReminderLabel').textContent = formatReminderDate(entry.reminderDate);
       $('detailReminderDateInput').value = entry.reminderDate;
@@ -4142,8 +4227,49 @@
     row.style.display = 'flex';
   }
 
+  function renderDetailSharedTo(entry){
+    const wrap = $('detailSharedToWrap');
+    wrap.innerHTML = '';
+    const shares = entry.sharedTo || [];
+    if(shares.length === 0){
+      wrap.dataset.hasContent = 'false';
+      wrap.style.display = 'none';
+      return;
+    }
+    wrap.dataset.hasContent = 'true';
+    const label = document.createElement('div');
+    label.style.cssText = 'font-size:12px; font-weight:600; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.06em;';
+    label.textContent = T().sharedToLabel;
+    wrap.appendChild(label);
+    shares.forEach((share, idx) => {
+      const row = document.createElement('div');
+      row.className = 'file-chip-row';
+      const who = share.email || T().viaPublicLink;
+      row.innerHTML = `<span>👤</span><span class="file-chip-name">${escapeHtml(who)}</span><button type="button" class="unsend-share-btn" style="color:var(--danger); font-weight:600; font-size:12px; background:none; border:none; cursor:pointer; flex-shrink:0;">${T().unsendAction}</button>`;
+      row.querySelector('.unsend-share-btn').addEventListener('click', async ()=>{
+        if(!confirm(T().confirmUnsendShare(who))) return;
+        const result = await revokeShare(share);
+        if(result.ok){
+          entry.sharedTo = entry.sharedTo.filter((s,i) => i !== idx);
+          persistIndex();
+          renderDetailSharedTo(entry);
+          showToast(T().toastUnsendSuccess);
+        } else if(result.reason === 'alreadyProcessed'){
+          showToast(T().toastUnsendAlreadyProcessed);
+        } else {
+          showToast(T().shareCreateFail);
+        }
+      });
+      wrap.appendChild(row);
+    });
+    wrap.style.display = $('infoBox').classList.contains('open') ? 'flex' : 'none';
+  }
+
   $('closeDetailBtn').addEventListener('click', ()=> $('detailOverlay').classList.remove('open'));
-  $('infoToggle').addEventListener('click', ()=> $('infoBox').classList.toggle('open'));
+  $('infoToggle').addEventListener('click', ()=>{
+    $('infoBox').classList.toggle('open');
+    $('detailSharedToWrap').style.display = $('infoBox').classList.contains('open') && $('detailSharedToWrap').dataset.hasContent === 'true' ? 'flex' : 'none';
+  });
 
   $('starBtn').addEventListener('click', ()=>{
     const entry = entries.find(e=>e.id === currentDetailId);
@@ -4302,6 +4428,19 @@
     }catch(e){ /* best effort */ }
   }
 
+  async function recordMyShare(record){
+    const fb = window.__firebase;
+    const me = fb.auth.currentUser;
+    if(!me) return;
+    const recordId = cryptoId();
+    try{
+      await fb.setDoc(fb.doc(fb.db, 'users', me.uid, 'myShares', recordId), {
+        ...record,
+        createdAt: Date.now()
+      });
+    }catch(e){ console.error('recordMyShare failed', e); }
+  }
+
   async function shareEntryToEmail(entry, email, allowEdit){
     const fb = window.__firebase;
     const me = fb.auth.currentUser;
@@ -4330,6 +4469,7 @@
       }
       await fb.setDoc(fb.doc(fb.db, 'users', recipientUid, 'inbox', itemId), {
         fromEmail: me.email,
+        fromUid: me.uid,
         title: entry.title,
         content: entry.content,
         images: entry.images || [],
@@ -4342,6 +4482,18 @@
         createdAt: Date.now()
       });
       touchContactSharedAt(email);
+      await recordMyShare({
+        kind: 'note',
+        entryId: entry.id,
+        entryTitle: entry.title,
+        toEmail: email,
+        recipientUid,
+        targetType: 'inbox',
+        targetId: itemId
+      });
+      if(!entry.sharedTo){ entry.sharedTo = []; }
+      entry.sharedTo.push({ email, sharedAt: Date.now(), targetType: 'inbox', targetId: itemId, recipientUid });
+      persistIndex();
       showToast(T().shareSentToContact);
       return true;
     }catch(e){
@@ -4354,6 +4506,7 @@
   async function createShareLink(entry){
     const fb = window.__firebase;
     if(!fb) return;
+    const me = fb.auth.currentUser;
     const shareId = cryptoId();
     try{
       await fb.setDoc(fb.doc(fb.db, 'publicShares', shareId), {
@@ -4364,16 +4517,52 @@
         files: entry.files || [],
         video: entry.video || null,
         location: entry.location || null,
+        createdByUid: me ? me.uid : null,
         createdAt: Date.now()
       });
       $('shareLinkInput').value = location.origin + location.pathname + '?share=' + shareId;
+      if(me){
+        await recordMyShare({
+          kind: 'note',
+          entryId: entry.id,
+          entryTitle: entry.title,
+          toEmail: null,
+          targetType: 'publicShare',
+          targetId: shareId
+        });
+        if(!entry.sharedTo){ entry.sharedTo = []; }
+        entry.sharedTo.push({ email: null, sharedAt: Date.now(), targetType: 'publicShare', targetId: shareId });
+        persistIndex();
+      }
     }catch(e){
       console.error('share create failed', e);
       showToast(T().shareCreateFail);
     }
   }
 
-  let currentShareEntry = null;
+  async function revokeShare(shareRecord){
+    const fb = window.__firebase;
+    const me = fb.auth.currentUser;
+    if(!me) return { ok:false, reason:'error' };
+    try{
+      if(shareRecord.targetType === 'inbox'){
+        const itemRef = fb.doc(fb.db, 'users', shareRecord.recipientUid, 'inbox', shareRecord.targetId);
+        const snap = await fb.getDoc(itemRef);
+        if(!snap.exists()){
+          return { ok:false, reason:'alreadyProcessed' };
+        }
+        await fb.deleteDoc(itemRef);
+        return { ok:true };
+      } else if(shareRecord.targetType === 'publicShare'){
+        await fb.deleteDoc(fb.doc(fb.db, 'publicShares', shareRecord.targetId));
+        return { ok:true };
+      }
+      return { ok:false, reason:'error' };
+    }catch(e){
+      console.error('revokeShare failed', e);
+      return { ok:false, reason:'error' };
+    }
+  }
 
   function toEntrySnapshot(entry){
     return {
@@ -4403,13 +4592,23 @@
       chip.type = 'button';
       chip.className = 'tag-chip';
       chip.textContent = c.nickname || c.email;
-      chip.addEventListener('click', async ()=>{
-        const ok = await shareTagBundleToEmail(tagName, notes, c.email);
-        if(ok){ $('shareTagOverlay').classList.remove('open'); }
+      chip.addEventListener('click', ()=>{
+        $('shareTagEmailInput').value = c.email;
+        row.querySelectorAll('button').forEach(b => b.classList.remove('selected'));
+        chip.classList.add('selected');
       });
       row.appendChild(chip);
     });
     $('shareTagOverlay').classList.add('open');
+  }
+
+  function showShareTagSuccessFlash(text){
+    $('shareTagSuccessFlashText').textContent = text;
+    $('shareTagSuccessFlash').style.display = 'flex';
+    setTimeout(()=>{
+      $('shareTagSuccessFlash').style.display = 'none';
+      $('shareTagOverlay').classList.remove('open');
+    }, 1400);
   }
 
   async function shareTagBundleToEmail(tagName, notes, email){
@@ -4433,12 +4632,22 @@
       await fb.setDoc(fb.doc(fb.db, 'users', recipientUid, 'inbox', itemId), {
         type: 'tagBundle',
         fromEmail: me.email,
+        fromUid: me.uid,
         tagName: tagName,
         notes: snapshots,
         noteCount: snapshots.length,
         createdAt: Date.now()
       });
       touchContactSharedAt(email);
+      await recordMyShare({
+        kind: 'tagBundle',
+        tagName: tagName,
+        noteCount: snapshots.length,
+        toEmail: email,
+        recipientUid,
+        targetType: 'inbox',
+        targetId: itemId
+      });
       showToast(T().shareTagSent(snapshots.length));
       return true;
     }catch(e){
@@ -4454,7 +4663,7 @@
     const tagName = currentTagDetailContext.presetTag;
     const notes = currentTagDetailContext.filterFn(entries);
     const ok = await shareTagBundleToEmail(tagName, notes, email);
-    if(ok){ $('shareTagOverlay').classList.remove('open'); }
+    if(ok){ showShareTagSuccessFlash(T().shareTagSentFlashText(notes.length, email)); }
   });
   $('closeShareTagBtn').addEventListener('click', ()=> $('shareTagOverlay').classList.remove('open'));
   $('shareTagOverlay').addEventListener('click', (e)=>{ if(e.target.id==='shareTagOverlay') $('shareTagOverlay').classList.remove('open'); });
@@ -4469,10 +4678,11 @@
       chip.type = 'button';
       chip.style.cssText = 'padding:8px 14px; font-size:13px; cursor:pointer; border:1px solid var(--line); background:var(--paper-raised); border-radius:999px; color:var(--ink);';
       chip.textContent = c.nickname || c.email;
-      chip.addEventListener('click', async ()=>{
-        if(!currentShareEntry) return;
-        const ok = await shareEntryToEmail(currentShareEntry, c.email, $('allowEditCheckbox').checked);
-        if(ok) $('shareOverlay').classList.remove('open');
+      chip.addEventListener('click', ()=>{
+        $('shareEmailInput').value = c.email;
+        row.querySelectorAll('button').forEach(b => { b.style.background = 'var(--paper-raised)'; b.style.borderColor = 'var(--line)'; });
+        chip.style.background = 'var(--plum-tint)';
+        chip.style.borderColor = 'var(--plum-deep)';
       });
       row.appendChild(chip);
     });
@@ -4503,8 +4713,18 @@
     if(ok){
       $('shareEmailInput').value = '';
       renderContactChips();
+      showShareSuccessFlash(T().shareSentFlashText(email));
     }
   });
+
+  function showShareSuccessFlash(text){
+    $('shareSuccessFlashText').textContent = text;
+    $('shareSuccessFlash').style.display = 'flex';
+    setTimeout(()=>{
+      $('shareSuccessFlash').style.display = 'none';
+      $('shareOverlay').classList.remove('open');
+    }, 1400);
+  }
 
   $('shareWhatsappBtn').addEventListener('click', ()=>{
     const url = $('shareLinkInput').value;
@@ -4818,14 +5038,38 @@
       row.className = 'file-chip-row';
       row.innerHTML = `
         <span class="file-chip-name">${escapeHtml(tag)}</span>
-        <button type="button" style="color:var(--danger); font-weight:600; font-size:12.5px; background:none; border:none; cursor:pointer;">${T().deleteAction}</button>
+        <button type="button" class="rename-tag-btn" style="color:var(--plum-deep); font-weight:600; font-size:12.5px; background:none; border:none; cursor:pointer; flex-shrink:0;">${T().renameAction}</button>
+        <button type="button" class="delete-tag-btn" style="color:var(--danger); font-weight:600; font-size:12.5px; background:none; border:none; cursor:pointer; flex-shrink:0;">${T().deleteAction}</button>
       `;
-      row.querySelector('button').addEventListener('click', ()=>{
+      row.querySelector('.rename-tag-btn').addEventListener('click', ()=> renameTag(tag));
+      row.querySelector('.delete-tag-btn').addEventListener('click', ()=>{
         pendingDeleteTagName = tag;
         $('tagDeleteChoiceOverlay').classList.add('open');
       });
       list.appendChild(row);
     });
+  }
+
+  function renameTag(oldName){
+    const input = prompt(T().renameTagPrompt, oldName);
+    if(input === null) return;
+    const newName = input.trim();
+    if(!newName || newName === oldName) return;
+    if(allTags.includes(newName)){
+      showToast(T().toastTagNameTaken);
+      return;
+    }
+    allTags = allTags.map(t => t === oldName ? newName : t);
+    persistTags();
+    entries.forEach(e => {
+      if(e.tags && e.tags.includes(oldName)){
+        e.tags = e.tags.map(t => t === oldName ? newName : t);
+      }
+    });
+    persistIndex();
+    renderTagsManageList();
+    if($('sectionTabsBar').children.length){ tabRenderFn(getActiveTabId())(); }
+    showToast(T().toastTagRenamed);
   }
 
   $('openManageTagsBtn').addEventListener('click', ()=>{
@@ -5060,19 +5304,19 @@
     showToast(T().savedFromInbox);
   }
 
+  let pendingTagBundleItem = null;
+
   async function saveTagBundleToLibrary(item){
-    let tagName = item.tagName;
-    const alreadyHasTag = allTags.includes(tagName);
-    if(alreadyHasTag){
-      const merge = confirm(T().confirmMergeTagBundle(tagName));
-      if(!merge){
-        // keep them separate by giving the incoming notes a distinct tag name
-        let suffix = 2;
-        let candidate = `${tagName} (${suffix})`;
-        while(allTags.includes(candidate)){ suffix++; candidate = `${tagName} (${suffix})`; }
-        tagName = candidate;
-      }
+    if(allTags.includes(item.tagName)){
+      pendingTagBundleItem = item;
+      $('tagBundleConflictExplain').textContent = T().tagBundleConflictExplain(item.tagName);
+      $('tagBundleConflictOverlay').classList.add('open');
+      return;
     }
+    await finishSavingTagBundle(item, item.tagName);
+  }
+
+  async function finishSavingTagBundle(item, tagName){
     if(!allTags.includes(tagName)){
       allTags.push(tagName);
       persistTags();
@@ -5099,6 +5343,32 @@
     await removeInboxItem(item.id);
     showToast(T().savedTagBundle((item.notes||[]).length, tagName));
   }
+
+  $('tagBundleMergeBtn').addEventListener('click', async ()=>{
+    if(!pendingTagBundleItem) return;
+    $('tagBundleConflictOverlay').classList.remove('open');
+    await finishSavingTagBundle(pendingTagBundleItem, pendingTagBundleItem.tagName);
+    pendingTagBundleItem = null;
+  });
+  $('tagBundleRenameBtn').addEventListener('click', async ()=>{
+    if(!pendingTagBundleItem) return;
+    const input = prompt(T().renameTagBundlePrompt, pendingTagBundleItem.tagName);
+    if(input === null) return;
+    let newName = input.trim();
+    if(!newName) return;
+    if(allTags.includes(newName)){
+      showToast(T().toastTagNameTaken);
+      return;
+    }
+    $('tagBundleConflictOverlay').classList.remove('open');
+    await finishSavingTagBundle(pendingTagBundleItem, newName);
+    pendingTagBundleItem = null;
+  });
+  $('cancelTagBundleConflictBtn').addEventListener('click', ()=>{
+    $('tagBundleConflictOverlay').classList.remove('open');
+    pendingTagBundleItem = null;
+  });
+  $('tagBundleConflictOverlay').addEventListener('click', (e)=>{ if(e.target.id==='tagBundleConflictOverlay'){ $('tagBundleConflictOverlay').classList.remove('open'); pendingTagBundleItem = null; } });
 
   async function removeInboxItem(itemId){
     const fb = window.__firebase;
@@ -5475,11 +5745,21 @@
     updateAuthModeUI();
   });
 
+  function isStandalonePWA(){
+    return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  }
+
   $('googleSignInBtn').addEventListener('click', async ()=>{
     clearAuthError();
     const fb = window.__firebase;
     try{
-      await fb.signInWithPopup(fb.auth, new fb.GoogleAuthProvider());
+      if(isStandalonePWA()){
+        // Popup-based sign-in is unreliable inside an installed/standalone PWA (no real browser
+        // chrome to host the popup window), so use a full-page redirect there instead.
+        await fb.signInWithRedirect(fb.auth, new fb.GoogleAuthProvider());
+      } else {
+        await fb.signInWithPopup(fb.auth, new fb.GoogleAuthProvider());
+      }
     }catch(e){
       console.error(e);
       showAuthError(mapAuthError(e));
@@ -5573,6 +5853,10 @@
   function initAuth(){
     const fb = window.__firebase;
     updateAuthModeUI();
+    fb.getRedirectResult(fb.auth).catch((e) => {
+      console.error('redirect sign-in failed', e);
+      showAuthError(mapAuthError(e));
+    });
     fb.onAuthStateChanged(fb.auth, async (user) => {
       const wasGuest = (activeStorageImpl === localStorageImpl);
       if(user){
