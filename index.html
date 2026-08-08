@@ -334,7 +334,7 @@
   .toast{
     position:fixed; bottom:100px; left:50%; transform:translateX(-50%); background:var(--ink); color:#fff;
     padding:10px 18px; border-radius:999px; font-size:13px; opacity:0; pointer-events:none;
-    transition:opacity .25s, transform .25s; z-index:200; max-width:80%; text-align:center;
+    transition:opacity .25s, transform .25s; z-index:700; max-width:80%; text-align:center;
   }
   .toast.show{ opacity:1; transform:translateX(-50%) translateY(-6px); }
 
@@ -1019,6 +1019,7 @@
   let entries = [];
   let currentDetailId = null;
   let editingId = null;
+  let formOpenSnapshot = null;
   let recentRandomIds = [];
   let recentForgottenIds = [];
   let mediaRecorder = null;
@@ -1187,6 +1188,9 @@
       deleteAction: "删除",
       renameAction: "重命名",
       renameTagPrompt: "输入新的标签名字：",
+      confirmSendShare: (who) => `确定要分享给${who}吗？`,
+      confirmDiscardEdits: "有还没保存的改动，确定要离开吗？改动会丢失。",
+      dblClickToRenameHint: "双击可以重命名",
       toastTagNameTaken: "已经有一个同名标签了，换个名字试试",
       toastTagRenamed: "标签已重命名",
       infoToggle: "ⓘ 详情",
@@ -1452,6 +1456,9 @@
       toastTagNameTaken: "已經有一個同名標籤了，換個名字試試",
       toastTagRenamed: "標籤已重新命名",
       sharedByLabel: "分享自：",
+      confirmSendShare: (who) => `確定要分享給${who}嗎？`,
+      confirmDiscardEdits: "有還沒儲存的改動，確定要離開嗎？改動會遺失。",
+      dblClickToRenameHint: "雙擊可以重新命名",
       tagsLabel: "標籤：",
       close: "關閉",
       confirmRemoveTagFromNote: (tag) => `把這則筆記從「${tag}」標籤裡移除嗎？`,
@@ -1705,6 +1712,9 @@
       toastCoEditingStopped: "You've left — this is now your own independent note",
       toastCoEditingEnded: "Co-editing has ended — this is now your own independent note",
       replaceFile: "Replace PDF",
+      confirmSendShare: (who) => `Share this with ${who}?`,
+      confirmDiscardEdits: "You have unsaved changes — leave without saving?",
+      dblClickToRenameHint: "Double-click to rename",
       openFile: "Open",
       toastPdfWrongType: "Only PDF files can be added",
       toastPdfTooLarge: "PDF can't be larger than 800KB — try compressing it",
@@ -2566,12 +2576,43 @@
     $('tagDetailSearchIcon').style.display = '';
     $('tagSortMenu').classList.remove('open');
     $('tagDetailTitle').textContent = config.title;
+    $('tagDetailTitle').style.cursor = config.presetTag ? 'text' : '';
+    $('tagDetailTitle').title = config.presetTag ? T().dblClickToRenameHint : '';
     renderTagDetailList();
     $('tagDetailAddBtn').style.display = config.presetTag ? 'block' : 'none';
     if(config.presetTag){ $('tagDetailAddBtn').textContent = T().addToTagAction(config.presetTag); }
     $('tagShareIconBtn').style.display = config.presetTag ? 'flex' : 'none';
     $('tagDetailOverlay').classList.add('open');
   }
+
+  $('tagDetailTitle').addEventListener('dblclick', ()=>{
+    if(!currentTagDetailContext || !currentTagDetailContext.presetTag) return;
+    const oldName = currentTagDetailContext.presetTag;
+    const input = prompt(T().renameTagPrompt, oldName);
+    if(input === null) return;
+    const newName = input.trim();
+    if(!newName || newName === oldName) return;
+    if(allTags.includes(newName)){
+      showToast(T().toastTagNameTaken);
+      return;
+    }
+    allTags = allTags.map(t => t === oldName ? newName : t);
+    persistTags();
+    entries.forEach(e => {
+      if(e.tags && e.tags.includes(oldName)){
+        e.tags = e.tags.map(t => t === oldName ? newName : t);
+      }
+    });
+    persistIndex();
+    showToast(T().toastTagRenamed);
+    if($('sectionTabsBar').children.length){ tabRenderFn(getActiveTabId())(); }
+    // rebuild the detail view's filter to use the new name and refresh in place
+    openTagDetail({
+      title: newName,
+      filterFn: (es) => es.filter(e => e.tags && e.tags.includes(newName)),
+      presetTag: newName
+    });
+  });
 
   $('tagShareIconBtn').addEventListener('click', ()=> openShareTagSheet());
 
@@ -2885,6 +2926,25 @@
     editingId = null;
   }
 
+  function captureFormSnapshot(){
+    return JSON.stringify({
+      title: $('inputTitle').value,
+      content: $('inputContent').value,
+      tags: [...pendingTags],
+      reminderDate: pendingReminderDate,
+      location: pendingLocation,
+      photoCount: pendingPhotos.length,
+      fileCount: pendingFiles.length,
+      hasAudio: !!pendingAudioData,
+      hasVideo: !!pendingVideo
+    });
+  }
+
+  function hasUnsavedFormChanges(){
+    if(formOpenSnapshot === null) return false;
+    return formOpenSnapshot !== captureFormSnapshot();
+  }
+
   function openAddSheet(presetTag){
     resetAddForm();
     $('addSheetTitle').textContent = T().addSheetTitleNew;
@@ -2895,6 +2955,7 @@
       $('presetTagBanner').style.display = 'flex';
     }
     $('addOverlay').classList.add('open');
+    formOpenSnapshot = captureFormSnapshot();
   }
 
   function openEditSheet(entry){
@@ -2931,10 +2992,15 @@
       renderReminderPreview();
     }
     $('addOverlay').classList.add('open');
+    formOpenSnapshot = captureFormSnapshot();
   }
 
   $('fabAdd').addEventListener('click', ()=> openAddSheet());
-  $('cancelAddBtn').addEventListener('click', ()=> $('addOverlay').classList.remove('open'));
+  $('cancelAddBtn').addEventListener('click', ()=>{
+    if(hasUnsavedFormChanges() && !confirm(T().confirmDiscardEdits)) return;
+    formOpenSnapshot = null;
+    $('addOverlay').classList.remove('open');
+  });
 
   function compressVideoMediaRecorderFallback(file, onProgress){
     return new Promise((resolve, reject) => {
@@ -3536,7 +3602,7 @@
     $('locationPreviewWrap').style.display = 'block';
   }
 
-  const GOOGLE_PLACES_API_KEY = 'AIzaSyC4eqza9CzCrAJzcuGUZd-Lr4KbR-BAVac';
+  const GOOGLE_PLACES_API_KEY = 'AIzaSyDWV_FabMHA8HO4e43e7554h0YOUglPTbg';
 
   async function reverseGeocode(lat, lng){
     try{
@@ -4027,6 +4093,7 @@
       filesToDeleteOnSave.forEach(path => deleteFileFromStorage(path));
       filesToDeleteOnSave = [];
 
+      formOpenSnapshot = null;
       $('addOverlay').classList.remove('open');
       renderRecent();
       renderRandom();
@@ -4521,19 +4588,8 @@
         createdAt: Date.now()
       });
       $('shareLinkInput').value = location.origin + location.pathname + '?share=' + shareId;
-      if(me){
-        await recordMyShare({
-          kind: 'note',
-          entryId: entry.id,
-          entryTitle: entry.title,
-          toEmail: null,
-          targetType: 'publicShare',
-          targetId: shareId
-        });
-        if(!entry.sharedTo){ entry.sharedTo = []; }
-        entry.sharedTo.push({ email: null, sharedAt: Date.now(), targetType: 'publicShare', targetId: shareId });
-        persistIndex();
-      }
+      currentShareLinkId = shareId;
+      currentShareLinkRecorded = false; // only becomes a tracked "share" once the user actually uses the link
     }catch(e){
       console.error('share create failed', e);
       showToast(T().shareCreateFail);
@@ -4591,11 +4647,12 @@
       const chip = document.createElement('button');
       chip.type = 'button';
       chip.className = 'tag-chip';
-      chip.textContent = c.nickname || c.email;
-      chip.addEventListener('click', ()=>{
-        $('shareTagEmailInput').value = c.email;
-        row.querySelectorAll('button').forEach(b => b.classList.remove('selected'));
-        chip.classList.add('selected');
+      const displayName = c.nickname || c.email;
+      chip.textContent = displayName;
+      chip.addEventListener('click', async ()=>{
+        if(!confirm(T().confirmSendShare(displayName))) return;
+        const ok = await shareTagBundleToEmail(tagName, notes, c.email);
+        if(ok){ showShareTagSuccessFlash(T().shareTagSentFlashText(notes.length, displayName)); }
       });
       row.appendChild(chip);
     });
@@ -4660,10 +4717,13 @@
   $('shareTagSendBtn').addEventListener('click', async ()=>{
     const email = $('shareTagEmailInput').value.trim();
     if(!email || !currentTagDetailContext || !currentTagDetailContext.presetTag) return;
+    const nickname = await getContactNickname(email);
+    const displayName = nickname || email;
+    if(!confirm(T().confirmSendShare(displayName))) return;
     const tagName = currentTagDetailContext.presetTag;
     const notes = currentTagDetailContext.filterFn(entries);
     const ok = await shareTagBundleToEmail(tagName, notes, email);
-    if(ok){ showShareTagSuccessFlash(T().shareTagSentFlashText(notes.length, email)); }
+    if(ok){ showShareTagSuccessFlash(T().shareTagSentFlashText(notes.length, displayName)); }
   });
   $('closeShareTagBtn').addEventListener('click', ()=> $('shareTagOverlay').classList.remove('open'));
   $('shareTagOverlay').addEventListener('click', (e)=>{ if(e.target.id==='shareTagOverlay') $('shareTagOverlay').classList.remove('open'); });
@@ -4677,12 +4737,16 @@
       const chip = document.createElement('button');
       chip.type = 'button';
       chip.style.cssText = 'padding:8px 14px; font-size:13px; cursor:pointer; border:1px solid var(--line); background:var(--paper-raised); border-radius:999px; color:var(--ink);';
-      chip.textContent = c.nickname || c.email;
-      chip.addEventListener('click', ()=>{
-        $('shareEmailInput').value = c.email;
-        row.querySelectorAll('button').forEach(b => { b.style.background = 'var(--paper-raised)'; b.style.borderColor = 'var(--line)'; });
-        chip.style.background = 'var(--plum-tint)';
-        chip.style.borderColor = 'var(--plum-deep)';
+      const displayName = c.nickname || c.email;
+      chip.textContent = displayName;
+      chip.addEventListener('click', async ()=>{
+        if(!currentShareEntry) return;
+        if(!confirm(T().confirmSendShare(displayName))) return;
+        const ok = await shareEntryToEmail(currentShareEntry, c.email, $('allowEditCheckbox').checked);
+        if(ok){
+          renderContactChips();
+          showShareSuccessFlash(T().shareSentFlashText(displayName));
+        }
       });
       row.appendChild(chip);
     });
@@ -4709,11 +4773,14 @@
   $('shareToEmailBtn').addEventListener('click', async ()=>{
     const email = $('shareEmailInput').value.trim();
     if(!email || !currentShareEntry) return;
+    const nickname = await getContactNickname(email);
+    const displayName = nickname || email;
+    if(!confirm(T().confirmSendShare(displayName))) return;
     const ok = await shareEntryToEmail(currentShareEntry, email, $('allowEditCheckbox').checked);
     if(ok){
       $('shareEmailInput').value = '';
       renderContactChips();
-      showShareSuccessFlash(T().shareSentFlashText(email));
+      showShareSuccessFlash(T().shareSentFlashText(displayName));
     }
   });
 
@@ -4726,23 +4793,45 @@
     }, 1400);
   }
 
+  let currentShareLinkId = null;
+  let currentShareLinkRecorded = false;
+
+  async function recordPublicLinkUseIfNeeded(){
+    if(currentShareLinkRecorded || !currentShareLinkId || !currentShareEntry) return;
+    currentShareLinkRecorded = true;
+    const entry = currentShareEntry;
+    await recordMyShare({
+      kind: 'note',
+      entryId: entry.id,
+      entryTitle: entry.title,
+      toEmail: null,
+      targetType: 'publicShare',
+      targetId: currentShareLinkId
+    });
+    if(!entry.sharedTo){ entry.sharedTo = []; }
+    entry.sharedTo.push({ email: null, sharedAt: Date.now(), targetType: 'publicShare', targetId: currentShareLinkId });
+    persistIndex();
+  }
+
   $('shareWhatsappBtn').addEventListener('click', ()=>{
     const url = $('shareLinkInput').value;
     if(!url) return;
     window.open('https://wa.me/?text=' + encodeURIComponent(url), '_blank');
+    recordPublicLinkUseIfNeeded();
   });
   $('shareLineBtn').addEventListener('click', ()=>{
     const url = $('shareLinkInput').value;
     if(!url) return;
     window.open('https://social-plugins.line.me/lineit/share?url=' + encodeURIComponent(url), '_blank');
+    recordPublicLinkUseIfNeeded();
   });
   $('shareMoreBtn').addEventListener('click', async ()=>{
     const url = $('shareLinkInput').value;
     if(!url) return;
     if(navigator.share){
-      try{ await navigator.share({ title: currentShareEntry ? currentShareEntry.title : 'Mind Search', url }); }catch(e){}
+      try{ await navigator.share({ title: currentShareEntry ? currentShareEntry.title : 'Mind Search', url }); recordPublicLinkUseIfNeeded(); }catch(e){}
     } else {
-      try{ await navigator.clipboard.writeText(url); showToast(T().linkCopied); }catch(e){}
+      try{ await navigator.clipboard.writeText(url); showToast(T().linkCopied); recordPublicLinkUseIfNeeded(); }catch(e){}
     }
   });
 
@@ -4760,6 +4849,7 @@
       try{ document.execCommand('copy'); }catch(e2){}
     }
     showToast(T().linkCopied);
+    recordPublicLinkUseIfNeeded();
   });
 
   // ---------- Manage Friends ----------
@@ -5586,7 +5676,10 @@
 
   [ 'addOverlay', 'detailOverlay' ].forEach(id=>{
     $(id).addEventListener('click', (e)=>{
-      if(e.target.id === id) $(id).classList.remove('open');
+      if(e.target.id !== id) return;
+      if(id === 'addOverlay' && hasUnsavedFormChanges() && !confirm(T().confirmDiscardEdits)) return;
+      if(id === 'addOverlay'){ formOpenSnapshot = null; }
+      $(id).classList.remove('open');
     });
   });
 
