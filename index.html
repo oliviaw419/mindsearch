@@ -840,9 +840,12 @@
 
     <div style="display:flex; align-items:center; justify-content:space-between; margin-top:20px;">
       <label class="field-label" style="margin:0; white-space:nowrap; flex-shrink:0;" data-i18n="allEntriesLabel">All Entries</label>
-      <div style="display:flex; gap:10px;">
-        <button type="button" id="dateLogExportPdfBtn" class="text-btn" style="margin:0; padding:0; white-space:nowrap; flex-shrink:0;" data-i18n="exportPdfAction">Export PDF</button>
-        <button type="button" id="dateLogExportExcelBtn" class="text-btn" style="margin:0; padding:0; white-space:nowrap; flex-shrink:0;" data-i18n="exportExcelAction">Export Excel</button>
+      <div style="position:relative;">
+        <button type="button" id="dateLogExportBtn" class="text-btn" style="margin:0; padding:0; white-space:nowrap;" data-i18n="exportAction">Export</button>
+        <div class="more-menu" id="dateLogExportMenu" style="right:0; left:auto; min-width:120px;">
+          <button type="button" id="dateLogExportPdfBtn" data-i18n="exportPdfAction">Export PDF</button>
+          <button type="button" id="dateLogExportExcelBtn" data-i18n="exportExcelAction">Export Excel</button>
+        </div>
       </div>
     </div>
     <div id="dateLogFullList" style="display:flex; flex-direction:column; gap:8px; margin-top:8px;"></div>
@@ -1385,6 +1388,7 @@
       dateLogNotePlaceholder: "备注（选填，比如「量比较多」、「从深圳入境」）…",
       addEntryAction: "+ 添加一条",
       allEntriesLabel: "全部记录",
+      exportAction: "导出",
       exportPdfAction: "导出 PDF",
       exportExcelAction: "导出 Excel",
       noteColumnLabel: "备注",
@@ -1691,6 +1695,7 @@
       dateLogNotePlaceholder: "備註（選填，比如「量比較多」、「從深圳入境」）…",
       addEntryAction: "+ 新增一筆",
       allEntriesLabel: "全部記錄",
+      exportAction: "匯出",
       exportPdfAction: "匯出 PDF",
       exportExcelAction: "匯出 Excel",
       noteColumnLabel: "備註",
@@ -1997,6 +2002,7 @@
       dateLogNotePlaceholder: "Optional note (e.g. \"heavy flow\", \"entered from Shenzhen\")…",
       addEntryAction: "+ Add entry",
       allEntriesLabel: "All Entries",
+      exportAction: "Export",
       exportPdfAction: "Export PDF",
       exportExcelAction: "Export Excel",
       noteColumnLabel: "Note",
@@ -4170,6 +4176,7 @@
   }
 
   $('dateLogExportExcelBtn').addEventListener('click', ()=>{
+    $('dateLogExportMenu').classList.remove('open');
     const { log, title } = getDateLogExportContext();
     if(log.length === 0){ showToast(T().noDateLogEntries); return; }
     const rows = [[T().dateLabel, T().noteColumnLabel], ...log.map(e => [e.date, e.note || ''])];
@@ -4180,20 +4187,37 @@
     XLSX.writeFile(wb, safeFileName(title) + '.xlsx');
   });
 
+  $('dateLogExportBtn').addEventListener('click', (e)=>{
+    e.stopPropagation();
+    $('dateLogExportMenu').classList.toggle('open');
+  });
+  document.addEventListener('click', (e)=>{
+    if($('dateLogExportMenu').classList.contains('open') && !$('dateLogExportMenu').contains(e.target) && e.target !== $('dateLogExportBtn')){
+      $('dateLogExportMenu').classList.remove('open');
+    }
+  });
+
   $('dateLogExportPdfBtn').addEventListener('click', async ()=>{
+    $('dateLogExportMenu').classList.remove('open');
     const { log, title } = getDateLogExportContext();
     if(log.length === 0){ showToast(T().noDateLogEntries); return; }
 
+    const CONTAINER_CSS_WIDTH = 480; // the physical width the PDF page will target, in CSS px
+    const DATE_COL_WIDTH = 130;
     const container = document.createElement('div');
-    container.style.cssText = 'position:fixed; left:-9999px; top:0; width:640px; background:#ffffff; padding:36px; font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; color:#222;';
+    container.style.cssText = `position:fixed; left:-9999px; top:0; width:${CONTAINER_CSS_WIDTH}px; background:#ffffff; padding:28px; font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; color:#222; box-sizing:border-box;`;
     const rowsHtml = log.map(e => `
-      <div style="padding:10px 0; border-bottom:1px solid #eee; font-size:14px; display:flex; gap:14px;">
-        <div style="font-weight:600; flex-shrink:0; width:110px;">${formatReminderDate(e.date)}</div>
-        <div style="color:#555;">${e.note ? escapeHtml(e.note) : ''}</div>
+      <div style="display:flex; border-bottom:1px solid #e5e5e5;">
+        <div style="width:${DATE_COL_WIDTH}px; flex-shrink:0; padding:8px 10px; font-size:12.5px; font-weight:600;">${formatReminderDate(e.date)}</div>
+        <div style="flex:1; min-width:0; padding:8px 10px; font-size:12.5px; color:#555; border-left:1px solid #eee; word-break:break-word;">${e.note ? escapeHtml(e.note) : ''}</div>
       </div>`).join('');
     container.innerHTML = `
-      <div style="font-size:20px; font-weight:700; margin-bottom:4px;">${escapeHtml(title)}</div>
-      <div style="font-size:12px; color:#999; margin-bottom:20px;">${escapeHtml(T().dateLogLabel)} · ${log.length}</div>
+      <div style="font-size:17px; font-weight:700; margin-bottom:3px;">${escapeHtml(title)}</div>
+      <div style="font-size:11px; color:#999; margin-bottom:14px;">${escapeHtml(T().dateLogLabel)} · ${log.length}</div>
+      <div style="display:flex; border-bottom:2px solid #ddd;">
+        <div style="width:${DATE_COL_WIDTH}px; flex-shrink:0; padding:6px 10px; font-size:11px; color:#999; text-transform:uppercase; letter-spacing:.04em;">${escapeHtml(T().dateLabel)}</div>
+        <div style="flex:1; padding:6px 10px; font-size:11px; color:#999; text-transform:uppercase; letter-spacing:.04em; border-left:1px solid #ddd;">${escapeHtml(T().noteColumnLabel)}</div>
+      </div>
       ${rowsHtml}
     `;
     document.body.appendChild(container);
@@ -4203,10 +4227,22 @@
       document.body.removeChild(container);
       const imgData = canvas.toDataURL('image/png');
       const { jsPDF } = window.jspdf;
-      const pageWidthPt = 595.28; // A4 width in points
-      const imgHeightPt = (canvas.height / canvas.width) * pageWidthPt;
-      const doc = new jsPDF({ unit: 'pt', format: [pageWidthPt, imgHeightPt] });
-      doc.addImage(imgData, 'PNG', 0, 0, pageWidthPt, imgHeightPt);
+      const A4_WIDTH_PT = 595.28, A4_HEIGHT_PT = 841.89;
+      const MARGIN_PT = 40;
+      const maxContentWidthPt = A4_WIDTH_PT - MARGIN_PT * 2;
+      const maxContentHeightPt = A4_HEIGHT_PT - MARGIN_PT * 2;
+      // Natural size: treat the container's CSS pixels at 96dpi (standard screen reference) —
+      // this keeps text/table crisp since we're not stretching a lower-res image to fill more space.
+      let imgWidthPt = CONTAINER_CSS_WIDTH / 96 * 72;
+      let imgHeightPt = (canvas.height / canvas.width) * imgWidthPt;
+      // Only scale down (never up) if the natural size wouldn't fit on one A4 page — e.g. a long log.
+      if(imgHeightPt > maxContentHeightPt){
+        const scale = maxContentHeightPt / imgHeightPt;
+        imgWidthPt *= scale;
+        imgHeightPt = maxContentHeightPt;
+      }
+      const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+      doc.addImage(imgData, 'PNG', MARGIN_PT, MARGIN_PT, imgWidthPt, imgHeightPt);
       doc.save(safeFileName(title) + '.pdf');
     }catch(e){
       if(container.parentNode) document.body.removeChild(container);
