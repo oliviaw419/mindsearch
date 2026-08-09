@@ -240,6 +240,7 @@
   }
   input.field:focus, textarea.field:focus{ border-color:var(--plum); }
   textarea.field{ min-height:170px; line-height:1.5; }
+  #dateLogAmountInput::placeholder{ font-size:11.5px; }
 
   .attach-row{ display:flex; gap:10px; margin-top:12px; }
   .attach-toolbar{ display:flex; gap:8px; margin-top:4px; }
@@ -270,6 +271,7 @@
   }
   .tag-chip.selected{ background:var(--plum); border-color:var(--plum); color:#fff; }
   .tag-chip.add-new{ border-style:dashed; color:var(--plum-deep); }
+  .tag-chip.small{ padding:4px 9px; font-size:11px; }
   .file-chip-row button{ background:none; border:none; color:var(--danger); font-size:13px; cursor:pointer; padding:2px; flex-shrink:0; }
   .attach-btn{ flex:1; display:flex; align-items:center; justify-content:center; gap:6px; padding:11px; border-radius:var(--radius-sm); border:1px dashed var(--line); background:var(--paper-raised); backdrop-filter: blur(var(--blur)); -webkit-backdrop-filter: blur(var(--blur)); font-size:13px; color:var(--ink-soft); cursor:pointer; }
   .attach-btn.active{ border:1px solid var(--plum); color:var(--plum-deep); background:var(--plum-tint); }
@@ -649,9 +651,15 @@
       </button>
     </div>
     <div id="detailDateLogWrap" style="display:none; margin-top:12px;">
-      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; flex-wrap:wrap; gap:6px;">
         <span style="font-size:12px; font-weight:600; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.06em; white-space:nowrap;" data-i18n="dateLogLabel">Date Log</span>
+        <div id="detailDateLogRangeRow" style="display:none; gap:4px;">
+          <button type="button" class="tag-chip detail-datelog-range-btn" data-range="all" data-i18n="rangeAll">All</button>
+          <button type="button" class="tag-chip detail-datelog-range-btn" data-range="month" data-i18n="rangeMonth">This month</button>
+          <button type="button" class="tag-chip detail-datelog-range-btn" data-range="year" data-i18n="rangeYear">This year</button>
+        </div>
       </div>
+      <div id="detailDateLogTotal" style="display:none; font-size:13px; font-weight:700; color:var(--ink-soft); margin-bottom:6px;"></div>
       <div id="detailDateLogTimeline" style="display:flex; flex-direction:column; gap:6px;"></div>
       <button type="button" id="detailDateLogManageBtn" class="text-btn" style="margin-top:6px; padding:0;" data-i18n="manageDateLogAction">Add entry, export, or set a reminder →</button>
     </div>
@@ -828,17 +836,17 @@
 <div class="sheet-overlay" id="dateLogOverlay" style="z-index:490;">
   <div class="sheet" style="max-width:420px;">
     <h2 data-i18n="dateLogLabel">Date Log</h2>
-    <div id="dateLogPredictionBox" style="display:none; background:var(--plum-tint); border-radius:12px; padding:12px 14px; margin-bottom:14px; font-size:12.5px; color:var(--plum-deep); line-height:1.6;">
-      <div id="dateLogPredictionText"></div>
-      <button type="button" id="dateLogSetReminderBtn" class="text-btn" style="margin:4px 0 0; padding:0; color:var(--plum-deep);" data-i18n="setReminderForPrediction">Set a reminder for this date</button>
+
+    <div id="dateLogTotalWrap" style="display:none; align-items:center; justify-content:space-between; background:var(--paper-raised); border-radius:12px; padding:10px 14px; margin-bottom:16px; flex-wrap:wrap; gap:8px;">
+      <div id="dateLogTotalText" style="font-size:14px; font-weight:700; color:var(--ink);"></div>
+      <div style="display:flex; gap:4px;">
+        <button type="button" class="tag-chip datelog-range-btn" data-range="all" data-i18n="rangeAll">All</button>
+        <button type="button" class="tag-chip datelog-range-btn" data-range="month" data-i18n="rangeMonth">This month</button>
+        <button type="button" class="tag-chip datelog-range-btn" data-range="year" data-i18n="rangeYear">This year</button>
+      </div>
     </div>
 
-    <label class="field-label" style="margin:0 0 4px;" data-i18n="dateLabel">Date</label>
-    <input class="field" id="dateLogDateInput" type="date" style="padding:9px 10px;">
-    <input class="field" id="dateLogNoteInput" type="text" data-i18n-placeholder="dateLogNotePlaceholder" placeholder="Optional note (e.g. heavy flow, entered from Shenzhen)…" style="margin-top:6px;">
-    <button class="primary-btn" id="dateLogAddBtn" style="margin-top:10px;" data-i18n="addEntryAction">+ Add entry</button>
-
-    <div style="display:flex; align-items:center; justify-content:space-between; margin-top:20px;">
+    <div style="display:flex; align-items:center; justify-content:space-between;">
       <label class="field-label" style="margin:0; white-space:nowrap; flex-shrink:0;" data-i18n="allEntriesLabel">All Entries</label>
       <div style="position:relative;">
         <button type="button" id="dateLogExportBtn" class="text-btn" style="margin:0; padding:0; white-space:nowrap;" data-i18n="exportAction">Export</button>
@@ -850,6 +858,19 @@
     </div>
     <div id="dateLogFullList" style="display:flex; flex-direction:column; gap:8px; margin-top:8px;"></div>
     <div id="dateLogEmpty" class="empty-note" style="display:none;" data-i18n="noDateLogEntries">No entries yet.</div>
+
+    <label class="field-label" style="margin:20px 0 4px;" data-i18n="dateLabel">Date</label>
+    <input class="field" id="dateLogDateInput" type="date" style="padding:9px 10px;">
+    <div style="display:flex; gap:8px; margin-top:6px;">
+      <input class="field" id="dateLogNoteInput" type="text" data-i18n-placeholder="dateLogNotePlaceholder" placeholder="Optional note (e.g. heavy flow, entered from Shenzhen)…" style="flex:1; min-width:0;">
+      <input class="field" id="dateLogAmountInput" type="number" step="any" data-i18n-placeholder="dateLogAmountPlaceholder" placeholder="+/- amount (optional)" style="width:110px; flex-shrink:0;">
+    </div>
+    <button class="primary-btn" id="dateLogAddBtn" style="margin-top:10px;" data-i18n="addEntryAction">+ Add entry</button>
+
+    <div id="dateLogPredictionBox" style="display:none; background:var(--plum-tint); border-radius:12px; padding:12px 14px; margin-top:16px; font-size:12.5px; color:var(--plum-deep); line-height:1.6;">
+      <div id="dateLogPredictionText"></div>
+      <button type="button" id="dateLogSetReminderBtn" class="text-btn" style="margin:4px 0 0; padding:0; color:var(--plum-deep);" data-i18n="setReminderForPrediction">Set a reminder for this date</button>
+    </div>
 
     <button class="text-btn" id="closeDateLogBtn" data-i18n="close">Close</button>
   </div>
@@ -1126,6 +1147,7 @@
   let pendingLocation = null; // {lat, lng, label}
   let pendingDateLog = []; // [{date:'YYYY-MM-DD', note:string}]
   let dateLogContext = null; // { mode: 'pending' } while editing a note, or { mode: 'entry', entryId } from the detail view
+  let dateLogSumRange = 'all'; // 'all' | 'month' | 'year'
   let pendingReminderDate = null; // 'YYYY-MM-DD' string
   let currentDetailLocation = null;
   const VIDEO_MAX_DURATION_SEC = 300; // 5 minutes
@@ -1392,6 +1414,14 @@
       exportPdfAction: "导出 PDF",
       exportExcelAction: "导出 Excel",
       noteColumnLabel: "备注",
+      amountColumnLabel: "金额",
+      dateLogAmountPlaceholder: "+/- 金额（选填）",
+      rangeAll: "全部",
+      rangeMonth: "本月",
+      rangeYear: "今年",
+      dateLogTotalLabel: "总计",
+      dateLogWinLoss: (w, l) => `${w} 次正 · ${l} 次负`,
+      dateLogNoAmountInRange: "这个时间段内没有带金额的记录",
       manageDateLogAction: "添加记录、导出、设置提醒 →",
       dateLogIrregularText: "这些日期间隔不太规律，暂时没法给出可靠的预测。",
       noDateLogEntries: "还没有记录",
@@ -1707,6 +1737,14 @@
       dateLogSummary: (n, latest) => `共 ${n} 筆 · 最近一次 ${latest}`,
       toastDateLogAdded: "已新增",
       toastReminderSetFromPrediction: "已經設好提醒了",
+      amountColumnLabel: "金額",
+      dateLogAmountPlaceholder: "+/- 金額（選填）",
+      rangeAll: "全部",
+      rangeMonth: "本月",
+      rangeYear: "今年",
+      dateLogTotalLabel: "總計",
+      dateLogWinLoss: (w, l) => `${w} 次正 · ${l} 次負`,
+      dateLogNoAmountInRange: "這個時間段內沒有帶金額的記錄",
       toastWeChatMapsBlocked: "微信可能會攔截跳轉，如果沒反應，用「複製地址」這個選項試試",
       toastLocationFailed: "取得位置失敗，檢查一下是不是拒絕了定位權限",
       toastCoordinatesCopied: "地址已複製",
@@ -2022,6 +2060,14 @@
       feedbackPlaceholder: "Type a message…",
       nicknameOptional: "Nickname (optional)",
       addFriend: "Add",
+      amountColumnLabel: "Amount",
+      dateLogAmountPlaceholder: "+/- amount (optional)",
+      rangeAll: "All",
+      rangeMonth: "This month",
+      rangeYear: "This year",
+      dateLogTotalLabel: "Total",
+      dateLogWinLoss: (w, l) => `${w} positive · ${l} negative`,
+      dateLogNoAmountInRange: "No amounts logged in this range.",
       manageAction: "Manage",
       addNewAction: "+ Add a friend",
       inboxTitle: "Shared with you",
@@ -4077,35 +4123,107 @@
     log.slice(0, 2).forEach(e => {
       const row = document.createElement('div');
       row.className = 'file-chip-row';
-      row.innerHTML = `<span>${ICON_CALENDAR}</span><span class="file-chip-name">${formatReminderDate(e.date)}${e.note ? ' — ' + escapeHtml(e.note) : ''}</span>`;
+      const hasAmount = e.amount !== undefined && e.amount !== null && e.amount !== '';
+      const amt = hasAmount ? parseFloat(e.amount) : null;
+      const amountHtml = hasAmount ? `<span style="font-weight:700; color:${amt >= 0 ? 'var(--green)' : 'var(--danger)'}; flex-shrink:0;">${amt > 0 ? '+' : ''}${formatAmount(amt)}</span>` : '';
+      row.innerHTML = `<span>${ICON_CALENDAR}</span><span class="file-chip-name">${formatReminderDate(e.date)}${e.note ? ' — ' + escapeHtml(e.note) : ''}</span>${amountHtml}`;
       list.appendChild(row);
     });
   }
 
+  function computeDateLogSum(log, range){
+    const now = new Date();
+    const filtered = log.filter(e => {
+      if(e.amount === undefined || e.amount === null || e.amount === '') return false;
+      if(range === 'all') return true;
+      const d = new Date(e.date + 'T00:00:00');
+      if(range === 'month'){ return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth(); }
+      if(range === 'year'){ return d.getFullYear() === now.getFullYear(); }
+      return true;
+    });
+    if(filtered.length === 0) return null;
+    let total = 0, wins = 0, losses = 0;
+    filtered.forEach(e => {
+      const amt = parseFloat(e.amount);
+      if(isNaN(amt)) return;
+      total += amt;
+      if(amt > 0) wins++; else if(amt < 0) losses++;
+    });
+    return { total, wins, losses, count: filtered.length };
+  }
+
+  function formatAmount(n){
+    const rounded = Math.round(n * 100) / 100;
+    return rounded.toLocaleString();
+  }
+
+  function renderDateLogTotal(){
+    const log = getActiveDateLog();
+    const hasAnyAmount = log.some(e => e.amount !== undefined && e.amount !== null && e.amount !== '');
+    if(!hasAnyAmount){
+      $('dateLogTotalWrap').style.display = 'none';
+      return;
+    }
+    const sum = computeDateLogSum(log, dateLogSumRange);
+    $('dateLogTotalWrap').style.display = 'flex';
+    document.querySelectorAll('.datelog-range-btn').forEach(b => b.classList.toggle('selected', b.dataset.range === dateLogSumRange));
+    if(!sum){
+      $('dateLogTotalText').textContent = T().dateLogNoAmountInRange;
+      return;
+    }
+    const sign = sum.total > 0 ? '+' : '';
+    $('dateLogTotalText').innerHTML = `${T().dateLogTotalLabel} <span style="color:${sum.total >= 0 ? 'var(--green)' : 'var(--danger)'};">${sign}${formatAmount(sum.total)}</span> <span style="font-weight:400; color:var(--ink-soft); font-size:12px;">(${T().dateLogWinLoss(sum.wins, sum.losses)})</span>`;
+  }
+
+  document.querySelectorAll('.datelog-range-btn').forEach(btn => {
+    btn.addEventListener('click', ()=>{
+      dateLogSumRange = btn.dataset.range;
+      renderDateLogFullList();
+    });
+  });
+
   function openDateLogOverlay(){
     $('dateLogDateInput').value = todayDateStr();
     $('dateLogNoteInput').value = '';
+    $('dateLogAmountInput').value = '';
+    dateLogSumRange = 'all';
     renderDateLogFullList();
     $('dateLogOverlay').classList.add('open');
   }
 
+  function filterLogByRange(log, range){
+    if(range === 'all') return log;
+    const now = new Date();
+    return log.filter(e => {
+      const d = new Date(e.date + 'T00:00:00');
+      if(range === 'month'){ return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth(); }
+      if(range === 'year'){ return d.getFullYear() === now.getFullYear(); }
+      return true;
+    });
+  }
+
   function renderDateLogFullList(){
-    const log = sortedDateLog(getActiveDateLog()).reverse();
+    const fullLog = getActiveDateLog();
+    const log = sortedDateLog(filterLogByRange(fullLog, dateLogSumRange)).reverse();
     const list = $('dateLogFullList');
     list.innerHTML = '';
     $('dateLogEmpty').style.display = log.length === 0 ? 'block' : 'none';
     log.forEach(e => {
       const row = document.createElement('div');
       row.className = 'file-chip-row';
-      row.innerHTML = `<span>${ICON_CALENDAR}</span><span class="file-chip-name">${formatReminderDate(e.date)}${e.note ? ' — ' + escapeHtml(e.note) : ''}</span><button type="button" class="remove-datelog-btn" style="color:var(--danger); font-weight:600; font-size:12.5px; background:none; border:none; cursor:pointer; flex-shrink:0;">✕</button>`;
+      const hasAmount = e.amount !== undefined && e.amount !== null && e.amount !== '';
+      const amt = hasAmount ? parseFloat(e.amount) : null;
+      const amountHtml = hasAmount ? `<span style="font-weight:700; color:${amt >= 0 ? 'var(--green)' : 'var(--danger)'}; flex-shrink:0;">${amt > 0 ? '+' : ''}${formatAmount(amt)}</span>` : '';
+      row.innerHTML = `<span>${ICON_CALENDAR}</span><span class="file-chip-name">${formatReminderDate(e.date)}${e.note ? ' — ' + escapeHtml(e.note) : ''}</span>${amountHtml}<button type="button" class="remove-datelog-btn" style="color:var(--danger); font-weight:600; font-size:12.5px; background:none; border:none; cursor:pointer; flex-shrink:0;">✕</button>`;
       row.querySelector('.remove-datelog-btn').addEventListener('click', ()=>{
-        const newLog = getActiveDateLog().filter(x => !(x.date === e.date && x.note === e.note));
+        const newLog = fullLog.filter(x => x !== e);
         persistActiveDateLog(newLog);
         renderDateLogFullList();
       });
       list.appendChild(row);
     });
-    const prediction = computeDateLogPrediction(getActiveDateLog());
+    renderDateLogTotal();
+    const prediction = computeDateLogPrediction(fullLog);
     if(prediction.status === 'ok'){
       $('dateLogPredictionText').textContent = T().dateLogPredictionText(prediction.avgDays, formatReminderDate(prediction.nextDate));
       $('dateLogSetReminderBtn').style.display = 'block';
@@ -4137,9 +4255,13 @@
     const date = $('dateLogDateInput').value;
     if(!date) return;
     const note = $('dateLogNoteInput').value.trim();
-    const newLog = [...getActiveDateLog(), { date, note }];
+    const amountRaw = $('dateLogAmountInput').value.trim();
+    const entry = { date, note };
+    if(amountRaw !== '' && !isNaN(parseFloat(amountRaw))){ entry.amount = parseFloat(amountRaw); }
+    const newLog = [...getActiveDateLog(), entry];
     persistActiveDateLog(newLog);
     $('dateLogNoteInput').value = '';
+    $('dateLogAmountInput').value = '';
     renderDateLogFullList();
     showToast(T().toastDateLogAdded);
   });
@@ -4179,9 +4301,11 @@
     $('dateLogExportMenu').classList.remove('open');
     const { log, title } = getDateLogExportContext();
     if(log.length === 0){ showToast(T().noDateLogEntries); return; }
-    const rows = [[T().dateLabel, T().noteColumnLabel], ...log.map(e => [e.date, e.note || ''])];
+    const hasAnyAmount = log.some(e => e.amount !== undefined && e.amount !== null && e.amount !== '');
+    const header = hasAnyAmount ? [T().dateLabel, T().noteColumnLabel, T().amountColumnLabel] : [T().dateLabel, T().noteColumnLabel];
+    const rows = [header, ...log.map(e => hasAnyAmount ? [e.date, e.note || '', (e.amount !== undefined && e.amount !== null && e.amount !== '') ? parseFloat(e.amount) : ''] : [e.date, e.note || ''])];
     const ws = XLSX.utils.aoa_to_sheet(rows);
-    ws['!cols'] = [{wch:14},{wch:40}];
+    ws['!cols'] = hasAnyAmount ? [{wch:14},{wch:40},{wch:12}] : [{wch:14},{wch:40}];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, T().dateLogLabel.slice(0,30));
     XLSX.writeFile(wb, safeFileName(title) + '.xlsx');
@@ -4202,21 +4326,39 @@
     const { log, title } = getDateLogExportContext();
     if(log.length === 0){ showToast(T().noDateLogEntries); return; }
 
+    const hasAnyAmount = log.some(e => e.amount !== undefined && e.amount !== null && e.amount !== '');
     const CONTAINER_CSS_WIDTH = 480; // the physical width the PDF page will target, in CSS px
     const DATE_COL_WIDTH = 130;
+    const AMOUNT_COL_WIDTH = 90;
     const container = document.createElement('div');
     container.style.cssText = `position:fixed; left:-9999px; top:0; width:${CONTAINER_CSS_WIDTH}px; background:#ffffff; padding:28px; font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; color:#222; box-sizing:border-box;`;
-    const rowsHtml = log.map(e => `
+    const rowsHtml = log.map(e => {
+      const hasAmount = e.amount !== undefined && e.amount !== null && e.amount !== '';
+      const amt = hasAmount ? parseFloat(e.amount) : null;
+      const amountCell = hasAnyAmount ? `<div style="width:${AMOUNT_COL_WIDTH}px; flex-shrink:0; padding:8px 10px; font-size:12.5px; font-weight:700; text-align:right; color:${hasAmount ? (amt >= 0 ? '#1a7f37' : '#c0392b') : '#ccc'}; border-left:1px solid #eee;">${hasAmount ? (amt > 0 ? '+' : '') + formatAmount(amt) : '—'}</div>` : '';
+      return `
       <div style="display:flex; border-bottom:1px solid #e5e5e5;">
         <div style="width:${DATE_COL_WIDTH}px; flex-shrink:0; padding:8px 10px; font-size:12.5px; font-weight:600;">${formatReminderDate(e.date)}</div>
         <div style="flex:1; min-width:0; padding:8px 10px; font-size:12.5px; color:#555; border-left:1px solid #eee; word-break:break-word;">${e.note ? escapeHtml(e.note) : ''}</div>
-      </div>`).join('');
+        ${amountCell}
+      </div>`;
+    }).join('');
+    let totalLineHtml = '';
+    if(hasAnyAmount){
+      const sum = computeDateLogSum(log, 'all');
+      if(sum){
+        const sign = sum.total > 0 ? '+' : '';
+        totalLineHtml = `<div style="font-size:12px; color:#666; margin-bottom:10px;">${escapeHtml(T().dateLogTotalLabel)} <strong style="color:${sum.total >= 0 ? '#1a7f37' : '#c0392b'};">${sign}${formatAmount(sum.total)}</strong></div>`;
+      }
+    }
     container.innerHTML = `
       <div style="font-size:17px; font-weight:700; margin-bottom:3px;">${escapeHtml(title)}</div>
-      <div style="font-size:11px; color:#999; margin-bottom:14px;">${escapeHtml(T().dateLogLabel)} · ${log.length}</div>
+      <div style="font-size:11px; color:#999; margin-bottom:6px;">${escapeHtml(T().dateLogLabel)} · ${log.length}</div>
+      ${totalLineHtml}
       <div style="display:flex; border-bottom:2px solid #ddd;">
         <div style="width:${DATE_COL_WIDTH}px; flex-shrink:0; padding:6px 10px; font-size:11px; color:#999; text-transform:uppercase; letter-spacing:.04em;">${escapeHtml(T().dateLabel)}</div>
         <div style="flex:1; padding:6px 10px; font-size:11px; color:#999; text-transform:uppercase; letter-spacing:.04em; border-left:1px solid #ddd;">${escapeHtml(T().noteColumnLabel)}</div>
+        ${hasAnyAmount ? `<div style="width:${AMOUNT_COL_WIDTH}px; flex-shrink:0; padding:6px 10px; font-size:11px; color:#999; text-transform:uppercase; letter-spacing:.04em; text-align:right; border-left:1px solid #ddd;">${escapeHtml(T().amountColumnLabel)}</div>` : ''}
       </div>
       ${rowsHtml}
     `;
@@ -4258,23 +4400,56 @@
   $('closeDateLogBtn').addEventListener('click', ()=> $('dateLogOverlay').classList.remove('open'));
   $('dateLogOverlay').addEventListener('click', (e)=>{ if(e.target.id==='dateLogOverlay') $('dateLogOverlay').classList.remove('open'); });
 
+  let detailDateLogRange = 'all';
+
   function renderDetailDateLog(entry){
     const log = entry.dateLog || [];
     if(log.length === 0){
       $('detailDateLogWrap').style.display = 'none';
       return;
     }
-    const sorted = sortedDateLog(log).reverse();
+    const hasAnyAmount = log.some(e => e.amount !== undefined && e.amount !== null && e.amount !== '');
+    $('detailDateLogRangeRow').style.display = hasAnyAmount ? 'flex' : 'none';
+    document.querySelectorAll('.detail-datelog-range-btn').forEach(b => b.classList.toggle('selected', b.dataset.range === detailDateLogRange));
+
+    const filtered = filterLogByRange(log, hasAnyAmount ? detailDateLogRange : 'all');
+    const sorted = sortedDateLog(filtered).reverse();
     const timeline = $('detailDateLogTimeline');
     timeline.innerHTML = '';
+
+    if(hasAnyAmount){
+      const sum = computeDateLogSum(log, detailDateLogRange);
+      if(sum){
+        const sign = sum.total > 0 ? '+' : '';
+        $('detailDateLogTotal').innerHTML = `${T().dateLogTotalLabel} <span style="color:${sum.total >= 0 ? 'var(--green)' : 'var(--danger)'};">${sign}${formatAmount(sum.total)}</span> <span style="font-weight:400; color:var(--ink-soft); font-size:11px;">(${T().dateLogWinLoss(sum.wins, sum.losses)})</span>`;
+        $('detailDateLogTotal').style.display = 'block';
+      } else {
+        $('detailDateLogTotal').textContent = T().dateLogNoAmountInRange;
+        $('detailDateLogTotal').style.display = 'block';
+      }
+    } else {
+      $('detailDateLogTotal').style.display = 'none';
+    }
+
     sorted.forEach(e => {
       const row = document.createElement('div');
       row.className = 'file-chip-row';
-      row.innerHTML = `<span>${ICON_CALENDAR}</span><span class="file-chip-name">${formatReminderDate(e.date)}${e.note ? ' — ' + escapeHtml(e.note) : ''}</span>`;
+      const hasAmount = e.amount !== undefined && e.amount !== null && e.amount !== '';
+      const amt = hasAmount ? parseFloat(e.amount) : null;
+      const amountHtml = hasAmount ? `<span style="font-weight:700; color:${amt >= 0 ? 'var(--green)' : 'var(--danger)'}; flex-shrink:0;">${amt > 0 ? '+' : ''}${formatAmount(amt)}</span>` : '';
+      row.innerHTML = `<span>${ICON_CALENDAR}</span><span class="file-chip-name">${formatReminderDate(e.date)}${e.note ? ' — ' + escapeHtml(e.note) : ''}</span>${amountHtml}`;
       timeline.appendChild(row);
     });
     $('detailDateLogWrap').style.display = 'block';
   }
+
+  document.querySelectorAll('.detail-datelog-range-btn').forEach(btn => {
+    btn.addEventListener('click', ()=>{
+      detailDateLogRange = btn.dataset.range;
+      const entry = entries.find(e => e.id === currentDetailId);
+      if(entry) renderDetailDateLog(entry);
+    });
+  });
 
   const GOOGLE_PLACES_API_KEY = 'AIzaSyDWV_FabMHA8HO4e43e7554h0YOUglPTbg';
 
@@ -4939,6 +5114,7 @@
     }
     renderDetailTagsRow(entry);
     renderDetailSharedTo(entry);
+    detailDateLogRange = 'all';
     renderDetailDateLog(entry);
     if(entry.reminderDate){
       $('detailReminderLabel').textContent = formatReminderDate(entry.reminderDate);
