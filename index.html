@@ -240,7 +240,7 @@
   }
   input.field:focus, textarea.field:focus{ border-color:var(--plum); }
   textarea.field{ min-height:170px; line-height:1.5; }
-  #dateLogAmountInput::placeholder{ font-size:11.5px; }
+  #dateLogAmountInput::placeholder, #dateLogNoteInput::placeholder{ font-size:11.5px; }
 
   .attach-row{ display:flex; gap:10px; margin-top:12px; }
   .attach-toolbar{ display:flex; gap:8px; margin-top:0; }
@@ -252,11 +252,13 @@
   .toolbar-icon-btn.active{ border-color:var(--plum); background:var(--plum-tint); }
   .toolbar-icon-btn.recording{ border-color:var(--danger); background:#FBEAE6; color:var(--danger); animation: recordPulse 1.6s ease-out infinite; }
   .format-btn{
-    width:23px; height:23px; border-radius:6px; border:1px solid var(--line);
-    background:var(--paper-raised); font-size:10.5px; cursor:pointer;
+    width:27px; height:27px; border-radius:8px; border:1px solid var(--line);
+    background:var(--paper-raised); font-size:12px; cursor:pointer;
     display:flex; align-items:center; justify-content:center; color:var(--ink-soft);
   }
   .format-btn:hover{ color:var(--ink); background:var(--paper); }
+  .format-btn.active{ background:var(--amber-tint); border-color:var(--amber-deep); color:var(--amber-deep); }
+  #tagBulkLockIconBtn.active{ background:var(--amber-tint); border-color:var(--amber-deep); color:var(--amber-deep); }
   @keyframes recordPulse{
     0% { box-shadow: 0 0 0 0 rgba(192,80,59,0.45); }
     70% { box-shadow: 0 0 0 10px rgba(192,80,59,0); }
@@ -362,6 +364,18 @@
 </head>
 <body data-theme="diagonal">
 <div id="videoProcessingSandbox" style="position:fixed; left:-9999px; top:-9999px; width:1px; height:1px; overflow:hidden;"></div>
+
+<div id="appLockScreen" style="display:none; position:fixed; inset:0; z-index:999; background:var(--paper); align-items:center; justify-content:center; flex-direction:column; gap:16px; padding:24px;">
+  <div style="width:56px; height:56px; border-radius:50%; background:var(--paper-raised); display:flex; align-items:center; justify-content:center; color:var(--ink-soft);">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg>
+  </div>
+  <div class="wordmark" style="font-size:20px;" data-i18n="appLockTitle">Enter your password</div>
+  <input class="field" id="appLockPasswordInput" type="password" style="max-width:260px; text-align:center;" data-i18n-placeholder="passwordPlaceholder" placeholder="Password">
+  <div id="appLockError" style="display:none; color:var(--danger); font-size:12.5px;" data-i18n="incorrectPassword">Incorrect password</div>
+  <button class="primary-btn" id="appLockUnlockBtn" style="max-width:260px;" data-i18n="unlockAction">Unlock</button>
+  <button class="text-btn" id="forgotAppLockPasswordBtn" data-i18n="forgotPasswordAction">Forgot password?</button>
+</div>
+
 <div id="app">
 
   <header>
@@ -379,6 +393,7 @@
           <button type="button" id="openContactsBtn" data-i18n="manageFriends">Manage Friends</button>
           <button type="button" id="openManageTagsBtn" data-i18n="manageTagsMenuLabel">Manage Tags</button>
           <button type="button" id="openManageRemindersBtn" data-i18n="manageRemindersMenuLabel">Manage Reminders</button>
+          <button type="button" id="openAppLockSettingsBtn" data-i18n="appLockMenuLabel">App Password</button>
           <button type="button" id="openHelpFeedbackBtn" style="position:relative;"><span data-i18n="helpFeedbackMenuLabel">Help &amp; Feedback</span><span id="feedbackMenuBadge" style="display:none; position:absolute; top:10px; right:14px; width:8px; height:8px; border-radius:50%; background:var(--danger);"></span></button>
         </div>
         <div id="settingsLanguagePanel" style="display:none;">
@@ -500,22 +515,24 @@
 <!-- Add / Edit Sheet -->
 <div class="sheet-overlay" id="addOverlay" style="z-index:480;">
   <div class="sheet">
-    <h2 id="addSheetTitle" data-i18n="addSheetTitleNew">New Entry</h2>
-    <div id="presetTagBanner" style="display:none; align-items:center; gap:8px; background:var(--plum-tint); color:var(--plum-deep); border-radius:12px; padding:9px 12px; margin-bottom:14px; font-size:12.5px; font-weight:600;">
+    <div style="display:flex; align-items:center; justify-content:space-between;">
+      <h2 id="addSheetTitle" data-i18n="addSheetTitleNew" style="margin:0;">New Entry</h2>
+      <button type="button" id="lockThisNoteToggleBtn" class="format-btn" title="Lock this note" style="width:30px; height:30px;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg>
+      </button>
+    </div>
+    <div id="presetTagBanner" style="display:none; align-items:center; gap:8px; background:var(--plum-tint); color:var(--plum-deep); border-radius:12px; padding:9px 12px; margin:18px 0 14px; font-size:12.5px; font-weight:600;">
       <span>🏷️</span>
       <span id="presetTagBannerText"></span>
     </div>
-    <label class="field-label" data-i18n="titleLabel">Title</label>
+    <label class="field-label" style="margin-top:18px;" data-i18n="titleLabel">Title</label>
     <input class="field" id="inputTitle" type="text" placeholder="Give it a name">
     <div style="display:flex; align-items:center; justify-content:space-between;">
       <label class="field-label" style="margin:16px 0 6px;" data-i18n="contentLabel">Content</label>
-      <div style="display:flex; gap:3px;">
+      <div style="display:flex; gap:12px;">
         <button type="button" id="formatBoldBtn" class="format-btn" title="Bold"><b>A</b></button>
-        <button type="button" id="formatCenterBtn" class="format-btn" title="Center">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="8" y1="18" x2="16" y2="18"/></svg>
-        </button>
         <button type="button" id="formatHighlightBtn" class="format-btn" title="Highlight">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l6 6M3 21l3.5-1 10-10-2.5-2.5-10 10L3 21z"/><path d="M14.5 6.5L17.5 3.5a2.1 2.1 0 013 3l-3 3"/></svg>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l6 6M3 21l3.5-1 10-10-2.5-2.5-10 10L3 21z"/><path d="M14.5 6.5L17.5 3.5a2.1 2.1 0 013 3l-3 3"/></svg>
         </button>
       </div>
     </div>
@@ -631,6 +648,9 @@
       </div>
       <div class="detail-header-actions">
         <button class="star-btn" id="starBtn" title="Review often">☆</button>
+        <button class="star-btn" id="toggleLockEntryBtn" title="Lock">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg>
+        </button>
         <div style="position:relative;">
           <button class="more-btn" id="moreBtn">⋯</button>
           <div class="more-menu" id="moreMenu">
@@ -831,6 +851,15 @@
     <div id="sharedHistoryList" style="display:flex; flex-direction:column; gap:8px; margin-top:14px;"></div>
     <div id="sharedHistoryEmpty" class="empty-note" style="display:none;"></div>
     <button class="text-btn" id="closeSharedHistoryBtn" data-i18n="close">Close</button>
+  </div>
+</div>
+
+<div class="sheet-overlay" id="customConfirmOverlay" style="z-index:600;">
+  <div class="sheet" style="max-width:340px;">
+    <h2 id="customConfirmTitle" style="font-size:17px;"></h2>
+    <p id="customConfirmText" style="font-size:13.5px; color:var(--ink-soft); margin:-8px 0 18px; line-height:1.55;"></p>
+    <button class="primary-btn" id="customConfirmYesBtn" style="margin-top:0;"></button>
+    <button class="text-btn" id="customConfirmNoBtn" style="margin-top:8px;"></button>
   </div>
 </div>
 
@@ -1041,6 +1070,76 @@
   </div>
 </div>
 
+<div class="sheet-overlay" id="appLockSettingsOverlay" style="z-index:450;">
+  <div class="sheet" style="max-width:380px;">
+    <h2 data-i18n="appLockMenuLabel">App Password</h2>
+    <p style="font-size:12.5px; color:var(--ink-soft); margin:-8px 0 16px;" data-i18n="appLockExplain">Requires a password every time you open the app on this account. This isn't encryption — it just keeps casual snoopers out.</p>
+
+    <div id="appLockOffState">
+      <input class="field" id="appLockNewPasswordInput" type="password" data-i18n-placeholder="newPasswordPlaceholder" placeholder="Set a password">
+      <input class="field" id="appLockConfirmPasswordInput" type="password" style="margin-top:8px;" data-i18n-placeholder="confirmPasswordPlaceholder" placeholder="Confirm password">
+      <button class="primary-btn" id="appLockEnableBtn" style="margin-top:12px;" data-i18n="enableAppLockAction">Turn On</button>
+    </div>
+    <div id="appLockOnState" style="display:none;">
+      <div style="display:flex; align-items:center; gap:8px; background:var(--paper-raised); border-radius:12px; padding:12px 14px;">
+        <span style="color:var(--green); font-weight:700;">✓</span>
+        <span data-i18n="appLockCurrentlyOn">App password is currently on.</span>
+      </div>
+      <button class="text-btn" id="appLockDisableBtn" style="margin-top:12px; color:var(--danger);" data-i18n="disableAppLockAction">Turn Off</button>
+    </div>
+
+    <button class="text-btn" id="closeAppLockSettingsBtn" data-i18n="close">Close</button>
+  </div>
+</div>
+
+<div class="sheet-overlay" id="createLockedTagOverlay" style="z-index:450;">
+  <div class="sheet" style="max-width:380px;">
+    <h2 data-i18n="setUpSecuredNotesTitle">Set Up Secured Notes</h2>
+    <p style="font-size:12.5px; color:var(--ink-soft); margin:-8px 0 16px;" data-i18n="secureNotesExplain">Locked notes are hidden everywhere else in the app — Recent, Search, tags, everything — until you unlock this folder with its password.</p>
+    <label class="field-label" style="margin:0 0 4px;" data-i18n="newPasswordLabel">Password</label>
+    <input class="field" id="lockedTagPasswordInput" type="password" data-i18n-placeholder="newPasswordPlaceholder" placeholder="Set a password">
+    <input class="field" id="lockedTagConfirmInput" type="password" style="margin-top:8px;" data-i18n-placeholder="confirmPasswordPlaceholder" placeholder="Confirm password">
+    <button class="primary-btn" id="createLockedTagBtn" style="margin-top:14px;" data-i18n="createAction">Create</button>
+    <button class="text-btn" id="cancelCreateLockedTagBtn" data-i18n="cancel">Cancel</button>
+  </div>
+</div>
+
+<div class="sheet-overlay" id="lockNewNoteOverlay" style="z-index:495;">
+  <div class="sheet" style="max-width:340px;">
+    <h2 data-i18n="lockNewNoteTitle">Lock this note too?</h2>
+    <p id="lockNewNoteExplain" style="font-size:13px; color:var(--ink-soft); margin:-8px 0 16px; line-height:1.5;"></p>
+    <button class="primary-btn" id="lockNewNoteYesBtn" style="margin-top:0;" data-i18n="lockThisNoteAction">🔒 Lock this note</button>
+    <button class="text-btn" id="lockNewNoteNoBtn" style="margin-top:10px;" data-i18n="dontLockAction">Don't lock</button>
+  </div>
+</div>
+
+<div class="sheet-overlay" id="reauthOverlay" style="z-index:498;">
+  <div class="sheet" style="max-width:340px;">
+    <h2 data-i18n="reauthTitle">Confirm it's you</h2>
+    <p style="font-size:13px; color:var(--ink-soft); margin:-8px 0 16px; line-height:1.5;" data-i18n="reauthExplain">For your security, please sign in again before resetting a password.</p>
+    <div id="reauthPasswordPanel" style="display:none;">
+      <input class="field" id="reauthPasswordInput" type="password" data-i18n-placeholder="passwordPlaceholder" placeholder="Password">
+      <button class="primary-btn" id="reauthPasswordBtn" style="margin-top:12px;" data-i18n="confirmAction">Confirm</button>
+    </div>
+    <div id="reauthGooglePanel" style="display:none;">
+      <button class="primary-btn" id="reauthGoogleBtn" style="margin-top:0;" data-i18n="reauthWithGoogleAction">Continue with Google</button>
+    </div>
+    <div id="reauthError" style="display:none; color:var(--danger); font-size:12.5px; margin-top:8px;" data-i18n="reauthFailed">Couldn't verify — please try again.</div>
+    <button class="text-btn" id="cancelReauthBtn" data-i18n="cancel">Cancel</button>
+  </div>
+</div>
+
+<div class="sheet-overlay" id="unlockTagOverlay" style="z-index:460;">
+  <div class="sheet" style="max-width:340px;">
+    <h2 id="unlockTagTitle" data-i18n="enterPasswordTitle">Enter Password</h2>
+    <input class="field" id="unlockTagPasswordInput" type="password" data-i18n-placeholder="passwordPlaceholder" placeholder="Password">
+    <div id="unlockTagError" style="display:none; color:var(--danger); font-size:12.5px; margin-top:6px;" data-i18n="incorrectPassword">Incorrect password</div>
+    <button class="primary-btn" id="unlockTagBtn" style="margin-top:12px;" data-i18n="unlockAction">Unlock</button>
+    <button class="text-btn" id="forgotSecureNotesPasswordBtn" style="margin-top:2px;" data-i18n="forgotPasswordAction">Forgot password?</button>
+    <button class="text-btn" id="cancelUnlockTagBtn" data-i18n="cancel">Cancel</button>
+  </div>
+</div>
+
 <div class="sheet-overlay" id="tagDetailOverlay" style="z-index:450;">
   <div class="sheet" style="max-width:420px; padding-bottom:14px;">
     <div class="detail-header">
@@ -1051,10 +1150,13 @@
         </button>
       </div>
       <div style="display:flex; gap:8px; flex-shrink:0;">
+        <button type="button" id="tagBulkLockIconBtn" title="Lock/Unlock all" class="format-btn" style="display:none; width:34px; height:34px; border-radius:10px; cursor:pointer; align-items:center; justify-content:center;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg>
+        </button>
         <button type="button" id="tagShareIconBtn" title="Share" style="width:34px; height:34px; border-radius:10px; border:1px solid var(--line); background:var(--paper-raised); color:var(--ink-soft); cursor:pointer; display:flex; align-items:center; justify-content:center;">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"/><path d="M7.5 8.5L12 4l4.5 4.5"/><path d="M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>
         </button>
-        <div style="position:relative;">
+        <div id="tagSortWrap" style="position:relative;">
         <button type="button" id="tagSortIconBtn" title="Sort" style="width:34px; height:34px; border-radius:10px; border:1px solid var(--line); background:var(--paper-raised); color:var(--ink-soft); cursor:pointer; display:flex; align-items:center; justify-content:center;">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h13M3 12h9M3 17h5"/><path d="M17 4v16M17 4l-3 3M17 4l3 3"/></svg>
         </button>
@@ -1065,7 +1167,7 @@
         </div>
       </div>
     </div>
-    <div class="search-wrap" style="margin:14px 0 0;">
+    <div class="search-wrap" id="tagDetailSearchWrap" style="margin:14px 0 0;">
       <input id="tagDetailSearchInput" type="text" data-i18n-placeholder="tagSearchPlaceholder" placeholder="Search in this tag…" autocomplete="off">
       <button class="icon clear-btn" id="tagDetailClearSearchBtn" style="display:none;">✕</button>
       <span class="icon search-icon" id="tagDetailSearchIcon">⌕</span>
@@ -1103,7 +1205,8 @@
     getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult,
     createUserWithEmailAndPassword, signInWithEmailAndPassword,
     sendPasswordResetEmail, onAuthStateChanged, signOut,
-    setPersistence, indexedDBLocalPersistence, browserLocalPersistence
+    setPersistence, indexedDBLocalPersistence, browserLocalPersistence,
+    EmailAuthProvider, reauthenticateWithCredential, reauthenticateWithPopup
   } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
   import {
     getFirestore, doc, getDoc, setDoc, deleteDoc,
@@ -1135,6 +1238,7 @@
     auth, db, storage, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult,
     createUserWithEmailAndPassword, signInWithEmailAndPassword,
     sendPasswordResetEmail, onAuthStateChanged, signOut,
+    EmailAuthProvider, reauthenticateWithCredential, reauthenticateWithPopup,
     doc, getDoc, setDoc, deleteDoc,
     collection, getDocs, query, orderBy, limit,
     ref, uploadBytes, uploadBytesResumable, getDownloadURL, deleteObject
@@ -1148,11 +1252,21 @@
   const LEGACY_KEY = 'mind-search-entries';
   const TAGS_KEY = 'mind-search-tags';
   const PINNED_TAGS_KEY = 'mind-search-pinned-tags';
+  const SECURE_NOTES_KEY = 'mind-search-secure-notes';
+  const APP_LOCK_KEY = 'mind-search-app-lock';
   const TAB_PREFS_KEY = 'mind-search-tab-prefs';
   const mediaKey = (id) => 'entry-media:' + id;
 
   let allTags = [];
   let pinnedTags = [];
+  let secureNotesPasswordHash = null; // one shared password for the whole Secured Notes folder
+  let secureNotesUnlockedThisSession = false; // resets on reload — never persisted
+  let appLockEnabled = false;
+  let appLockHash = null;
+  let appUnlockedThisSession = false;
+  let pendingUnlockCallback = null;
+  let pendingReauthCallback = null;
+  let pendingSecureNotesSetupCallback = null;
 
   let entries = [];
   let currentDetailId = null;
@@ -1172,6 +1286,7 @@
   let dateLogContext = null; // { mode: 'pending' } while editing a note, or { mode: 'entry', entryId } from the detail view
   let dateLogSumRange = 'all'; // 'all' | 'month' | 'year'
   let pendingReminderDate = null; // 'YYYY-MM-DD' string
+  let pendingLocked = false;
   let currentDetailLocation = null;
   const VIDEO_MAX_DURATION_SEC = 300; // 5 minutes
   const VIDEO_MAX_INPUT_BYTES = 500 * 1024 * 1024; // sanity cap on the original file before compression
@@ -1306,6 +1421,7 @@
       photosHint: "最多 5 张",
       attachmentsLabel: "附件",
       toastFileNeedsAccount: "需要登录才能添加文件",
+      toastNeedAccountForLock: "这个功能需要先登录账号才能用（访客模式没有账号可以拿来重新验证身份）",
       toastMaxFiles: "最多只能加 10 个文件",
       toastFileWrongType: "支持 PDF、Word、Excel、PPT、RTF、TXT 格式",
       toastFileTooLarge: "文件不能超过 10MB",
@@ -1360,6 +1476,53 @@
       remindersDueTitle: "提醒日期到了",
       manageRemindersTitle: "管理提醒",
       manageRemindersMenuLabel: "管理提醒",
+      appLockMenuLabel: "App 密码",
+      appLockTitle: "输入密码",
+      passwordPlaceholder: "密码",
+      incorrectPassword: "密码不对",
+      unlockAction: "解锁",
+      appLockExplain: "每次打开 App 都需要输入密码。这不是加密，只是挡住随手翻看的人。",
+      newPasswordPlaceholder: "设置一个密码",
+      confirmPasswordPlaceholder: "再输一次密码",
+      enableAppLockAction: "开启",
+      appLockCurrentlyOn: "App 密码当前是开启状态。",
+      disableAppLockAction: "关闭",
+      toastEnterPassword: "请输入密码",
+      toastPasswordsDontMatch: "两次密码不一致",
+      toastAppLockEnabled: "App 密码已开启",
+      confirmDisableAppLock: "确定要关闭 App 密码吗？",
+      toastAppLockDisabled: "App 密码已关闭",
+      setUpSecuredNotesTitle: "设置安全笔记密码",
+      secureNotesExplain: "上锁的笔记会从其他所有地方隐藏——最近、搜索、标签，全部都不会显示——直到你用这个密码解锁这个文件夹。",
+      securedNotesLabel: "安全笔记",
+      newPasswordLabel: "密码",
+      createAction: "创建",
+      enterPasswordTitle: "输入密码",
+      forgotPasswordAction: "忘记密码了？",
+      reauthTitle: "确认是你本人",
+      reauthExplain: "为了安全，重置密码之前需要你重新登录验证一下身份。",
+      confirmAction: "确认",
+      reauthWithGoogleAction: "用 Google 重新登录验证",
+      reauthFailed: "验证失败，请再试一次",
+      confirmContactAdminForPassword: "密码不能自助重置——这样会给你发一条消息给管理员，说明情况、核实身份以后，管理员会帮你处理。要继续吗？",
+      forgotPasswordAutoMessage: (ctx) => `我忘记了「${ctx}」的密码，麻烦帮我核实一下身份、处理一下，谢谢！`,
+      lockThisNoteAction: "🔒 给这条笔记上锁",
+      unlockThisNoteAction: "解锁这条笔记",
+      lockNewNoteTitle: "也要上锁吗？",
+      dontLockAction: "不上锁",
+      confirmLockNote: "给这条笔记上锁吗？上锁后会从最近、搜索、标签等地方隐藏，只能从「安全笔记」里找到。",
+      confirmUnlockNote: "解锁这条笔记吗？解锁后会恢复正常显示。",
+      toastNoteLocked: "已上锁",
+      confirmLockNewNoteInSecuredTag: (tag) => `你之前把「${tag}」标签下的笔记都搬去安全笔记了。这条新笔记也要上锁吗？`,
+      lockAllInTagAction: "🔒 把这个标签下所有笔记移到安全笔记",
+      toastNothingToLock: "这个标签下没有能上锁的笔记了",
+      confirmBulkLockTag: (n, tag) => `把"${tag}"标签下的 ${n} 条笔记都移到安全笔记吗？这些笔记会从这个标签的普通列表里消失。`,
+      toastBulkLocked: (n) => `已经把 ${n} 条笔记移到安全笔记`,
+      unlockAllInTagAction: "解锁这里所有笔记",
+      toastNothingToUnlock: "这里没有能解锁的笔记",
+      confirmBulkUnlockTag: (n, tag) => `把"${tag}"里的 ${n} 条笔记都解锁吗？解锁后会恢复正常显示，能在最近、搜索这些地方看到。`,
+      toastBulkUnlocked: (n) => `已经解锁 ${n} 条笔记`,
+      toastNoteUnlocked: "已解锁",
       noRemindersYet: "还没有设置提醒",
       reminderDueNow: "已到期",
       keepNextYearAction: "明年这天继续提醒",
@@ -1432,7 +1595,7 @@
       dateLogLabel: "日期记录",
       viewAllAction: "查看全部",
       dateLabel: "日期",
-      dateLogNotePlaceholder: "备注（选填，比如「量比较多」、「从深圳入境」）…",
+      dateLogNotePlaceholder: "备注（选填）",
       addEntryAction: "+ 添加一条",
       allEntriesLabel: "全部记录",
       exportAction: "导出",
@@ -1601,6 +1764,7 @@
       attachmentsLabel: "附件",
       toastFileNeedsAccount: "需要登入才能新增檔案",
       toastMaxFiles: "最多只能加 10 個檔案",
+      toastNeedAccountForLock: "這個功能需要先登入帳號才能用（訪客模式沒有帳號可以拿來重新驗證身分）",
       toastFileWrongType: "支援 PDF、Word、Excel、PPT、RTF、TXT 格式",
       toastFileTooLarge: "檔案不能超過 10MB",
       toastFileUploadFail: "檔案上傳失敗，請重試",
@@ -1677,13 +1841,60 @@
       noRemindersYet: "還沒有設定提醒",
       reminderDueNow: "已到期",
       keepNextYearAction: "明年這天繼續提醒",
+      appLockMenuLabel: "App 密碼",
+      appLockTitle: "輸入密碼",
+      passwordPlaceholder: "密碼",
+      incorrectPassword: "密碼不對",
+      unlockAction: "解鎖",
+      appLockExplain: "每次打開 App 都需要輸入密碼。這不是加密，只是擋住隨手翻看的人。",
+      newPasswordPlaceholder: "設定一個密碼",
+      confirmPasswordPlaceholder: "再輸一次密碼",
+      enableAppLockAction: "開啟",
+      appLockCurrentlyOn: "App 密碼目前是開啟狀態。",
+      disableAppLockAction: "關閉",
+      toastEnterPassword: "請輸入密碼",
+      toastPasswordsDontMatch: "兩次密碼不一致",
+      toastAppLockEnabled: "App 密碼已開啟",
+      confirmDisableAppLock: "確定要關閉 App 密碼嗎？",
+      toastAppLockDisabled: "App 密碼已關閉",
+      setUpSecuredNotesTitle: "設定安全筆記密碼",
+      secureNotesExplain: "上鎖的筆記會從其他所有地方隱藏——最近、搜尋、標籤，全部都不會顯示——直到你用這個密碼解鎖這個資料夾。",
+      securedNotesLabel: "安全筆記",
+      newPasswordLabel: "密碼",
+      createAction: "建立",
+      enterPasswordTitle: "輸入密碼",
+      lockThisNoteAction: "🔒 給這則筆記上鎖",
+      unlockThisNoteAction: "解鎖這則筆記",
+      confirmLockNote: "給這則筆記上鎖嗎？上鎖後會從最近、搜尋、標籤等地方隱藏，只能從「安全筆記」裡找到。",
+      lockNewNoteTitle: "也要上鎖嗎？",
+      dontLockAction: "不上鎖",
+      forgotPasswordAction: "忘記密碼了？",
+      confirmContactAdminForPassword: "密碼不能自助重設——這樣會給你發一則訊息給管理員，說明情況、核實身分以後，管理員會幫你處理。要繼續嗎？",
+      forgotPasswordAutoMessage: (ctx) => `我忘記了「${ctx}」的密碼，麻煩幫我核實一下身分、處理一下，謝謝！`,
+      confirmUnlockNote: "解鎖這則筆記嗎？解鎖後會恢復正常顯示。",
+      toastNoteLocked: "已上鎖",
+      toastNoteUnlocked: "已解鎖",
+      confirmLockNewNoteInSecuredTag: (tag) => `你之前把「${tag}」標籤下的筆記都搬去安全筆記了。這則新筆記也要上鎖嗎？`,
+      reauthTitle: "確認是你本人",
+      reauthExplain: "為了安全，重設密碼之前需要你重新登入驗證一下身分。",
+      confirmAction: "確認",
+      reauthWithGoogleAction: "用 Google 重新登入驗證",
+      reauthFailed: "驗證失敗，請再試一次",
       discardReminderAction: "不再提醒",
       toastReminderKept: "好的，明年這天會再提醒你",
       toastReminderDiscarded: "已取消這條提醒",
+      lockAllInTagAction: "🔒 把這個標籤下所有筆記移到安全筆記",
+      toastNothingToLock: "這個標籤下沒有能上鎖的筆記了",
+      confirmBulkLockTag: (n, tag) => `把「${tag}」標籤下的 ${n} 則筆記都移到安全筆記嗎？這些筆記會從這個標籤的一般列表裡消失。`,
+      toastBulkLocked: (n) => `已經把 ${n} 則筆記移到安全筆記`,
       starTitle: "常復習",
       allowEditLabel: "允許對方也能編輯這則筆記",
       sharedOwnerBadge: "共同編輯中，對方改動會同步給你",
       sharedCollabBadge: (who) => who ? `與 ${who} 共同編輯` : `共同編輯中`,
+      unlockAllInTagAction: "解鎖這裡所有筆記",
+      toastNothingToUnlock: "這裡沒有能解鎖的筆記",
+      confirmBulkUnlockTag: (n, tag) => `把「${tag}」裡的 ${n} 則筆記都解鎖嗎？解鎖後會恢復正常顯示，能在最近、搜尋這些地方看到。`,
+      toastBulkUnlocked: (n) => `已經解鎖 ${n} 則筆記`,
       sharedCollabBadgeMore: (n) => ` 等 ${n} 人`,
       decideLaterTitle: "稍後處理",
       themeBtnTitle: "換主題",
@@ -1749,7 +1960,7 @@
       dateLogLabel: "日期記錄",
       viewAllAction: "查看全部",
       dateLabel: "日期",
-      dateLogNotePlaceholder: "備註（選填，比如「量比較多」、「從深圳入境」）…",
+      dateLogNotePlaceholder: "備註（選填）",
       addEntryAction: "+ 新增一筆",
       allEntriesLabel: "全部記錄",
       exportAction: "匯出",
@@ -1878,6 +2089,7 @@
       toastFileNeedsAccount: "Sign in to attach files",
       toastMaxFiles: "You can add up to 10 files",
       toastFileWrongType: "Supported: PDF, Word, Excel, PPT, RTF, TXT",
+      toastNeedAccountForLock: "This feature needs an account (as a guest, there's nothing to re-verify against)",
       myTagsLabel: "My Tags",
       recentTabLabel: "Recent",
       upcomingDatesLabel: "Upcoming Dates",
@@ -1997,10 +2209,53 @@
       themeDiagonal: "Mint & Coral",
       themeGlass: "Warm Glass",
       themePastel: "Candy Gradient",
+      appLockMenuLabel: "App Password",
+      appLockTitle: "Enter your password",
+      passwordPlaceholder: "Password",
+      incorrectPassword: "Incorrect password",
+      unlockAction: "Unlock",
+      appLockExplain: "Requires a password every time you open the app on this account. This isn't encryption — it just keeps casual snoopers out.",
+      newPasswordPlaceholder: "Set a password",
+      confirmPasswordPlaceholder: "Confirm password",
+      enableAppLockAction: "Turn On",
+      appLockCurrentlyOn: "App password is currently on.",
+      disableAppLockAction: "Turn Off",
+      toastEnterPassword: "Please enter a password",
+      toastPasswordsDontMatch: "Passwords don't match",
+      toastAppLockEnabled: "App password enabled",
+      confirmDisableAppLock: "Turn off the app password?",
+      toastAppLockDisabled: "App password disabled",
+      setUpSecuredNotesTitle: "Set Up Secured Notes",
+      secureNotesExplain: "Locked notes are hidden everywhere else in the app — Recent, Search, tags, everything — until you unlock this folder with its password.",
+      securedNotesLabel: "Secured Notes",
+      newPasswordLabel: "Password",
+      createAction: "Create",
+      enterPasswordTitle: "Enter Password",
+      lockThisNoteAction: "🔒 Lock this note",
+      unlockThisNoteAction: "Unlock this note",
+      confirmLockNote: "Lock this note? It will be hidden from Recent, Search, tags, and everywhere else — only findable in Secured Notes.",
+      lockNewNoteTitle: "Lock this one too?",
+      dontLockAction: "Don't lock",
+      forgotPasswordAction: "Forgot password?",
+      confirmContactAdminForPassword: "Passwords can't be self-reset — this will send a message to the admin so they can verify it's really you and help you out. Continue?",
+      forgotPasswordAutoMessage: (ctx) => `I forgot my password for "${ctx}". Could you please verify it's me and help me out? Thanks!`,
+      confirmUnlockNote: "Unlock this note? It will show up normally again.",
+      toastNoteLocked: "Locked",
+      toastNoteUnlocked: "Unlocked",
       themeButter: "Buttercream",
+      confirmLockNewNoteInSecuredTag: (tag) => `You've previously moved all "${tag}" notes to Secured Notes. Lock this new one too?`,
       continueWithGoogle: "Continue with Google",
       orDivider: "or",
       emailLabel: "Email",
+      lockAllInTagAction: "🔒 Move all notes in this tag to Secured Notes",
+      reauthTitle: "Confirm it's you",
+      reauthExplain: "For your security, please sign in again before resetting a password.",
+      confirmAction: "Confirm",
+      reauthWithGoogleAction: "Continue with Google",
+      reauthFailed: "Couldn't verify — please try again.",
+      toastNothingToLock: "There's nothing left to lock in this tag.",
+      confirmBulkLockTag: (n, tag) => `Move all ${n} notes in "${tag}" to Secured Notes? They'll disappear from this tag's regular list.`,
+      toastBulkLocked: (n) => `Moved ${n} notes to Secured Notes`,
       passwordLabel: "Password",
       signIn: "Sign In",
       signUp: "Sign Up",
@@ -2009,6 +2264,10 @@
       forgotPassword: "Forgot password?",
       resetEmailSent: "Password reset email sent — check your inbox",
       signOut: "Sign out",
+      unlockAllInTagAction: "Unlock all notes here",
+      toastNothingToUnlock: "There's nothing here to unlock.",
+      confirmBulkUnlockTag: (n, tag) => `Unlock all ${n} notes in "${tag}"? They'll show up normally again — in Recent, Search, etc.`,
+      toastBulkUnlocked: (n) => `Unlocked ${n} notes`,
       signedInAs: "Signed in as: ",
       authErrorGeneric: "Something went wrong, please try again",
       authErrorWeakPassword: "Password needs to be at least 6 characters",
@@ -2066,7 +2325,7 @@
       dateLogLabel: "Date Log",
       viewAllAction: "View all",
       dateLabel: "Date",
-      dateLogNotePlaceholder: "Optional note (e.g. \"heavy flow\", \"entered from Shenzhen\")…",
+      dateLogNotePlaceholder: "Optional note",
       addEntryAction: "+ Add entry",
       allEntriesLabel: "All Entries",
       exportAction: "Export",
@@ -2337,7 +2596,7 @@
 
   function getDueReminders(){
     const today = todayDateStr();
-    return entries.filter(e => e.reminderDate && e.reminderDate <= today);
+    return visibleEntries().filter(e => e.reminderDate && e.reminderDate <= today);
   }
 
   function checkRemindersDue(){
@@ -2352,7 +2611,7 @@
   }
 
   function getAllReminderEntries(){
-    return entries.filter(e => e.reminderDate).sort((a,b) => a.reminderDate.localeCompare(b.reminderDate));
+    return visibleEntries().filter(e => e.reminderDate).sort((a,b) => a.reminderDate.localeCompare(b.reminderDate));
   }
 
   function advanceReminderOneYear(dateStr){
@@ -2426,6 +2685,47 @@
   $('closeRemindersListBtn').addEventListener('click', ()=> $('remindersListOverlay').classList.remove('open'));
   $('remindersListOverlay').addEventListener('click', (e)=>{ if(e.target.id==='remindersListOverlay') $('remindersListOverlay').classList.remove('open'); });
 
+  $('openAppLockSettingsBtn').addEventListener('click', ()=>{
+    $('settingsMenu').classList.remove('open');
+    $('appLockNewPasswordInput').value = '';
+    $('appLockConfirmPasswordInput').value = '';
+    $('appLockOffState').style.display = appLockEnabled ? 'none' : 'block';
+    $('appLockOnState').style.display = appLockEnabled ? 'block' : 'none';
+    $('appLockSettingsOverlay').classList.add('open');
+  });
+  $('closeAppLockSettingsBtn').addEventListener('click', ()=>{
+    $('appLockSettingsOverlay').classList.remove('open');
+    reLockIfStillPending();
+  });
+  $('appLockSettingsOverlay').addEventListener('click', (e)=>{
+    if(e.target.id!=='appLockSettingsOverlay') return;
+    $('appLockSettingsOverlay').classList.remove('open');
+    reLockIfStillPending();
+  });
+
+  $('appLockEnableBtn').addEventListener('click', async ()=>{
+    const pw = $('appLockNewPasswordInput').value;
+    const confirm2 = $('appLockConfirmPasswordInput').value;
+    if(!pw){ showToast(T().toastEnterPassword); return; }
+    if(pw !== confirm2){ showToast(T().toastPasswordsDontMatch); return; }
+    appLockHash = await hashPassword(pw);
+    appLockEnabled = true;
+    appUnlockedThisSession = true; // no need to immediately re-enter what you just set
+    persistAppLock();
+    $('appLockOffState').style.display = 'none';
+    $('appLockOnState').style.display = 'block';
+    showToast(T().toastAppLockEnabled);
+  });
+  $('appLockDisableBtn').addEventListener('click', ()=>{
+    if(!confirm(T().confirmDisableAppLock)) return;
+    appLockEnabled = false;
+    appLockHash = null;
+    persistAppLock();
+    $('appLockOffState').style.display = 'block';
+    $('appLockOnState').style.display = 'none';
+    showToast(T().toastAppLockDisabled);
+  });
+
   async function loadTags(){
     try{
       const res = await storageAdapter.get(TAGS_KEY, false);
@@ -2450,6 +2750,110 @@
 
   function persistPinnedTags(){
     storageAdapter.set(PINNED_TAGS_KEY, JSON.stringify(pinnedTags), false).catch(()=>{});
+  }
+
+  function showCustomConfirm({ title, text, yesLabel, noLabel }){
+    return new Promise((resolve) => {
+      $('customConfirmTitle').textContent = title || '';
+      $('customConfirmText').textContent = text || '';
+      $('customConfirmYesBtn').textContent = yesLabel;
+      $('customConfirmNoBtn').textContent = noLabel;
+      $('customConfirmOverlay').classList.add('open');
+
+      const cleanup = (result) => {
+        $('customConfirmOverlay').classList.remove('open');
+        yesBtn.removeEventListener('click', onYes);
+        noBtn.removeEventListener('click', onNo);
+        resolve(result);
+      };
+      const yesBtn = $('customConfirmYesBtn');
+      const noBtn = $('customConfirmNoBtn');
+      const onYes = () => cleanup(true);
+      const onNo = () => cleanup(false);
+      yesBtn.addEventListener('click', onYes);
+      noBtn.addEventListener('click', onNo);
+    });
+  }
+
+  async function hashPassword(pw){
+    const data = new TextEncoder().encode(pw);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2,'0')).join('');
+  }
+
+  async function loadLockSettings(){
+    try{
+      const res = await storageAdapter.get(SECURE_NOTES_KEY, false);
+      const parsed = (res && res.value) ? JSON.parse(res.value) : { hash: null };
+      secureNotesPasswordHash = parsed.hash || null;
+    }catch(e){
+      secureNotesPasswordHash = null;
+    }
+    try{
+      const res = await storageAdapter.get(APP_LOCK_KEY, false);
+      const parsed = (res && res.value) ? JSON.parse(res.value) : { enabled: false, hash: null };
+      appLockEnabled = !!parsed.enabled;
+      appLockHash = parsed.hash || null;
+    }catch(e){
+      appLockEnabled = false;
+      appLockHash = null;
+    }
+  }
+
+  function persistSecureNotesPassword(){
+    storageAdapter.set(SECURE_NOTES_KEY, JSON.stringify({ hash: secureNotesPasswordHash }), false).catch(()=>{});
+  }
+
+  function persistAppLock(){
+    storageAdapter.set(APP_LOCK_KEY, JSON.stringify({ enabled: appLockEnabled, hash: appLockHash }), false).catch(()=>{});
+  }
+
+  function isLockedEntry(entry){
+    return !!entry.locked;
+  }
+
+  function visibleEntries(){
+    return entries.filter(e => !isLockedEntry(e));
+  }
+
+  function checkAppLockOnLoad(){
+    $('appLockScreen').style.display = (appLockEnabled && !appUnlockedThisSession) ? 'flex' : 'none';
+  }
+
+  $('appLockUnlockBtn').addEventListener('click', async ()=>{
+    const pw = $('appLockPasswordInput').value;
+    const hash = await hashPassword(pw);
+    if(hash === appLockHash){
+      appUnlockedThisSession = true;
+      $('appLockScreen').style.display = 'none';
+      $('appLockError').style.display = 'none';
+      $('appLockPasswordInput').value = '';
+    } else {
+      $('appLockError').style.display = 'block';
+    }
+  });
+  $('appLockPasswordInput').addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter'){ e.preventDefault(); $('appLockUnlockBtn').click(); }
+  });
+
+  let cameFromAppLockScreen = false;
+  $('forgotAppLockPasswordBtn').addEventListener('click', ()=>{
+    cameFromAppLockScreen = true;
+    $('appLockScreen').style.display = 'none'; // temporarily, only to allow the reauth prompt to be visible
+    promptReauthentication(()=>{
+      $('appLockNewPasswordInput').value = '';
+      $('appLockConfirmPasswordInput').value = '';
+      $('appLockOffState').style.display = 'block';
+      $('appLockOnState').style.display = 'none';
+      $('appLockSettingsOverlay').classList.add('open');
+    });
+  });
+
+  function reLockIfStillPending(){
+    if(cameFromAppLockScreen && !appUnlockedThisSession){
+      cameFromAppLockScreen = false;
+      $('appLockScreen').style.display = 'flex';
+    }
   }
 
   function formatDate(ts){
@@ -2519,6 +2923,7 @@
   const BADGE_ICON_LOCATION = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0119 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.3"/></svg>';
   const ICON_CALENDAR = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16.5" rx="2.3"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><circle cx="12" cy="15" r="1.7"/></svg>';
   const ICON_TAG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.6 2H4a2 2 0 00-2 2v8.6a2 2 0 00.59 1.41l9.4 9.4a2 2 0 002.82 0l8.6-8.6a2 2 0 000-2.82l-9.4-9.4A2 2 0 0012.6 2z"/><circle cx="8" cy="8" r="1.3"/></svg>';
+  const ICON_LOCK = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg>';
   const ICON_LOCATION_LG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0119 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.3"/></svg>';
   const ICON_ALL = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>';
   const ICON_UNTAGGED = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.6 2H4a2 2 0 00-2 2v8.6a2 2 0 00.59 1.41l9.4 9.4a2 2 0 002.82 0l8.6-8.6a2 2 0 000-2.82l-9.4-9.4A2 2 0 0012.6 2z" stroke-dasharray="3 3"/></svg>';
@@ -2576,11 +2981,12 @@
   function renderRecent(){
     const list = $('recentList');
     list.innerHTML = '';
-    if(entries.length === 0){
+    const visible = visibleEntries();
+    if(visible.length === 0){
       list.innerHTML = `<div class="empty-note">${T().emptyRecent}</div>`;
       return;
     }
-    const sorted = [...entries].sort((a,b)=> Math.max(b.updatedAt, b.lastViewedAt||0) - Math.max(a.updatedAt, a.lastViewedAt||0)).slice(0,8);
+    const sorted = [...visible].sort((a,b)=> Math.max(b.updatedAt, b.lastViewedAt||0) - Math.max(a.updatedAt, a.lastViewedAt||0)).slice(0,8);
     sorted.forEach(entry => {
       const row = buildEntryRow(entry);
       list.appendChild(row);
@@ -2693,11 +3099,12 @@
   function renderMyTagsList(){
     const list = $('myTagsList');
     list.innerHTML = '';
+    const visible = visibleEntries();
     const tagCounts = allTags.map(tag => ({
       tag,
-      count: entries.filter(e => e.tags && e.tags.includes(tag)).length,
+      count: visible.filter(e => e.tags && e.tags.includes(tag)).length,
       pinned: pinnedTags.includes(tag)
-    })).sort((a,b) => {
+    })).filter(t => t.count > 0).sort((a,b) => {
       if(a.pinned && !b.pinned) return -1;
       if(!a.pinned && b.pinned) return 1;
       return b.count - a.count;
@@ -2716,22 +3123,260 @@
       });
       row.addEventListener('click', ()=> openTagDetail({
         title: tag,
-        filterFn: (es) => es.filter(e => e.tags && e.tags.includes(tag)),
+        filterFn: (es) => es.filter(e => !isLockedEntry(e) && e.tags && e.tags.includes(tag)),
         presetTag: tag
       }));
       list.appendChild(row);
     });
 
-    if(tagCounts.length === 0){
+    if(tagCounts.length === 0 && entries.filter(e => e.locked).length === 0){
       list.innerHTML = `<div class="empty-note">${T().noTagsYet}</div>`;
     }
+
+    // Secured Notes is always available as a distinct entry point, independent of tags
+    const securedCount = entries.filter(e => e.locked).length;
+    const securedRow = document.createElement('div');
+    securedRow.className = 'tag-row';
+    securedRow.style.marginTop = tagCounts.length ? '10px' : '0';
+    securedRow.style.borderTop = tagCounts.length ? '1px solid var(--line)' : 'none';
+    securedRow.style.paddingTop = tagCounts.length ? '18px' : '12px';
+    securedRow.innerHTML = `<span>${ICON_LOCK}</span><span class="tag-name">${T().securedNotesLabel}</span><span class="tag-count">${securedCount}</span>`;
+    securedRow.addEventListener('click', openSecuredNotes);
+    list.appendChild(securedRow);
   }
+
+  function openSecuredNotes(){
+    if(!secureNotesPasswordHash){
+      openCreateSecureNotesPassword(renderSecuredNotesGroups);
+      return;
+    }
+    if(secureNotesUnlockedThisSession){
+      renderSecuredNotesGroups();
+      return;
+    }
+    promptUnlockSecureNotes(renderSecuredNotesGroups);
+  }
+
+  function renderSecuredNotesGroups(){
+    currentTagDetailContext = null;
+    $('tagDetailTitle').textContent = T().securedNotesLabel;
+    $('tagRenameIconBtn').style.display = 'none';
+    $('tagShareIconBtn').style.display = 'none';
+    $('tagBulkLockIconBtn').style.display = 'none';
+    $('tagDetailAddBtn').style.display = 'none';
+    $('tagSortWrap').style.display = 'none';
+    $('tagDetailSearchWrap').style.display = 'none';
+
+    const locked = entries.filter(e => e.locked);
+    const list = $('tagDetailList');
+    list.innerHTML = '';
+    $('tagDetailEmpty').style.display = locked.length === 0 ? 'block' : 'none';
+
+    if(locked.length > 0){
+      const allRow = document.createElement('div');
+      allRow.className = 'tag-row';
+      allRow.innerHTML = `<span>${ICON_ALL}</span><span class="tag-name">${T().allFilterLabel}</span><span class="tag-count">${locked.length}</span>`;
+      allRow.addEventListener('click', ()=> openTagDetail({
+        title: T().securedNotesLabel,
+        filterFn: (es) => es.filter(e => e.locked),
+        presetTag: null,
+        isSecuredContext: true
+      }));
+      list.appendChild(allRow);
+
+      const tagCounts = {};
+      let untaggedCount = 0;
+      locked.forEach(e => {
+        if(e.tags && e.tags.length){ e.tags.forEach(t => { tagCounts[t] = (tagCounts[t]||0) + 1; }); }
+        else { untaggedCount++; }
+      });
+
+      Object.keys(tagCounts).sort().forEach(tag => {
+        const row = document.createElement('div');
+        row.className = 'tag-row';
+        row.innerHTML = `<span>${ICON_TAG}</span><span class="tag-name">${escapeHtml(tag)}</span><span class="tag-count">${tagCounts[tag]}</span>`;
+        row.addEventListener('click', ()=> openTagDetail({
+          title: tag,
+          filterFn: (es) => es.filter(e => e.locked && e.tags && e.tags.includes(tag)),
+          presetTag: null,
+          isSecuredContext: true
+        }));
+        list.appendChild(row);
+      });
+
+      if(untaggedCount > 0){
+        const row = document.createElement('div');
+        row.className = 'tag-row';
+        row.innerHTML = `<span>${ICON_UNTAGGED}</span><span class="tag-name">${T().untaggedFilterLabel}</span><span class="tag-count">${untaggedCount}</span>`;
+        row.addEventListener('click', ()=> openTagDetail({
+          title: T().untaggedFilterLabel,
+          filterFn: (es) => es.filter(e => e.locked && (!e.tags || e.tags.length === 0)),
+          presetTag: null,
+          isSecuredContext: true
+        }));
+        list.appendChild(row);
+      }
+    }
+    $('tagDetailOverlay').classList.add('open');
+  }
+
+  function openCreateSecureNotesPassword(onSuccess){
+    $('lockedTagPasswordInput').value = '';
+    $('lockedTagConfirmInput').value = '';
+    $('createLockedTagOverlay').classList.add('open');
+    pendingSecureNotesSetupCallback = onSuccess;
+  }
+
+  $('tagBulkLockIconBtn').addEventListener('click', ()=>{
+    if(!currentTagDetailContext) return;
+
+    if(currentTagDetailContext.isSecuredContext){
+      const notesHere = currentTagDetailContext.filterFn(entries);
+      if(notesHere.length === 0){ showToast(T().toastNothingToUnlock); return; }
+      if(!confirm(T().confirmBulkUnlockTag(notesHere.length, currentTagDetailContext.title))) return;
+      notesHere.forEach(e => { e.locked = false; });
+      persistIndex();
+      $('tagDetailOverlay').classList.remove('open');
+      refreshAfterLockChange();
+      showToast(T().toastBulkUnlocked(notesHere.length));
+      return;
+    }
+
+    if(!currentTagDetailContext.presetTag) return;
+    const notesInTag = currentTagDetailContext.filterFn(entries).filter(e => !e.locked);
+    if(notesInTag.length === 0){ showToast(T().toastNothingToLock); return; }
+    const doBulkLock = () => {
+      if(!confirm(T().confirmBulkLockTag(notesInTag.length, currentTagDetailContext.title))) return;
+      notesInTag.forEach(e => { e.locked = true; });
+      persistIndex();
+      $('tagDetailOverlay').classList.remove('open');
+      refreshAfterLockChange();
+      showToast(T().toastBulkLocked(notesInTag.length));
+    };
+    if(!secureNotesPasswordHash){
+      openCreateSecureNotesPassword(doBulkLock);
+    } else {
+      doBulkLock();
+    }
+  });
+
+  $('cancelCreateLockedTagBtn').addEventListener('click', ()=> $('createLockedTagOverlay').classList.remove('open'));
+  $('createLockedTagOverlay').addEventListener('click', (e)=>{ if(e.target.id==='createLockedTagOverlay') $('createLockedTagOverlay').classList.remove('open'); });
+
+  $('createLockedTagBtn').addEventListener('click', async ()=>{
+    const pw = $('lockedTagPasswordInput').value;
+    const confirm2 = $('lockedTagConfirmInput').value;
+    if(!pw){ showToast(T().toastEnterPassword); return; }
+    if(pw !== confirm2){ showToast(T().toastPasswordsDontMatch); return; }
+    secureNotesPasswordHash = await hashPassword(pw);
+    persistSecureNotesPassword();
+    secureNotesUnlockedThisSession = true; // no need to immediately re-enter what you just set
+    $('createLockedTagOverlay').classList.remove('open');
+    const cb = pendingSecureNotesSetupCallback;
+    pendingSecureNotesSetupCallback = null;
+    if(cb) cb();
+    if($('sectionTabsBar').children.length){ tabRenderFn(getActiveTabId())(); }
+  });
+
+  function promptUnlockSecureNotes(onSuccess){
+    $('unlockTagTitle').textContent = T().securedNotesLabel;
+    $('unlockTagPasswordInput').value = '';
+    $('unlockTagError').style.display = 'none';
+    $('unlockTagOverlay').classList.add('open');
+    pendingUnlockCallback = onSuccess;
+    setTimeout(()=> $('unlockTagPasswordInput').focus(), 50);
+  }
+
+  $('unlockTagBtn').addEventListener('click', async ()=>{
+    const pw = $('unlockTagPasswordInput').value;
+    const hash = await hashPassword(pw);
+    if(hash === secureNotesPasswordHash){
+      secureNotesUnlockedThisSession = true;
+      $('unlockTagOverlay').classList.remove('open');
+      const cb = pendingUnlockCallback;
+      pendingUnlockCallback = null;
+      if(cb) cb();
+    } else {
+      $('unlockTagError').style.display = 'block';
+    }
+  });
+  $('unlockTagPasswordInput').addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter'){ e.preventDefault(); $('unlockTagBtn').click(); }
+  });
+  $('cancelUnlockTagBtn').addEventListener('click', ()=>{
+    $('unlockTagOverlay').classList.remove('open');
+    pendingUnlockCallback = null;
+  });
+
+  function promptReauthentication(onSuccess){
+    const fb = window.__firebase;
+    const me = fb.auth.currentUser;
+    if(!me){
+      showToast(T().toastNeedAccountForLock);
+      showAuthOverlay();
+      return;
+    }
+    pendingReauthCallback = onSuccess;
+    $('reauthError').style.display = 'none';
+    $('reauthPasswordInput').value = '';
+    const isGoogleUser = me.providerData.some(p => p.providerId === 'google.com');
+    $('reauthPasswordPanel').style.display = isGoogleUser ? 'none' : 'block';
+    $('reauthGooglePanel').style.display = isGoogleUser ? 'block' : 'none';
+    $('reauthOverlay').classList.add('open');
+  }
+
+  $('reauthPasswordBtn').addEventListener('click', async ()=>{
+    const fb = window.__firebase;
+    const me = fb.auth.currentUser;
+    const pw = $('reauthPasswordInput').value;
+    if(!pw) return;
+    try{
+      const cred = fb.EmailAuthProvider.credential(me.email, pw);
+      await fb.reauthenticateWithCredential(me, cred);
+      $('reauthOverlay').classList.remove('open');
+      const cb = pendingReauthCallback;
+      pendingReauthCallback = null;
+      if(cb) cb();
+    }catch(e){
+      console.error('reauth failed', e);
+      $('reauthError').style.display = 'block';
+    }
+  });
+  $('reauthGoogleBtn').addEventListener('click', async ()=>{
+    const fb = window.__firebase;
+    const me = fb.auth.currentUser;
+    try{
+      await fb.reauthenticateWithPopup(me, new fb.GoogleAuthProvider());
+      $('reauthOverlay').classList.remove('open');
+      const cb = pendingReauthCallback;
+      pendingReauthCallback = null;
+      if(cb) cb();
+    }catch(e){
+      console.error('reauth failed', e);
+      $('reauthError').style.display = 'block';
+    }
+  });
+  $('cancelReauthBtn').addEventListener('click', ()=>{
+    $('reauthOverlay').classList.remove('open');
+    pendingReauthCallback = null;
+    reLockIfStillPending();
+  });
+
+  $('forgotSecureNotesPasswordBtn').addEventListener('click', ()=>{
+    pendingUnlockCallback = null;
+    $('unlockTagOverlay').classList.remove('open');
+    promptReauthentication(()=>{
+      openCreateSecureNotesPassword(()=>{
+        showToast(T().toastPasswordReset);
+      });
+    });
+  });
 
   // ---------- My Spots tab ----------
   function renderMySpotsList(){
     const list = $('mySpotsList');
     list.innerHTML = '';
-    const spots = entries.filter(e => e.location);
+    const spots = visibleEntries().filter(e => e.location);
     if(spots.length === 0){
       list.innerHTML = `<div class="empty-note">${T().noSpotsYet}</div>`;
       return;
@@ -2742,7 +3387,7 @@
     allRow.innerHTML = `<span>${ICON_ALL}</span><span class="tag-name">${T().allFilterLabel}</span><span class="tag-count">${spots.length}</span>`;
     allRow.addEventListener('click', ()=> openTagDetail({
       title: T().mySpotsLabel,
-      filterFn: (es) => es.filter(e => e.location),
+      filterFn: (es) => es.filter(e => !isLockedEntry(e) && e.location),
       presetTag: null
     }));
     list.appendChild(allRow);
@@ -2760,7 +3405,7 @@
       row.innerHTML = `<span>${ICON_TAG}</span><span class="tag-name">${escapeHtml(tag)}</span><span class="tag-count">${spotTagCounts[tag]}</span>`;
       row.addEventListener('click', ()=> openTagDetail({
         title: tag,
-        filterFn: (es) => es.filter(e => e.location && e.tags && e.tags.includes(tag)),
+        filterFn: (es) => es.filter(e => !isLockedEntry(e) && e.location && e.tags && e.tags.includes(tag)),
         presetTag: tag
       }));
       list.appendChild(row);
@@ -2772,7 +3417,7 @@
       row.innerHTML = `<span>${ICON_UNTAGGED}</span><span class="tag-name">${T().untaggedFilterLabel}</span><span class="tag-count">${untaggedCount}</span>`;
       row.addEventListener('click', ()=> openTagDetail({
         title: T().untaggedFilterLabel,
-        filterFn: (es) => es.filter(e => e.location && (!e.tags || e.tags.length === 0)),
+        filterFn: (es) => es.filter(e => !isLockedEntry(e) && e.location && (!e.tags || e.tags.length === 0)),
         presetTag: null
       }));
       list.appendChild(row);
@@ -2783,7 +3428,7 @@
   function renderMyFavoritesList(){
     const list = $('myFavoritesList');
     list.innerHTML = '';
-    const favs = entries.filter(e => e.pinned);
+    const favs = visibleEntries().filter(e => e.pinned);
     if(favs.length === 0){
       list.innerHTML = `<div class="empty-note">${T().noFavoritesYet}</div>`;
       return;
@@ -2794,7 +3439,7 @@
     allRow.innerHTML = `<span>${ICON_STAR}</span><span class="tag-name">${T().allFilterLabel}</span><span class="tag-count">${favs.length}</span>`;
     allRow.addEventListener('click', ()=> openTagDetail({
       title: T().myFavoritesLabel,
-      filterFn: (es) => es.filter(e => e.pinned),
+      filterFn: (es) => es.filter(e => !isLockedEntry(e) && e.pinned),
       presetTag: null,
       shareLabel: T().myFavoritesLabel
     }));
@@ -2813,7 +3458,7 @@
       row.innerHTML = `<span>${ICON_TAG}</span><span class="tag-name">${escapeHtml(tag)}</span><span class="tag-count">${favTagCounts[tag]}</span>`;
       row.addEventListener('click', ()=> openTagDetail({
         title: tag,
-        filterFn: (es) => es.filter(e => e.pinned && e.tags && e.tags.includes(tag)),
+        filterFn: (es) => es.filter(e => !isLockedEntry(e) && e.pinned && e.tags && e.tags.includes(tag)),
         presetTag: tag
       }));
       list.appendChild(row);
@@ -2825,7 +3470,7 @@
       row.innerHTML = `<span>${ICON_UNTAGGED}</span><span class="tag-name">${T().untaggedFilterLabel}</span><span class="tag-count">${untaggedCount}</span>`;
       row.addEventListener('click', ()=> openTagDetail({
         title: T().untaggedFilterLabel,
-        filterFn: (es) => es.filter(e => e.pinned && (!e.tags || e.tags.length === 0)),
+        filterFn: (es) => es.filter(e => !isLockedEntry(e) && e.pinned && (!e.tags || e.tags.length === 0)),
         presetTag: null,
         shareLabel: T().myFavoritesLabel + ' – ' + T().untaggedFilterLabel
       }));
@@ -3057,12 +3702,26 @@
     $('tagDetailClearSearchBtn').style.display = 'none';
     $('tagDetailSearchIcon').style.display = '';
     $('tagSortMenu').classList.remove('open');
+    $('tagSortWrap').style.display = 'block';
+    $('tagDetailSearchWrap').style.display = 'block';
     $('tagDetailTitle').textContent = config.title;
     $('tagRenameIconBtn').style.display = config.presetTag ? 'flex' : 'none';
     renderTagDetailList();
     $('tagDetailAddBtn').style.display = config.presetTag ? 'block' : 'none';
     if(config.presetTag){ $('tagDetailAddBtn').textContent = T().addToTagAction(config.presetTag); }
-    const shareLabel = config.shareLabel || config.presetTag;
+    const bulkLockBtn = $('tagBulkLockIconBtn');
+    if(config.presetTag && !config.isSecuredContext){
+      bulkLockBtn.style.display = 'flex';
+      bulkLockBtn.title = T().lockAllInTagAction;
+      bulkLockBtn.classList.remove('active');
+    } else if(config.isSecuredContext){
+      bulkLockBtn.style.display = 'flex';
+      bulkLockBtn.title = T().unlockAllInTagAction;
+      bulkLockBtn.classList.add('active');
+    } else {
+      bulkLockBtn.style.display = 'none';
+    }
+    const shareLabel = !config.isSecuredContext && (config.shareLabel || config.presetTag);
     $('tagShareIconBtn').style.display = shareLabel ? 'flex' : 'none';
     $('tagDetailOverlay').classList.add('open');
   }
@@ -3339,7 +3998,7 @@
     $('searchIcon').style.display = 'none';
     $('searchResultsSection').style.display = '';
     $('defaultSections').style.display = 'none';
-    const results = entries.filter(entry =>
+    const results = visibleEntries().filter(entry =>
       entry.title.toLowerCase().includes(q) ||
       entry.content.toLowerCase().includes(q) ||
       (entry.tags || []).some(tag => tag.toLowerCase().includes(q))
@@ -3419,7 +4078,6 @@
   }
   $('formatBoldBtn').addEventListener('click', ()=>{ wrapSelectionInTextarea($('inputContent'), '**', '**'); updateContentPreview(); });
   $('formatHighlightBtn').addEventListener('click', ()=>{ wrapSelectionInTextarea($('inputContent'), '==', '=='); updateContentPreview(); });
-  $('formatCenterBtn').addEventListener('click', ()=>{ wrapSelectionInTextarea($('inputContent'), '[center]', '[/center]'); updateContentPreview(); });
 
   function updateContentPreview(){
     const text = $('inputContent').value;
@@ -3449,6 +4107,8 @@
     pendingDateLog = [];
     pendingReminderDate = null;
     $('reminderDateInput').value = '';
+    pendingLocked = false;
+    $('lockThisNoteToggleBtn').classList.remove('active');
     filesToDeleteOnSave = [];
     renderPhotoStrip();
     renderFileChips();
@@ -3539,9 +4199,25 @@
       $('reminderDateInput').value = entry.reminderDate;
       renderReminderPreview();
     }
+    pendingLocked = !!entry.locked;
+    $('lockThisNoteToggleBtn').classList.toggle('active', pendingLocked);
     $('addOverlay').classList.add('open');
     formOpenSnapshot = captureFormSnapshot();
   }
+
+  $('lockThisNoteToggleBtn').addEventListener('click', ()=>{
+    const btn = $('lockThisNoteToggleBtn');
+    const willBeLocked = !btn.classList.contains('active');
+    if(willBeLocked && !secureNotesPasswordHash){
+      openCreateSecureNotesPassword(()=>{
+        btn.classList.add('active');
+        pendingLocked = true;
+      });
+      return;
+    }
+    btn.classList.toggle('active', willBeLocked);
+    pendingLocked = willBeLocked;
+  });
 
   $('fabAdd').addEventListener('click', ()=> openAddSheet());
   $('cancelAddBtn').addEventListener('click', ()=>{
@@ -4954,6 +5630,7 @@
       entry.location = pendingLocation ? { ...pendingLocation } : null;
       entry.dateLog = pendingDateLog.length ? pendingDateLog.map(e => ({...e})) : [];
       entry.reminderDate = pendingReminderDate || null;
+      entry.locked = pendingLocked;
 
       const isShared = !!entry.sharedId;
 
@@ -5068,6 +5745,17 @@
       showToast(T().toastSaved);
       if(editingId){
         openDetail(entry.id); // return to the note so the user can see what they just changed, instead of losing track of it
+      }
+
+      if(!entry.locked && entry.tags && entry.tags.length){
+        const wasFullySecuredTag = entry.tags.find(tag => {
+          const otherVisible = entries.filter(e => e.id !== entry.id && !e.locked && e.tags && e.tags.includes(tag));
+          const otherLocked = entries.filter(e => e.id !== entry.id && e.locked && e.tags && e.tags.includes(tag));
+          return otherVisible.length === 0 && otherLocked.length > 0;
+        });
+        if(wasFullySecuredTag){
+          promptLockNewNote(entry, wasFullySecuredTag);
+        }
       }
 
       persistIndex();
@@ -5216,6 +5904,8 @@
     }
     renderDetailTagsRow(entry);
     renderDetailSharedTo(entry);
+    $('toggleLockEntryBtn').classList.toggle('active', !!entry.locked);
+    $('toggleLockEntryBtn').title = entry.locked ? T().unlockThisNoteAction : T().lockThisNoteAction;
     detailDateLogRange = 'all';
     renderDetailDateLog(entry);
     if(entry.reminderDate){
@@ -5741,6 +6431,68 @@
     $('shareOverlay').classList.add('open');
     createShareLink(entry);
   }
+
+  function refreshAfterLockChange(){
+    renderRecent(); renderRandom(); renderForgotten();
+    if($('sectionTabsBar').children.length){ tabRenderFn(getActiveTabId())(); }
+    const activeSearchQuery = $('searchInput').value.trim().toLowerCase();
+    if(activeSearchQuery !== ''){ runSearch(activeSearchQuery); }
+    if($('tagDetailOverlay').classList.contains('open') && currentTagDetailContext){
+      renderTagDetailList();
+    }
+  }
+
+  let pendingLockNewNoteEntry = null;
+  function promptLockNewNote(entry, tag){
+    pendingLockNewNoteEntry = entry;
+    $('lockNewNoteExplain').textContent = T().confirmLockNewNoteInSecuredTag(tag);
+    $('lockNewNoteOverlay').classList.add('open');
+  }
+  $('lockNewNoteYesBtn').addEventListener('click', ()=>{
+    const entry = pendingLockNewNoteEntry;
+    pendingLockNewNoteEntry = null;
+    $('lockNewNoteOverlay').classList.remove('open');
+    if(!entry) return;
+    entry.locked = true;
+    persistIndex();
+    refreshAfterLockChange();
+    if($('detailOverlay').classList.contains('open')){ $('detailOverlay').classList.remove('open'); }
+    showToast(T().toastNoteLocked);
+  });
+  $('lockNewNoteNoBtn').addEventListener('click', ()=>{
+    pendingLockNewNoteEntry = null;
+    $('lockNewNoteOverlay').classList.remove('open');
+  });
+
+  $('toggleLockEntryBtn').addEventListener('click', ()=>{
+    $('moreMenu').classList.remove('open');
+    const entry = entries.find(e=>e.id === currentDetailId);
+    if(!entry) return;
+
+    if(entry.locked){
+      if(!confirm(T().confirmUnlockNote)) return;
+      entry.locked = false;
+      persistIndex();
+      $('detailOverlay').classList.remove('open');
+      refreshAfterLockChange();
+      showToast(T().toastNoteUnlocked);
+      return;
+    }
+
+    const doLock = () => {
+      entry.locked = true;
+      persistIndex();
+      $('detailOverlay').classList.remove('open');
+      refreshAfterLockChange();
+      showToast(T().toastNoteLocked);
+    };
+    if(!secureNotesPasswordHash){
+      openCreateSecureNotesPassword(doLock);
+    } else {
+      if(!confirm(T().confirmLockNote)) return;
+      doLock();
+    }
+  });
 
   $('shareEntryBtn').addEventListener('click', async ()=>{
     $('moreMenu').classList.remove('open');
@@ -7006,12 +7758,14 @@
       loadTheme();
       loadLanguage();
       loadTabPreferences();
+      loadLockSettings().then(checkAppLockOnLoad);
     });
   }
 
   loadTheme();
   loadLanguage();
   loadTabPreferences();
+  loadLockSettings().then(checkAppLockOnLoad);
 
   if('serviceWorker' in navigator){
     navigator.serviceWorker.register('sw.js').catch(e => console.error('service worker registration failed', e));
