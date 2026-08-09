@@ -243,7 +243,7 @@
   #dateLogAmountInput::placeholder{ font-size:11.5px; }
 
   .attach-row{ display:flex; gap:10px; margin-top:12px; }
-  .attach-toolbar{ display:flex; gap:8px; margin-top:4px; }
+  .attach-toolbar{ display:flex; gap:8px; margin-top:0; }
   .toolbar-icon-btn{
     width:34px; height:34px; border-radius:50%; border:1px solid var(--line);
     background:var(--paper-raised); font-size:15px; cursor:pointer;
@@ -251,6 +251,12 @@
   }
   .toolbar-icon-btn.active{ border-color:var(--plum); background:var(--plum-tint); }
   .toolbar-icon-btn.recording{ border-color:var(--danger); background:#FBEAE6; color:var(--danger); animation: recordPulse 1.6s ease-out infinite; }
+  .format-btn{
+    width:23px; height:23px; border-radius:6px; border:1px solid var(--line);
+    background:var(--paper-raised); font-size:10.5px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; color:var(--ink-soft);
+  }
+  .format-btn:hover{ color:var(--ink); background:var(--paper); }
   @keyframes recordPulse{
     0% { box-shadow: 0 0 0 0 rgba(192,80,59,0.45); }
     70% { box-shadow: 0 0 0 10px rgba(192,80,59,0); }
@@ -501,8 +507,23 @@
     </div>
     <label class="field-label" data-i18n="titleLabel">Title</label>
     <input class="field" id="inputTitle" type="text" placeholder="Give it a name">
-    <label class="field-label" data-i18n="contentLabel">Content</label>
+    <div style="display:flex; align-items:center; justify-content:space-between;">
+      <label class="field-label" style="margin:16px 0 6px;" data-i18n="contentLabel">Content</label>
+      <div style="display:flex; gap:3px;">
+        <button type="button" id="formatBoldBtn" class="format-btn" title="Bold"><b>A</b></button>
+        <button type="button" id="formatCenterBtn" class="format-btn" title="Center">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="8" y1="18" x2="16" y2="18"/></svg>
+        </button>
+        <button type="button" id="formatHighlightBtn" class="format-btn" title="Highlight">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l6 6M3 21l3.5-1 10-10-2.5-2.5-10 10L3 21z"/><path d="M14.5 6.5L17.5 3.5a2.1 2.1 0 013 3l-3 3"/></svg>
+        </button>
+      </div>
+    </div>
     <textarea class="field" id="inputContent" placeholder="Write down what you want to remember…"></textarea>
+    <div id="contentPreviewWrap" style="display:none; margin-top:6px;">
+      <div style="font-size:11px; font-weight:600; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.04em; margin-bottom:4px;" data-i18n="previewLabel">Preview</div>
+      <div id="contentPreview" style="background:var(--paper-raised); border-radius:10px; padding:10px 12px; font-size:14px; line-height:1.55; color:var(--ink);"></div>
+    </div>
 
     <div id="tagPickerRow" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:12px;"></div>
 
@@ -519,7 +540,7 @@
       <input type="date" id="reminderDateInput" style="width:100%; box-sizing:border-box; border:1px solid var(--line); border-radius:10px; padding:9px 12px; font-size:13px; background:var(--paper-raised); color:var(--ink); font-family:inherit;">
     </div>
 
-    <label class="field-label" data-i18n="attachmentsLabel" style="margin:14px 0 2px;">Attachments</label>
+    <label class="field-label" data-i18n="attachmentsLabel" style="margin:14px 0 0;">Attachments</label>
     <div id="videoPreviewWrap" style="display:none; margin-top:8px;">
       <video id="videoPreview" controls style="width:100%; border-radius:14px; display:block; background:#000;"></video>
       <div style="display:flex; align-items:center; justify-content:space-between; margin-top:6px;">
@@ -1126,10 +1147,12 @@
   const INDEX_KEY = 'mind-search-index';
   const LEGACY_KEY = 'mind-search-entries';
   const TAGS_KEY = 'mind-search-tags';
+  const PINNED_TAGS_KEY = 'mind-search-pinned-tags';
   const TAB_PREFS_KEY = 'mind-search-tab-prefs';
   const mediaKey = (id) => 'entry-media:' + id;
 
   let allTags = [];
+  let pinnedTags = [];
 
   let entries = [];
   let currentDetailId = null;
@@ -1276,6 +1299,7 @@
       addSheetTitleNew: "记一笔",
       titleLabel: "标题",
       contentLabel: "内容",
+      previewLabel: "预览效果",
       titlePlaceholder: "给它起个名字",
       contentPlaceholder: "写下你想记住的东西…",
       photosLabel: "照片",
@@ -1317,6 +1341,7 @@
       toastCoEditingEnded: "共同编辑已结束，这条笔记现在是你自己的独立笔记了",
       deleteAction: "删除",
       renameAction: "重命名",
+      pinTagAction: "置顶这个标签",
       renameTagPrompt: "输入新的标签名字：",
       confirmSendShare: (who) => `确定要分享给${who}吗？`,
       confirmDiscardEdits: "有还没保存的改动，确定要离开吗？改动会丢失。",
@@ -1541,6 +1566,7 @@
       titleLabel: "標題",
       contentLabel: "內容",
       titlePlaceholder: "給它起個名字",
+      previewLabel: "預覽效果",
       contentPlaceholder: "寫下你想記住的東西…",
       myTagsLabel: "我的\n標籤",
       recentTabLabel: "最近",
@@ -1623,6 +1649,7 @@
       lastEdited: "最後編輯",
       renameAction: "重新命名",
       renameTagPrompt: "輸入新的標籤名字：",
+      pinTagAction: "置頂這個標籤",
       toastTagNameTaken: "已經有一個同名標籤了，換個名字試試",
       toastTagRenamed: "標籤已重新命名",
       sharedByLabel: "分享自：",
@@ -1844,6 +1871,7 @@
       contentLabel: "Content",
       titlePlaceholder: "Give it a name",
       contentPlaceholder: "Write down what you want to remember…",
+      previewLabel: "Preview",
       photosLabel: "Photos",
       photosHint: "up to 5",
       attachmentsLabel: "Attachments",
@@ -1917,6 +1945,7 @@
       renameAction: "Rename",
       renameTagPrompt: "Enter a new name for this tag:",
       toastTagNameTaken: "A tag with that name already exists — try a different name",
+      pinTagAction: "Pin this tag",
       toastTagRenamed: "Tag renamed",
       confirmStopCoEditing: "You'll keep your own independent copy and stop syncing with the others — anyone else still co-editing will carry on. Continue?",
       toastCoEditingStopped: "You've left — this is now your own independent note",
@@ -2404,6 +2433,12 @@
     }catch(e){
       allTags = [];
     }
+    try{
+      const res = await storageAdapter.get(PINNED_TAGS_KEY, false);
+      pinnedTags = (res && res.value) ? JSON.parse(res.value) : [];
+    }catch(e){
+      pinnedTags = [];
+    }
   }
 
   function persistTags(){
@@ -2413,13 +2448,33 @@
     });
   }
 
+  function persistPinnedTags(){
+    storageAdapter.set(PINNED_TAGS_KEY, JSON.stringify(pinnedTags), false).catch(()=>{});
+  }
+
   function formatDate(ts){
     const d = new Date(ts);
     return d.toLocaleDateString(T().dateLocale, { year:'numeric', month:'long', day:'numeric' });
   }
 
+  function stripFormatMarkers(text){
+    return (text || '')
+      .replace(/\[center\]([\s\S]*?)\[\/center\]/g, '$1')
+      .replace(/\*\*(.+?)\*\*/g, '$1')
+      .replace(/==(.+?)==/g, '$1');
+  }
+
+  function renderFormattedContent(text){
+    let html = escapeHtml(text || '');
+    html = html.replace(/==(.+?)==/g, '<mark style="background:#fff3b0; padding:0 2px; border-radius:2px;">$1</mark>');
+    html = html.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+    html = html.replace(/\[center\]([\s\S]*?)\[\/center\]/g, '<div style="text-align:center;">$1</div>');
+    html = html.replace(/\n/g, '<br>');
+    return html;
+  }
+
   function snippet(entry){
-    return entry.content.replace(/\s+/g,' ').slice(0,60);
+    return stripFormatMarkers(entry.content).replace(/\s+/g,' ').slice(0,60);
   }
 
   function escapeHtml(str){
@@ -2640,13 +2695,25 @@
     list.innerHTML = '';
     const tagCounts = allTags.map(tag => ({
       tag,
-      count: entries.filter(e => e.tags && e.tags.includes(tag)).length
-    })).sort((a,b) => b.count - a.count);
+      count: entries.filter(e => e.tags && e.tags.includes(tag)).length,
+      pinned: pinnedTags.includes(tag)
+    })).sort((a,b) => {
+      if(a.pinned && !b.pinned) return -1;
+      if(!a.pinned && b.pinned) return 1;
+      return b.count - a.count;
+    });
 
-    tagCounts.forEach(({tag, count}) => {
+    tagCounts.forEach(({tag, count, pinned}) => {
       const row = document.createElement('div');
       row.className = 'tag-row';
-      row.innerHTML = `<span>${ICON_TAG}</span><span class="tag-name">${escapeHtml(tag)}</span><span class="tag-count">${count}</span>`;
+      row.innerHTML = `<span>${ICON_TAG}</span><span class="tag-name">${escapeHtml(tag)}</span><button type="button" class="tag-pin-toggle-btn" title="${T().pinTagAction}" style="background:none; border:none; cursor:pointer; padding:0; flex-shrink:0; opacity:${pinned ? '0.85' : '0.3'};">${ICON_STAR}</button><span class="tag-count">${count}</span>`;
+      row.querySelector('.tag-pin-toggle-btn').addEventListener('click', (e)=>{
+        e.stopPropagation();
+        if(pinnedTags.includes(tag)){ pinnedTags = pinnedTags.filter(t => t !== tag); }
+        else { pinnedTags.push(tag); }
+        persistPinnedTags();
+        renderMyTagsList();
+      });
       row.addEventListener('click', ()=> openTagDetail({
         title: tag,
         filterFn: (es) => es.filter(e => e.tags && e.tags.includes(tag)),
@@ -2728,7 +2795,8 @@
     allRow.addEventListener('click', ()=> openTagDetail({
       title: T().myFavoritesLabel,
       filterFn: (es) => es.filter(e => e.pinned),
-      presetTag: null
+      presetTag: null,
+      shareLabel: T().myFavoritesLabel
     }));
     list.appendChild(allRow);
 
@@ -2758,7 +2826,8 @@
       row.addEventListener('click', ()=> openTagDetail({
         title: T().untaggedFilterLabel,
         filterFn: (es) => es.filter(e => e.pinned && (!e.tags || e.tags.length === 0)),
-        presetTag: null
+        presetTag: null,
+        shareLabel: T().myFavoritesLabel + ' – ' + T().untaggedFilterLabel
       }));
       list.appendChild(row);
     }
@@ -2993,7 +3062,8 @@
     renderTagDetailList();
     $('tagDetailAddBtn').style.display = config.presetTag ? 'block' : 'none';
     if(config.presetTag){ $('tagDetailAddBtn').textContent = T().addToTagAction(config.presetTag); }
-    $('tagShareIconBtn').style.display = config.presetTag ? 'flex' : 'none';
+    const shareLabel = config.shareLabel || config.presetTag;
+    $('tagShareIconBtn').style.display = shareLabel ? 'flex' : 'none';
     $('tagDetailOverlay').classList.add('open');
   }
 
@@ -3333,9 +3403,40 @@
     $('voiceBtn').title = pendingAudioData ? T().replaceVoice : T().addVoice;
   }
 
+  function wrapSelectionInTextarea(textarea, before, after){
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const value = textarea.value;
+    const selected = value.slice(start, end);
+    textarea.value = value.slice(0, start) + before + selected + after + value.slice(end);
+    textarea.focus();
+    if(selected){
+      textarea.selectionStart = start + before.length;
+      textarea.selectionEnd = start + before.length + selected.length;
+    } else {
+      textarea.selectionStart = textarea.selectionEnd = start + before.length;
+    }
+  }
+  $('formatBoldBtn').addEventListener('click', ()=>{ wrapSelectionInTextarea($('inputContent'), '**', '**'); updateContentPreview(); });
+  $('formatHighlightBtn').addEventListener('click', ()=>{ wrapSelectionInTextarea($('inputContent'), '==', '=='); updateContentPreview(); });
+  $('formatCenterBtn').addEventListener('click', ()=>{ wrapSelectionInTextarea($('inputContent'), '[center]', '[/center]'); updateContentPreview(); });
+
+  function updateContentPreview(){
+    const text = $('inputContent').value;
+    const hasFormatting = /\*\*(.+?)\*\*|==(.+?)==|\[center\]/.test(text);
+    if(!hasFormatting){
+      $('contentPreviewWrap').style.display = 'none';
+      return;
+    }
+    $('contentPreview').innerHTML = renderFormattedContent(text);
+    $('contentPreviewWrap').style.display = 'block';
+  }
+  $('inputContent').addEventListener('input', updateContentPreview);
+
   function resetAddForm(){
     $('inputTitle').value = '';
     $('inputContent').value = '';
+    $('contentPreviewWrap').style.display = 'none';
     pendingPhotos.forEach(p => { if(p.isNew && p.previewUrl){ URL.revokeObjectURL(p.previewUrl); } });
     pendingPhotos = [];
     pendingPhotoProcessingCount = 0;
@@ -3406,6 +3507,7 @@
     $('addSheetTitle').textContent = T().editAction;
     $('inputTitle').value = entry.title;
     $('inputContent').value = entry.content;
+    updateContentPreview();
     pendingPhotos = (entry.images || []).map(img => ({ isNew:false, url: img.url, path: img.path }));
     renderPhotoStrip();
     if(entry.audio){
@@ -5066,7 +5168,7 @@
     $('stopCoEditingBtn').style.display = entry.sharedId ? 'flex' : 'none';
 
     $('detailTitle').textContent = entry.title;
-    $('detailContent').textContent = entry.content;
+    $('detailContent').innerHTML = renderFormattedContent(entry.content);
 
     if(entry.video){
       $('detailVideo').src = entry.video.url;
@@ -5513,8 +5615,8 @@
       showAuthOverlay();
       return;
     }
-    if(!currentTagDetailContext || !currentTagDetailContext.presetTag) return;
-    const tagName = currentTagDetailContext.presetTag;
+    if(!currentTagDetailContext || !(currentTagDetailContext.shareLabel || currentTagDetailContext.presetTag)) return;
+    const tagName = currentTagDetailContext.shareLabel || currentTagDetailContext.presetTag;
     const notes = currentTagDetailContext.filterFn(entries);
     $('shareTagSubtitle').textContent = T().shareTagSubtitle(tagName, notes.length);
     $('shareTagEmailInput').value = '';
@@ -5594,11 +5696,11 @@
 
   $('shareTagSendBtn').addEventListener('click', async ()=>{
     const email = $('shareTagEmailInput').value.trim();
-    if(!email || !currentTagDetailContext || !currentTagDetailContext.presetTag) return;
+    if(!email || !currentTagDetailContext || !(currentTagDetailContext.shareLabel || currentTagDetailContext.presetTag)) return;
     const nickname = await getContactNickname(email);
     const displayName = nickname || email;
     if(!confirm(T().confirmSendShare(displayName))) return;
-    const tagName = currentTagDetailContext.presetTag;
+    const tagName = currentTagDetailContext.shareLabel || currentTagDetailContext.presetTag;
     const notes = currentTagDetailContext.filterFn(entries);
     const ok = await shareTagBundleToEmail(tagName, notes, email);
     if(ok){ showShareTagSuccessFlash(T().shareTagSentFlashText(notes.length, displayName)); }
@@ -6001,14 +6103,29 @@
     const list = $('tagsManageList');
     list.innerHTML = '';
     $('tagsManageEmpty').style.display = allTags.length === 0 ? 'block' : 'none';
-    allTags.forEach(tag => {
+    const sortedTags = [...allTags].sort((a,b) => {
+      const aPinned = pinnedTags.includes(a), bPinned = pinnedTags.includes(b);
+      if(aPinned && !bPinned) return -1;
+      if(!aPinned && bPinned) return 1;
+      return 0;
+    });
+    sortedTags.forEach(tag => {
+      const isPinned = pinnedTags.includes(tag);
       const row = document.createElement('div');
       row.className = 'file-chip-row';
       row.innerHTML = `
+        <button type="button" class="pin-tag-btn" title="${T().pinTagAction}" style="background:none; border:none; cursor:pointer; font-size:15px; padding:0; flex-shrink:0; opacity:${isPinned ? '1' : '0.35'};">${ICON_STAR}</button>
         <span class="file-chip-name">${escapeHtml(tag)}</span>
         <button type="button" class="rename-tag-btn" style="color:var(--plum-deep); font-weight:600; font-size:12.5px; background:none; border:none; cursor:pointer; flex-shrink:0;">${T().renameAction}</button>
         <button type="button" class="delete-tag-btn" style="color:var(--danger); font-weight:600; font-size:12.5px; background:none; border:none; cursor:pointer; flex-shrink:0;">${T().deleteAction}</button>
       `;
+      row.querySelector('.pin-tag-btn').addEventListener('click', ()=>{
+        if(isPinned){ pinnedTags = pinnedTags.filter(t => t !== tag); }
+        else { pinnedTags.push(tag); }
+        persistPinnedTags();
+        renderTagsManageList();
+        if($('sectionTabsBar').children.length){ tabRenderFn(getActiveTabId())(); }
+      });
       row.querySelector('.rename-tag-btn').addEventListener('click', ()=> renameTag(tag));
       row.querySelector('.delete-tag-btn').addEventListener('click', ()=>{
         pendingDeleteTagName = tag;
@@ -6029,6 +6146,10 @@
     }
     allTags = allTags.map(t => t === oldName ? newName : t);
     persistTags();
+    if(pinnedTags.includes(oldName)){
+      pinnedTags = pinnedTags.map(t => t === oldName ? newName : t);
+      persistPinnedTags();
+    }
     entries.forEach(e => {
       if(e.tags && e.tags.includes(oldName)){
         e.tags = e.tags.map(t => t === oldName ? newName : t);
@@ -6086,6 +6207,10 @@
     const tagName = pendingDeleteTagName;
     allTags = allTags.filter(t => t !== tagName);
     persistTags();
+    if(pinnedTags.includes(tagName)){
+      pinnedTags = pinnedTags.filter(t => t !== tagName);
+      persistPinnedTags();
+    }
     entries.forEach(e => {
       if(e.tags && e.tags.includes(tagName)){
         e.tags = e.tags.filter(t => t !== tagName);
@@ -6204,7 +6329,7 @@
     $('inboxItemBundleList').style.display = 'none';
 
     $('inboxItemTitle').textContent = item.title || '';
-    $('inboxItemContent').textContent = item.content || '';
+    $('inboxItemContent').innerHTML = renderFormattedContent(item.content || '');
     if(item.video){
       $('inboxItemVideo').src = item.video.url;
       $('inboxItemVideoWrap').style.display = 'block';
