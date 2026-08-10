@@ -1092,7 +1092,7 @@
   </div>
 </div>
 
-<div class="sheet-overlay" id="createLockedTagOverlay" style="z-index:496; background:rgba(20,18,15,0.92);">
+<div class="sheet-overlay" id="createLockedTagOverlay" style="z-index:496;">
   <div class="sheet" style="max-width:380px;">
     <h2 data-i18n="setUpSecuredNotesTitle">Set Up Secured Notes</h2>
     <p style="font-size:12.5px; color:var(--ink-soft); margin:-8px 0 16px;" data-i18n="secureNotesExplain">Locked notes are hidden everywhere else in the app — Recent, Search, tags, everything — until you unlock this folder with its password.</p>
@@ -1113,23 +1113,24 @@
   </div>
 </div>
 
-<div class="sheet-overlay" id="reauthOverlay" style="z-index:498; background:rgba(20,18,15,0.92);">
-  <div class="sheet" style="max-width:340px;">
-    <h2 data-i18n="reauthTitle">Confirm it's you</h2>
-    <p style="font-size:13px; color:var(--ink-soft); margin:-8px 0 16px; line-height:1.5;" data-i18n="reauthExplain">For your security, please sign in again before resetting a password.</p>
-    <div id="reauthPasswordPanel" style="display:none;">
-      <input class="field" id="reauthPasswordInput" type="password" data-i18n-placeholder="passwordPlaceholder" placeholder="Password">
-      <button class="primary-btn" id="reauthPasswordBtn" style="margin-top:12px;" data-i18n="confirmAction">Confirm</button>
-    </div>
-    <div id="reauthGooglePanel" style="display:none;">
-      <button class="primary-btn" id="reauthGoogleBtn" style="margin-top:0;" data-i18n="reauthWithGoogleAction">Continue with Google</button>
-    </div>
-    <div id="reauthError" style="display:none; color:var(--danger); font-size:12.5px; margin-top:8px;" data-i18n="reauthFailed">Couldn't verify — please try again.</div>
-    <button class="text-btn" id="cancelReauthBtn" data-i18n="cancel">Cancel</button>
+<div id="reauthOverlay" style="display:none; position:fixed; inset:0; z-index:998; background:var(--paper); align-items:center; justify-content:center; flex-direction:column; gap:14px; padding:24px;">
+  <div style="width:56px; height:56px; border-radius:50%; background:var(--paper-raised); display:flex; align-items:center; justify-content:center; color:var(--ink-soft);">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0116 0v1"/></svg>
   </div>
+  <div class="wordmark" style="font-size:20px; text-align:center;" data-i18n="reauthTitle">Confirm it's you</div>
+  <p style="font-size:13px; color:var(--ink-soft); margin:0; line-height:1.5; text-align:center; max-width:280px;" data-i18n="reauthExplain">For your security, please sign in again before resetting a password.</p>
+  <div id="reauthPasswordPanel" style="display:none; width:100%; max-width:260px;">
+    <input class="field" id="reauthPasswordInput" type="password" style="text-align:center;" data-i18n-placeholder="passwordPlaceholder" placeholder="Password">
+    <button class="primary-btn" id="reauthPasswordBtn" style="margin-top:12px;" data-i18n="confirmAction">Confirm</button>
+  </div>
+  <div id="reauthGooglePanel" style="display:none; width:100%; max-width:260px;">
+    <button class="primary-btn" id="reauthGoogleBtn" style="margin-top:0;" data-i18n="reauthWithGoogleAction">Continue with Google</button>
+  </div>
+  <div id="reauthError" style="display:none; color:var(--danger); font-size:12.5px;" data-i18n="reauthFailed">Couldn't verify — please try again.</div>
+  <button class="text-btn" id="cancelReauthBtn" data-i18n="cancel">Cancel</button>
 </div>
 
-<div class="sheet-overlay" id="unlockTagOverlay" style="z-index:460; background:rgba(20,18,15,0.92);">
+<div class="sheet-overlay" id="unlockTagOverlay" style="z-index:460;">
   <div class="sheet" style="max-width:340px;">
     <h2 id="unlockTagTitle" data-i18n="enterPasswordTitle">Enter Password</h2>
     <input class="field" id="unlockTagPasswordInput" type="password" data-i18n-placeholder="passwordPlaceholder" placeholder="Password">
@@ -1490,6 +1491,7 @@
       toastEnterPassword: "请输入密码",
       toastPasswordsDontMatch: "两次密码不一致",
       toastAppLockEnabled: "App 密码已开启",
+      toastPasswordReset: "密码已重设，新密码现在生效了", 
       confirmDisableAppLock: "确定要关闭 App 密码吗？",
       toastAppLockDisabled: "App 密码已关闭",
       setUpSecuredNotesTitle: "设置安全笔记密码",
@@ -1856,6 +1858,7 @@
       toastPasswordsDontMatch: "兩次密碼不一致",
       toastAppLockEnabled: "App 密碼已開啟",
       confirmDisableAppLock: "確定要關閉 App 密碼嗎？",
+      toastPasswordReset: "密碼已重設，新密碼現在生效了", 
       toastAppLockDisabled: "App 密碼已關閉",
       setUpSecuredNotesTitle: "設定安全筆記密碼",
       secureNotesExplain: "上鎖的筆記會從其他所有地方隱藏——最近、搜尋、標籤，全部都不會顯示——直到你用這個密碼解鎖這個資料夾。",
@@ -2225,6 +2228,7 @@
       toastAppLockEnabled: "App password enabled",
       confirmDisableAppLock: "Turn off the app password?",
       toastAppLockDisabled: "App password disabled",
+      toastPasswordReset: "Password reset — your new password is now active", 
       setUpSecuredNotesTitle: "Set Up Secured Notes",
       secureNotesExplain: "Locked notes are hidden everywhere else in the app — Recent, Search, tags, everything — until you unlock this folder with its password.",
       securedNotesLabel: "Secured Notes",
@@ -2718,7 +2722,8 @@
     persistAppLock();
     $('appLockOffState').style.display = 'none';
     $('appLockOnState').style.display = 'block';
-    showToast(T().toastAppLockEnabled);
+    showToast(cameFromAppLockScreen ? T().toastPasswordReset : T().toastAppLockEnabled);
+    cameFromAppLockScreen = false;
   });
   $('appLockDisableBtn').addEventListener('click', ()=>{
     if(!confirm(T().confirmDisableAppLock)) return;
@@ -3322,7 +3327,7 @@
     const isGoogleUser = me.providerData.some(p => p.providerId === 'google.com');
     $('reauthPasswordPanel').style.display = isGoogleUser ? 'none' : 'block';
     $('reauthGooglePanel').style.display = isGoogleUser ? 'block' : 'none';
-    $('reauthOverlay').classList.add('open');
+    $('reauthOverlay').style.display = 'flex';
   }
 
   $('reauthPasswordBtn').addEventListener('click', async ()=>{
@@ -3333,7 +3338,7 @@
     try{
       const cred = fb.EmailAuthProvider.credential(me.email, pw);
       await fb.reauthenticateWithCredential(me, cred);
-      $('reauthOverlay').classList.remove('open');
+      $('reauthOverlay').style.display = 'none';
       const cb = pendingReauthCallback;
       pendingReauthCallback = null;
       if(cb) cb();
@@ -3347,7 +3352,7 @@
     const me = fb.auth.currentUser;
     try{
       await fb.reauthenticateWithPopup(me, new fb.GoogleAuthProvider());
-      $('reauthOverlay').classList.remove('open');
+      $('reauthOverlay').style.display = 'none';
       const cb = pendingReauthCallback;
       pendingReauthCallback = null;
       if(cb) cb();
@@ -3357,7 +3362,7 @@
     }
   });
   $('cancelReauthBtn').addEventListener('click', ()=>{
-    $('reauthOverlay').classList.remove('open');
+    $('reauthOverlay').style.display = 'none';
     pendingReauthCallback = null;
     reLockIfStillPending();
   });
