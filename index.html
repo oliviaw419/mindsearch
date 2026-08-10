@@ -2583,6 +2583,9 @@
     checkRemindersDue();
     if(typeof getActiveTabId === 'function' && $('sectionTabsBar').children.length){
       tabRenderFn(getActiveTabId())();
+      if(getActiveTabId() !== 'myTags' && typeof renderMyTagsList === 'function'){
+        renderMyTagsList(); // keep the Secured Notes count fresh even when My Tags isn't the visible tab
+      }
     }
     if(entries.some(e => e.reminderDate) && isSignedIn && window.Notification && Notification.permission === 'granted'){
       ensurePushSubscriptionSaved(); // safe to do silently — permission was already granted, no new prompt involved
@@ -3148,10 +3151,6 @@
   function openSecuredNotes(){
     if(!secureNotesPasswordHash){
       openCreateSecureNotesPassword(renderSecuredNotesGroups);
-      return;
-    }
-    if(secureNotesUnlockedThisSession){
-      renderSecuredNotesGroups();
       return;
     }
     promptUnlockSecureNotes(renderSecuredNotesGroups);
