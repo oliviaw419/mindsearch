@@ -1094,7 +1094,7 @@
 
 <div class="sheet-overlay" id="createLockedTagOverlay" style="z-index:496;">
   <div class="sheet" style="max-width:380px;">
-    <h2 data-i18n="setUpSecuredNotesTitle">Set Up Secured Notes</h2>
+    <h2 id="createLockedTagTitle" data-i18n="setUpSecuredNotesTitle">Set Up Secured Notes</h2>
     <p style="font-size:12.5px; color:var(--ink-soft); margin:-8px 0 16px;" data-i18n="secureNotesExplain">Locked notes are hidden everywhere else in the app — Recent, Search, tags, everything — until you unlock this folder with its password.</p>
     <label class="field-label" style="margin:0 0 4px;" data-i18n="newPasswordLabel">Password</label>
     <input class="field" id="lockedTagPasswordInput" type="password" data-i18n-placeholder="newPasswordPlaceholder" placeholder="Set a password">
@@ -1495,6 +1495,8 @@
       confirmDisableAppLock: "确定要关闭 App 密码吗？",
       toastAppLockDisabled: "App 密码已关闭",
       setUpSecuredNotesTitle: "设置安全笔记密码",
+      resetSecuredNotesTitle: "重设安全笔记密码",
+      resetAction: "重设",
       secureNotesExplain: "上锁的笔记会从其他所有地方隐藏——最近、搜索、标签，全部都不会显示——直到你用这个密码解锁这个文件夹。",
       securedNotesLabel: "安全笔记",
       newPasswordLabel: "密码",
@@ -1863,6 +1865,8 @@
       setUpSecuredNotesTitle: "設定安全筆記密碼",
       secureNotesExplain: "上鎖的筆記會從其他所有地方隱藏——最近、搜尋、標籤，全部都不會顯示——直到你用這個密碼解鎖這個資料夾。",
       securedNotesLabel: "安全筆記",
+      resetSecuredNotesTitle: "重設安全筆記密碼",
+      resetAction: "重設",
       newPasswordLabel: "密碼",
       createAction: "建立",
       enterPasswordTitle: "輸入密碼",
@@ -2233,6 +2237,8 @@
       secureNotesExplain: "Locked notes are hidden everywhere else in the app — Recent, Search, tags, everything — until you unlock this folder with its password.",
       securedNotesLabel: "Secured Notes",
       newPasswordLabel: "Password",
+      resetSecuredNotesTitle: "Reset Secured Notes Password",
+      resetAction: "Reset",
       createAction: "Create",
       enterPasswordTitle: "Enter Password",
       lockThisNoteAction: "🔒 Lock this note",
@@ -3159,6 +3165,10 @@
       openCreateSecureNotesPassword(renderSecuredNotesGroups);
       return;
     }
+    if(secureNotesUnlockedThisSession){
+      renderSecuredNotesGroups();
+      return;
+    }
     promptUnlockSecureNotes(renderSecuredNotesGroups);
   }
 
@@ -3225,9 +3235,11 @@
     $('tagDetailOverlay').classList.add('open');
   }
 
-  function openCreateSecureNotesPassword(onSuccess){
+  function openCreateSecureNotesPassword(onSuccess, isReset){
     $('lockedTagPasswordInput').value = '';
     $('lockedTagConfirmInput').value = '';
+    $('createLockedTagTitle').textContent = isReset ? T().resetSecuredNotesTitle : T().setUpSecuredNotesTitle;
+    $('createLockedTagBtn').textContent = isReset ? T().resetAction : T().createAction;
     $('createLockedTagOverlay').classList.add('open');
     pendingSecureNotesSetupCallback = onSuccess;
   }
@@ -3373,7 +3385,7 @@
     promptReauthentication(()=>{
       openCreateSecureNotesPassword(()=>{
         showToast(T().toastPasswordReset);
-      });
+      }, true);
     });
   });
 
