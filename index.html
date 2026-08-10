@@ -1080,6 +1080,14 @@
       <input class="field" id="appLockConfirmPasswordInput" type="password" style="margin-top:8px;" data-i18n-placeholder="confirmPasswordPlaceholder" placeholder="Confirm password">
       <button class="primary-btn" id="appLockEnableBtn" style="margin-top:12px;" data-i18n="enableAppLockAction">Turn On</button>
     </div>
+    <div id="appLockOffWithPasswordState" style="display:none;">
+      <div style="display:flex; align-items:center; gap:8px; background:var(--paper-raised); border-radius:12px; padding:12px 14px;">
+        <span style="color:var(--ink-soft); font-weight:700;">–</span>
+        <span data-i18n="appLockCurrentlyOffKeptPassword">App password is off — your previous password is still saved.</span>
+      </div>
+      <button class="primary-btn" id="appLockTurnBackOnBtn" style="margin-top:12px;" data-i18n="enableAppLockAction">Turn On</button>
+      <button class="text-btn" id="appLockSetNewInsteadBtn" style="margin-top:2px;" data-i18n="setNewPasswordInsteadAction">Set a new password instead</button>
+    </div>
     <div id="appLockOnState" style="display:none;">
       <div style="display:flex; align-items:center; gap:8px; background:var(--paper-raised); border-radius:12px; padding:12px 14px;">
         <span style="color:var(--green); font-weight:700;">✓</span>
@@ -1487,6 +1495,8 @@
       confirmPasswordPlaceholder: "再输一次密码",
       enableAppLockAction: "开启",
       appLockCurrentlyOn: "App 密码当前是开启状态。",
+      appLockCurrentlyOffKeptPassword: "App 密码目前是关闭状态——之前设置的密码还留着。",
+      setNewPasswordInsteadAction: "改设一个新密码",
       disableAppLockAction: "关闭",
       toastEnterPassword: "请输入密码",
       toastPasswordsDontMatch: "两次密码不一致",
@@ -1859,6 +1869,8 @@
       appLockCurrentlyOn: "App 密碼目前是開啟狀態。",
       disableAppLockAction: "關閉",
       toastEnterPassword: "請輸入密碼",
+      appLockCurrentlyOffKeptPassword: "App 密碼目前是關閉狀態——之前設定的密碼還留著。",
+      setNewPasswordInsteadAction: "改設一個新密碼",
       toastPasswordsDontMatch: "兩次密碼不一致",
       toastAppLockEnabled: "App 密碼已開啟",
       confirmDisableAppLock: "確定要關閉 App 密碼嗎？",
@@ -2234,6 +2246,8 @@
       toastEnterPassword: "Please enter a password",
       toastPasswordsDontMatch: "Passwords don't match",
       toastAppLockEnabled: "App password enabled",
+      appLockCurrentlyOffKeptPassword: "App password is off — your previous password is still saved.",
+      setNewPasswordInsteadAction: "Set a new password instead",
       confirmDisableAppLock: "Turn off the app password?",
       toastAppLockDisabled: "App password disabled",
       toastPasswordReset: "Password reset — your new password is now active", 
@@ -2705,15 +2719,27 @@
   $('closeRemindersListBtn').addEventListener('click', ()=> $('remindersListOverlay').classList.remove('open'));
   $('remindersListOverlay').addEventListener('click', (e)=>{ if(e.target.id==='remindersListOverlay') $('remindersListOverlay').classList.remove('open'); });
 
+  function refreshAppLockPanelState(){
+    $('appLockOffState').style.display = 'none';
+    $('appLockOffWithPasswordState').style.display = 'none';
+    $('appLockOnState').style.display = 'none';
+    if(appLockEnabled){
+      $('appLockOnState').style.display = 'block';
+    } else if(appLockHash){
+      $('appLockOffWithPasswordState').style.display = 'block';
+    } else {
+      $('appLockOffState').style.display = 'block';
+    }
+  }
+
   $('openAppLockSettingsBtn').addEventListener('click', ()=>{
     $('settingsMenu').classList.remove('open');
     $('appLockNewPasswordInput').value = '';
     $('appLockConfirmPasswordInput').value = '';
-    $('appLockOffState').style.display = appLockEnabled ? 'none' : 'block';
-    $('appLockOnState').style.display = appLockEnabled ? 'block' : 'none';
     $('appLockSettingsTitle').textContent = T().appLockMenuLabel;
     $('appLockNewPasswordInput').placeholder = T().newPasswordPlaceholder;
     $('appLockEnableBtn').textContent = T().enableAppLockAction;
+    refreshAppLockPanelState();
     $('appLockSettingsOverlay').classList.add('open');
   });
   $('closeAppLockSettingsBtn').addEventListener('click', ()=>{
@@ -2735,18 +2761,27 @@
     appLockEnabled = true;
     appUnlockedThisSession = true; // no need to immediately re-enter what you just set
     persistAppLock();
-    $('appLockOffState').style.display = 'none';
-    $('appLockOnState').style.display = 'block';
+    refreshAppLockPanelState();
     showToast(cameFromAppLockScreen ? T().toastPasswordReset : T().toastAppLockEnabled);
     cameFromAppLockScreen = false;
+  });
+  $('appLockTurnBackOnBtn').addEventListener('click', ()=>{
+    appLockEnabled = true;
+    persistAppLock();
+    refreshAppLockPanelState();
+    showToast(T().toastAppLockEnabled);
+  });
+  $('appLockSetNewInsteadBtn').addEventListener('click', ()=>{
+    $('appLockNewPasswordInput').value = '';
+    $('appLockConfirmPasswordInput').value = '';
+    $('appLockOffWithPasswordState').style.display = 'none';
+    $('appLockOffState').style.display = 'block';
   });
   $('appLockDisableBtn').addEventListener('click', ()=>{
     if(!confirm(T().confirmDisableAppLock)) return;
     appLockEnabled = false;
-    appLockHash = null;
     persistAppLock();
-    $('appLockOffState').style.display = 'block';
-    $('appLockOnState').style.display = 'none';
+    refreshAppLockPanelState();
     showToast(T().toastAppLockDisabled);
   });
 
@@ -2868,6 +2903,7 @@
       $('appLockNewPasswordInput').value = '';
       $('appLockConfirmPasswordInput').value = '';
       $('appLockOffState').style.display = 'block';
+      $('appLockOffWithPasswordState').style.display = 'none';
       $('appLockOnState').style.display = 'none';
       $('appLockSettingsTitle').textContent = T().resetAppLockTitle;
       $('appLockNewPasswordInput').placeholder = T().resetPasswordPlaceholder;
