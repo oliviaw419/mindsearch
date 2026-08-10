@@ -1092,7 +1092,7 @@
   </div>
 </div>
 
-<div class="sheet-overlay" id="createLockedTagOverlay" style="z-index:496;">
+<div class="sheet-overlay" id="createLockedTagOverlay" style="z-index:496; background:rgba(20,18,15,0.92);">
   <div class="sheet" style="max-width:380px;">
     <h2 data-i18n="setUpSecuredNotesTitle">Set Up Secured Notes</h2>
     <p style="font-size:12.5px; color:var(--ink-soft); margin:-8px 0 16px;" data-i18n="secureNotesExplain">Locked notes are hidden everywhere else in the app — Recent, Search, tags, everything — until you unlock this folder with its password.</p>
@@ -1113,7 +1113,7 @@
   </div>
 </div>
 
-<div class="sheet-overlay" id="reauthOverlay" style="z-index:498;">
+<div class="sheet-overlay" id="reauthOverlay" style="z-index:498; background:rgba(20,18,15,0.92);">
   <div class="sheet" style="max-width:340px;">
     <h2 data-i18n="reauthTitle">Confirm it's you</h2>
     <p style="font-size:13px; color:var(--ink-soft); margin:-8px 0 16px; line-height:1.5;" data-i18n="reauthExplain">For your security, please sign in again before resetting a password.</p>
@@ -1129,7 +1129,7 @@
   </div>
 </div>
 
-<div class="sheet-overlay" id="unlockTagOverlay" style="z-index:460;">
+<div class="sheet-overlay" id="unlockTagOverlay" style="z-index:460; background:rgba(20,18,15,0.92);">
   <div class="sheet" style="max-width:340px;">
     <h2 id="unlockTagTitle" data-i18n="enterPasswordTitle">Enter Password</h2>
     <input class="field" id="unlockTagPasswordInput" type="password" data-i18n-placeholder="passwordPlaceholder" placeholder="Password">
@@ -2454,6 +2454,7 @@
       sharedBy: e.sharedBy || null, sharedAt: e.sharedAt || null,
       sharedId: e.sharedId || null, isSharedOwner: !!e.isSharedOwner,
       sharedWithEmail: e.sharedWithEmail || null,
+      locked: !!e.locked,
       createdAt: e.createdAt, updatedAt: e.updatedAt, lastViewedAt: e.lastViewedAt || null
     };
   }
