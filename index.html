@@ -1072,7 +1072,7 @@
 
 <div class="sheet-overlay" id="appLockSettingsOverlay" style="z-index:450;">
   <div class="sheet" style="max-width:380px;">
-    <h2 data-i18n="appLockMenuLabel">App Password</h2>
+    <h2 id="appLockSettingsTitle" data-i18n="appLockMenuLabel">App Password</h2>
     <p style="font-size:12.5px; color:var(--ink-soft); margin:-8px 0 16px;" data-i18n="appLockExplain">Requires a password every time you open the app on this account. This isn't encryption — it just keeps casual snoopers out.</p>
 
     <div id="appLockOffState">
@@ -1497,6 +1497,8 @@
       setUpSecuredNotesTitle: "设置安全笔记密码",
       resetSecuredNotesTitle: "重设安全笔记密码",
       resetAction: "重设",
+      resetAppLockTitle: "重设 App 密码",
+      resetPasswordPlaceholder: "输入新密码",
       secureNotesExplain: "上锁的笔记会从其他所有地方隐藏——最近、搜索、标签，全部都不会显示——直到你用这个密码解锁这个文件夹。",
       securedNotesLabel: "安全笔记",
       newPasswordLabel: "密码",
@@ -1868,6 +1870,8 @@
       resetSecuredNotesTitle: "重設安全筆記密碼",
       resetAction: "重設",
       newPasswordLabel: "密碼",
+      resetAppLockTitle: "重設 App 密碼",
+      resetPasswordPlaceholder: "輸入新密碼",
       createAction: "建立",
       enterPasswordTitle: "輸入密碼",
       lockThisNoteAction: "🔒 給這則筆記上鎖",
@@ -2241,6 +2245,8 @@
       resetAction: "Reset",
       createAction: "Create",
       enterPasswordTitle: "Enter Password",
+      resetAppLockTitle: "Reset App Password",
+      resetPasswordPlaceholder: "Enter new password",
       lockThisNoteAction: "🔒 Lock this note",
       unlockThisNoteAction: "Unlock this note",
       confirmLockNote: "Lock this note? It will be hidden from Recent, Search, tags, and everywhere else — only findable in Secured Notes.",
@@ -2705,6 +2711,9 @@
     $('appLockConfirmPasswordInput').value = '';
     $('appLockOffState').style.display = appLockEnabled ? 'none' : 'block';
     $('appLockOnState').style.display = appLockEnabled ? 'block' : 'none';
+    $('appLockSettingsTitle').textContent = T().appLockMenuLabel;
+    $('appLockNewPasswordInput').placeholder = T().newPasswordPlaceholder;
+    $('appLockEnableBtn').textContent = T().enableAppLockAction;
     $('appLockSettingsOverlay').classList.add('open');
   });
   $('closeAppLockSettingsBtn').addEventListener('click', ()=>{
@@ -2860,6 +2869,9 @@
       $('appLockConfirmPasswordInput').value = '';
       $('appLockOffState').style.display = 'block';
       $('appLockOnState').style.display = 'none';
+      $('appLockSettingsTitle').textContent = T().resetAppLockTitle;
+      $('appLockNewPasswordInput').placeholder = T().resetPasswordPlaceholder;
+      $('appLockEnableBtn').textContent = T().resetAction;
       $('appLockSettingsOverlay').classList.add('open');
     });
   });
@@ -3239,6 +3251,7 @@
     $('lockedTagPasswordInput').value = '';
     $('lockedTagConfirmInput').value = '';
     $('createLockedTagTitle').textContent = isReset ? T().resetSecuredNotesTitle : T().setUpSecuredNotesTitle;
+    $('lockedTagPasswordInput').placeholder = isReset ? T().resetPasswordPlaceholder : T().newPasswordPlaceholder;
     $('createLockedTagBtn').textContent = isReset ? T().resetAction : T().createAction;
     $('createLockedTagOverlay').classList.add('open');
     pendingSecureNotesSetupCallback = onSuccess;
