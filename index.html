@@ -961,10 +961,10 @@
 <div class="sheet-overlay" id="inboxOverlay" style="z-index:450;">
   <div class="sheet" style="max-width:420px;">
     <h2 data-i18n="inboxTitle">Shared with you</h2>
-    <p style="font-size:12.5px; color:var(--ink-soft); margin:-8px 0 4px; line-height:1.5;" data-i18n="inboxIntroExplain">This is where you handle shares you've received — save them or discard them.</p>
-    <button type="button" class="text-btn" id="inboxGoToSharedBtn" style="margin:0 0 14px; padding:0; display:block;" data-i18n="inboxEmptyCrossLink">Looking for shares you've already saved? See Shared with me →</button>
+    <p style="font-size:12.5px; color:var(--ink-soft); margin:-8px 0 14px; line-height:1.5;" data-i18n="inboxIntroExplain">This is where you handle shares you've received — save them or discard them.</p>
     <div id="inboxList" style="display:flex; flex-direction:column; gap:10px;"></div>
     <div id="inboxEmpty" class="empty-note" style="display:none;" data-i18n="inboxEmpty">Nothing shared with you yet.</div>
+    <button type="button" class="text-btn" id="inboxGoToSharedBtn" style="margin-top:6px; padding:0; text-align:left; display:block; width:auto; color:var(--plum-deep); font-weight:600;" data-i18n="inboxEmptyCrossLink">Looking for shares you've already saved? See Shared with me →</button>
     <button class="text-btn" id="closeInboxBtn" data-i18n="close">Close</button>
   </div>
 </div>
@@ -1720,7 +1720,7 @@
       toastEnableSharedTabFirst: "请先在标签设置里开启『分享』标签页",
       sharedWithMeArchiveExplain: "你已保存的、别人分享给你的笔记。",
       pendingInboxCrossLink: (n) => `${n} 条待处理 → 收件箱`,
-      sharedByMeArchiveExplain: "你正在分享出去的笔记，按朋友分组。",
+      sharedByMeArchiveExplain: "你正在分享出去的笔记。",
       myRecentSharesExplain: "撤回你最近分享出去的东西。",
       inboxIntroExplain: "这里是处理收到的分享的地方。",
       discardAction: "不要了",
@@ -2099,7 +2099,7 @@
       sharedWithMeArchiveExplain: "你已保存的、別人分享給你的筆記。",
       pendingInboxCrossLink: (n) => `${n} 條待處理 → 收件匣`,
       inboxMenuLabel: "分享收件匣",
-      sharedByMeArchiveExplain: "你正在分享出去的筆記，按朋友分組。",
+      sharedByMeArchiveExplain: "你正在分享出去的筆記。",
       myRecentSharesExplain: "撤回你最近分享出去的東西。",
       inboxIntroExplain: "這裡是處理收到的分享的地方。",
       shareSentToContact: "已分享",
@@ -2479,7 +2479,7 @@
       pendingInboxCrossLink: (n) => `${n} pending \u2192 Inbox`,
       shareRecipientNotFound: "That email hasn't signed up for Mind Search yet — try copying the link instead",
       shareOpenedEmail: "Opened your email app with an invite link ready to send",
-      sharedByMeArchiveExplain: "What you're sharing out, by friend.",
+      sharedByMeArchiveExplain: "What you're sharing out.",
       myRecentSharesExplain: "Unsend things you've recently shared.",
       inboxIntroExplain: "Handle shares you've received here.",
       mailtoSubject: (title) => `${title} — shared from Mind Search`,
@@ -6630,6 +6630,7 @@
     const me = fb.auth.currentUser;
     if(!me) return false;
     if(notes.length === 0) return false;
+    await Promise.all(notes.map(n => ensureMedia(n))); // audio is lazily loaded per-note; without this, notes not yet opened this session would share with no audio
     const snapshots = notes.map(toEntrySnapshot);
     const payloadSize = JSON.stringify(snapshots).length;
     if(payloadSize > 900000){
