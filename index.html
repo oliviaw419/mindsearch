@@ -961,11 +961,10 @@
 <div class="sheet-overlay" id="inboxOverlay" style="z-index:450;">
   <div class="sheet" style="max-width:420px;">
     <h2 data-i18n="inboxTitle">Shared with you</h2>
+    <p style="font-size:12.5px; color:var(--ink-soft); margin:-8px 0 4px; line-height:1.5;" data-i18n="inboxIntroExplain">This is where you handle shares you've received — save them or discard them.</p>
+    <button type="button" class="text-btn" id="inboxGoToSharedBtn" style="margin:0 0 14px; padding:0; display:block;" data-i18n="inboxEmptyCrossLink">Looking for shares you've already saved? See Shared with me →</button>
     <div id="inboxList" style="display:flex; flex-direction:column; gap:10px;"></div>
-    <div id="inboxEmpty" class="empty-note" style="display:none;">
-      <div data-i18n="inboxEmpty">Nothing shared with you yet.</div>
-      <button type="button" class="text-btn" id="inboxEmptyGoToSharedBtn" style="margin-top:4px; display:block;" data-i18n="inboxEmptyCrossLink">Looking for shares you've already saved? See Shared with me →</button>
-    </div>
+    <div id="inboxEmpty" class="empty-note" style="display:none;" data-i18n="inboxEmpty">Nothing shared with you yet.</div>
     <button class="text-btn" id="closeInboxBtn" data-i18n="close">Close</button>
   </div>
 </div>
@@ -1721,6 +1720,9 @@
       toastEnableSharedTabFirst: "请先在标签设置里开启『分享』标签页",
       sharedWithMeArchiveExplain: "这里显示你已经保存下来的、别人分享给你的笔记。",
       pendingInboxCrossLink: (n) => `你还有 ${n} 条待处理的分享，去收件箱看看 →`,
+      sharedByMeArchiveExplain: "这里显示你现在还在分享出去的全部笔记，按朋友分组。",
+      myRecentSharesExplain: "这里可以撤回你最近分享出去的东西。",
+      inboxIntroExplain: "这里是给你处理收到的分享的地方——存下来或者忽略。",
       discardAction: "不要了",
       recentSharesCrossLink: "想撤回最近分享出去的东西？去『我的最近分享』撤回 →",
       sharedByMeCrossLink: "想浏览你分享出去的全部笔记？去『分享』标签页的『我分享的』 →",
@@ -2097,6 +2099,9 @@
       sharedWithMeArchiveExplain: "這裡顯示你已經保存下來的、別人分享給你的筆記。",
       pendingInboxCrossLink: (n) => `你還有 ${n} 條待處理的分享，去收件匣看看 →`,
       inboxMenuLabel: "分享收件匣",
+      sharedByMeArchiveExplain: "這裡顯示你現在還在分享出去的全部筆記，按朋友分組。",
+      myRecentSharesExplain: "這裡可以撤回你最近分享出去的東西。",
+      inboxIntroExplain: "這裡是給你處理收到的分享的地方——存下來或者忽略。",
       shareSentToContact: "已分享",
       recentSharesCrossLink: "想撤回最近分享出去的東西？去『我的最近分享』撤回 →",
       sharedByMeCrossLink: "想瀏覽你分享出去的全部筆記？去『分享』標籤頁的『我分享的』 →",
@@ -2474,6 +2479,9 @@
       pendingInboxCrossLink: (n) => `You have ${n} pending shares waiting — check your inbox →`,
       shareRecipientNotFound: "That email hasn't signed up for Mind Search yet — try copying the link instead",
       shareOpenedEmail: "Opened your email app with an invite link ready to send",
+      sharedByMeArchiveExplain: "This shows everything you're currently sharing out, grouped by friend.",
+      myRecentSharesExplain: "This is where you can unsend things you've recently shared.",
+      inboxIntroExplain: "This is where you handle shares you've received \u2014 save them or discard them.",
       mailtoSubject: (title) => `${title} — shared from Mind Search`,
       recentSharesCrossLink: "Want to unsend something you recently shared? Go to My Recent Shares \u2192",
       sharedByMeCrossLink: "Want to browse everything you've shared out, by friend? See Shared by me in the Shared tab \u2192",
@@ -3719,31 +3727,39 @@
 
     if(category === 'withMe'){
       const subtitle = document.createElement('p');
-      subtitle.style.cssText = 'font-size:12.5px; color:var(--ink-soft); margin:-6px 0 14px; line-height:1.5;';
+      subtitle.style.cssText = 'font-size:12.5px; color:var(--ink-soft); margin:-6px 0 4px; line-height:1.5;';
       subtitle.textContent = T().sharedWithMeArchiveExplain;
       list.appendChild(subtitle);
       if(pendingInboxCount > 0){
-        const banner = document.createElement('div');
-        banner.style.cssText = 'background:var(--plum-tint); color:var(--plum-deep); border-radius:12px; padding:10px 14px; margin-bottom:14px; font-size:12.5px; font-weight:600; cursor:pointer;';
-        banner.textContent = T().pendingInboxCrossLink(pendingInboxCount);
-        banner.addEventListener('click', ()=>{
+        const link = document.createElement('button');
+        link.type = 'button';
+        link.className = 'text-btn';
+        link.style.cssText = 'width:auto; padding:0; margin:0 0 14px; text-align:left; display:block; color:var(--plum-deep); font-weight:600;';
+        link.textContent = T().pendingInboxCrossLink(pendingInboxCount);
+        link.addEventListener('click', ()=>{
           $('tagDetailOverlay').classList.remove('open');
           renderInboxList();
           $('inboxOverlay').classList.add('open');
         });
-        list.appendChild(banner);
+        list.appendChild(link);
       }
     }
 
     if(category === 'byMe'){
-      const banner = document.createElement('div');
-      banner.style.cssText = 'background:var(--paper-raised); color:var(--ink-soft); border-radius:12px; padding:10px 14px; margin-bottom:14px; font-size:12.5px; font-weight:600; cursor:pointer;';
-      banner.textContent = T().recentSharesCrossLink;
-      banner.addEventListener('click', ()=>{
+      const subtitle = document.createElement('p');
+      subtitle.style.cssText = 'font-size:12.5px; color:var(--ink-soft); margin:-6px 0 4px; line-height:1.5;';
+      subtitle.textContent = T().sharedByMeArchiveExplain;
+      list.appendChild(subtitle);
+      const link = document.createElement('button');
+      link.type = 'button';
+      link.className = 'text-btn';
+      link.style.cssText = 'width:auto; padding:0; margin:0 0 14px; text-align:left; display:block; color:var(--plum-deep); font-weight:600;';
+      link.textContent = T().recentSharesCrossLink;
+      link.addEventListener('click', ()=>{
         $('tagDetailOverlay').classList.remove('open');
         openMyRecentSharesPanel();
       });
-      list.appendChild(banner);
+      list.appendChild(link);
     }
 
     if(baseNotes.length > 0){
@@ -3787,8 +3803,15 @@
     const items = allShares.slice(0, RECENT_SHARES_LIMIT);
     sharedHistoryItemsCache = items;
 
-    const crossLink = document.createElement('div');
-    crossLink.style.cssText = 'background:var(--paper-raised); color:var(--ink-soft); border-radius:12px; padding:10px 14px; margin-bottom:14px; font-size:12.5px; font-weight:600; cursor:pointer;';
+    const subtitle = document.createElement('p');
+    subtitle.style.cssText = 'font-size:12.5px; color:var(--ink-soft); margin:-6px 0 4px; line-height:1.5;';
+    subtitle.textContent = T().myRecentSharesExplain;
+    list.appendChild(subtitle);
+
+    const crossLink = document.createElement('button');
+    crossLink.type = 'button';
+    crossLink.className = 'text-btn';
+    crossLink.style.cssText = 'width:auto; padding:0; margin:0 0 14px; text-align:left; display:block; color:var(--plum-deep); font-weight:600;';
     crossLink.textContent = T().sharedByMeCrossLink;
     crossLink.addEventListener('click', ()=>{
       $('sharedHistoryOverlay').classList.remove('open');
@@ -7353,7 +7376,7 @@
     $('accountMenu').classList.remove('open');
     openMyRecentSharesPanel();
   });
-  $('inboxEmptyGoToSharedBtn').addEventListener('click', ()=>{
+  $('inboxGoToSharedBtn').addEventListener('click', ()=>{
     $('inboxOverlay').classList.remove('open');
     const sharedTabBtn = $('sectionTabsBar').querySelector('[data-tab="shared"]');
     if(!sharedTabBtn){
