@@ -962,7 +962,10 @@
   <div class="sheet" style="max-width:420px;">
     <h2 data-i18n="inboxTitle">Shared with you</h2>
     <div id="inboxList" style="display:flex; flex-direction:column; gap:10px;"></div>
-    <div id="inboxEmpty" class="empty-note" style="display:none;" data-i18n="inboxEmpty">Nothing shared with you yet.</div>
+    <div id="inboxEmpty" class="empty-note" style="display:none;">
+      <div data-i18n="inboxEmpty">Nothing shared with you yet.</div>
+      <button type="button" class="text-btn" id="inboxEmptyGoToSharedBtn" style="margin-top:4px; display:block;" data-i18n="inboxEmptyCrossLink">Looking for shares you've already saved? See Shared with me →</button>
+    </div>
     <button class="text-btn" id="closeInboxBtn" data-i18n="close">Close</button>
   </div>
 </div>
@@ -1714,8 +1717,12 @@
       inboxTitle: "别人分享给你的",
       inboxEmpty: "还没有人分享东西给你",
       saveToLibrary: "存进我的库",
+      inboxEmptyCrossLink: "想找你已经保存下来的分享笔记？去『分享』标签页看看 →",
+      toastEnableSharedTabFirst: "请先在标签设置里开启『分享』标签页",
+      sharedWithMeArchiveExplain: "这里显示你已经保存下来的、别人分享给你的笔记。",
+      pendingInboxCrossLink: (n) => `你还有 ${n} 条待处理的分享，去收件箱看看 →`,
       discardAction: "不要了",
-      inboxMenuLabel: "别人分享给你的",
+      inboxMenuLabel: "分享收件箱",
       shareSentToContact: "已分享",
       shareSentFlashText: (email) => `已经分享给 ${email} 啦！`,
       shareTagSentFlashText: (n, email) => `已经把 ${n} 条笔记分享给 ${email} 啦！`,
@@ -2083,7 +2090,11 @@
       inboxEmpty: "還沒有人分享東西給你",
       saveToLibrary: "存進我的庫",
       discardAction: "不要了",
-      inboxMenuLabel: "別人分享給你的",
+      inboxEmptyCrossLink: "想找你已經保存下來的分享筆記？去『分享』標籤頁看看 →",
+      toastEnableSharedTabFirst: "請先在標籤設定裡開啟『分享』標籤頁",
+      sharedWithMeArchiveExplain: "這裡顯示你已經保存下來的、別人分享給你的筆記。",
+      pendingInboxCrossLink: (n) => `你還有 ${n} 條待處理的分享，去收件匣看看 →`,
+      inboxMenuLabel: "分享收件匣",
       shareSentToContact: "已分享",
       shareRecipientNotFound: "這個電子郵件還沒註冊 Mind Search，試試直接複製連結分享給對方",
       shareOpenedEmail: "已幫你打開郵件 App，寫好邀請連結了，確認傳送就行",
@@ -2451,8 +2462,12 @@
       inboxEmpty: "Nothing shared with you yet",
       saveToLibrary: "Save to my library",
       discardAction: "Discard",
-      inboxMenuLabel: "Shared with you",
+      inboxMenuLabel: "Share Inbox",
       shareSentToContact: "Shared",
+      inboxEmptyCrossLink: "Looking for shares you've already saved? See Shared with me →",
+      toastEnableSharedTabFirst: "Please enable the Shared tab in tab settings first",
+      sharedWithMeArchiveExplain: "This shows notes shared with you that you've already saved.",
+      pendingInboxCrossLink: (n) => `You have ${n} pending shares waiting — check your inbox →`,
       shareRecipientNotFound: "That email hasn't signed up for Mind Search yet — try copying the link instead",
       shareOpenedEmail: "Opened your email app with an invite link ready to send",
       mailtoSubject: (title) => `${title} — shared from Mind Search`,
@@ -3671,10 +3686,16 @@
       }
     }
 
-    renderSharedCategoryGroups(category, baseNotes, groupsMap);
+    let pendingInboxCount = 0;
+    if(category === 'withMe'){
+      const inboxItems = await listInbox();
+      pendingInboxCount = inboxItems.length;
+    }
+
+    renderSharedCategoryGroups(category, baseNotes, groupsMap, pendingInboxCount);
   }
 
-  function renderSharedCategoryGroups(category, baseNotes, groupsMap){
+  function renderSharedCategoryGroups(category, baseNotes, groupsMap, pendingInboxCount){
     const titleMap = { coediting: T().coEditingLabel, withMe: T().sharedWithMeLabel, byMe: T().sharedByMeLabel };
     $('tagDetailTitle').textContent = titleMap[category];
     $('tagRenameIconBtn').style.display = 'none';
@@ -3688,6 +3709,24 @@
     const list = $('tagDetailList');
     list.innerHTML = '';
     $('tagDetailEmpty').style.display = baseNotes.length === 0 ? 'block' : 'none';
+
+    if(category === 'withMe'){
+      const subtitle = document.createElement('p');
+      subtitle.style.cssText = 'font-size:12.5px; color:var(--ink-soft); margin:-6px 0 14px; line-height:1.5;';
+      subtitle.textContent = T().sharedWithMeArchiveExplain;
+      list.appendChild(subtitle);
+      if(pendingInboxCount > 0){
+        const banner = document.createElement('div');
+        banner.style.cssText = 'background:var(--plum-tint); color:var(--plum-deep); border-radius:12px; padding:10px 14px; margin-bottom:14px; font-size:12.5px; font-weight:600; cursor:pointer;';
+        banner.textContent = T().pendingInboxCrossLink(pendingInboxCount);
+        banner.addEventListener('click', ()=>{
+          $('tagDetailOverlay').classList.remove('open');
+          renderInboxList();
+          $('inboxOverlay').classList.add('open');
+        });
+        list.appendChild(banner);
+      }
+    }
 
     if(baseNotes.length > 0){
       const allRow = document.createElement('div');
@@ -7280,6 +7319,16 @@
   $('openAccountRecentSharesBtn').addEventListener('click', ()=>{
     $('accountMenu').classList.remove('open');
     openMyRecentSharesPanel();
+  });
+  $('inboxEmptyGoToSharedBtn').addEventListener('click', ()=>{
+    $('inboxOverlay').classList.remove('open');
+    const sharedTabBtn = $('sectionTabsBar').querySelector('[data-tab="shared"]');
+    if(!sharedTabBtn){
+      showToast(T().toastEnableSharedTabFirst);
+      return;
+    }
+    switchToTab('shared');
+    openSharedCategory('withMe');
   });
   $('closeInboxBtn').addEventListener('click', ()=> $('inboxOverlay').classList.remove('open'));
   $('inboxOverlay').addEventListener('click', (e)=>{ if(e.target.id==='inboxOverlay') $('inboxOverlay').classList.remove('open'); });
