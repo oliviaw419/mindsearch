@@ -1717,7 +1717,7 @@
       inboxEmpty: "还没有人分享东西给你",
       saveToLibrary: "存进我的库",
       inboxEmptyCrossLink: "已保存的分享 → 分享标签页",
-      toastEnableSharedTabFirst: "请先在标签设置里开启『分享』标签页",
+      toastSuggestAddSharedTab: "小提示：可以在 Tab 设置里把『分享』加到常显标签页",
       sharedWithMeArchiveExplain: "你已保存的、别人分享给你的笔记。",
       pendingInboxCrossLink: (n) => `${n} 条待处理 → 收件箱`,
       sharedByMeArchiveExplain: "你正在分享出去的笔记。",
@@ -2095,7 +2095,7 @@
       saveToLibrary: "存進我的庫",
       discardAction: "不要了",
       inboxEmptyCrossLink: "已保存的分享 → 分享標籤頁",
-      toastEnableSharedTabFirst: "請先在標籤設定裡開啟『分享』標籤頁",
+      toastSuggestAddSharedTab: "小提示：可以在 Tab 設定裡把『分享』加到常顯標籤頁",
       sharedWithMeArchiveExplain: "你已保存的、別人分享給你的筆記。",
       pendingInboxCrossLink: (n) => `${n} 條待處理 → 收件匣`,
       inboxMenuLabel: "分享收件匣",
@@ -2474,7 +2474,7 @@
       inboxMenuLabel: "Share Inbox",
       shareSentToContact: "Shared",
       inboxEmptyCrossLink: "Already-saved shares → Shared with me",
-      toastEnableSharedTabFirst: "Please enable the Shared tab in tab settings first",
+      toastSuggestAddSharedTab: "Tip: you can pin the Shared tab in tab settings",
       sharedWithMeArchiveExplain: "Notes shared with you that you've saved.",
       pendingInboxCrossLink: (n) => `${n} pending \u2192 Inbox`,
       shareRecipientNotFound: "That email hasn't signed up for Mind Search yet — try copying the link instead",
@@ -3710,6 +3710,14 @@
     renderSharedCategoryGroups(category, baseNotes, groupsMap, pendingInboxCount);
   }
 
+  function navigateToSharedCategory(category){
+    openSharedCategory(category);
+    const sharedTabBtn = $('sectionTabsBar').querySelector('[data-tab="shared"]');
+    if(!sharedTabBtn){
+      showToast(T().toastSuggestAddSharedTab);
+    }
+  }
+
   function renderSharedCategoryGroups(category, baseNotes, groupsMap, pendingInboxCount){
     const titleMap = { coediting: T().coEditingLabel, withMe: T().sharedWithMeLabel, byMe: T().sharedByMeLabel };
     $('tagDetailTitle').textContent = titleMap[category];
@@ -3820,13 +3828,7 @@
       crossLink.textContent = T().sharedByMeCrossLink;
       crossLink.addEventListener('click', ()=>{
         $('sharedHistoryOverlay').classList.remove('open');
-        const sharedTabBtn = $('sectionTabsBar').querySelector('[data-tab="shared"]');
-        if(!sharedTabBtn){
-          showToast(T().toastEnableSharedTabFirst);
-          return;
-        }
-        switchToTab('shared');
-        openSharedCategory('byMe');
+        navigateToSharedCategory('byMe');
       });
       list.appendChild(crossLink);
     }
@@ -7387,13 +7389,7 @@
   });
   $('inboxGoToSharedBtn').addEventListener('click', ()=>{
     $('inboxOverlay').classList.remove('open');
-    const sharedTabBtn = $('sectionTabsBar').querySelector('[data-tab="shared"]');
-    if(!sharedTabBtn){
-      showToast(T().toastEnableSharedTabFirst);
-      return;
-    }
-    switchToTab('shared');
-    openSharedCategory('withMe');
+    navigateToSharedCategory('withMe');
   });
   $('closeInboxBtn').addEventListener('click', ()=> $('inboxOverlay').classList.remove('open'));
   $('inboxOverlay').addEventListener('click', (e)=>{ if(e.target.id==='inboxOverlay') $('inboxOverlay').classList.remove('open'); });
