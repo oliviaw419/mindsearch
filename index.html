@@ -194,6 +194,12 @@
     color:#fff; display:flex; align-items:center; justify-content:center;
     font-family:'Fraunces', serif; font-weight:600; font-size:15px;
   }
+  .contact-avatar-sm{
+    width:22px; height:22px; border-radius:50%; flex-shrink:0;
+    background: linear-gradient(155deg, var(--plum) 0%, var(--plum-deep) 100%);
+    color:#fff; display:flex; align-items:center; justify-content:center;
+    font-family:'Fraunces', serif; font-weight:600; font-size:11px;
+  }
   .contact-info{ flex:1; min-width:0; }
   .contact-name{ font-size:14px; font-weight:600; color:var(--ink); font-family:'Fraunces', serif; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .contact-email{ font-size:11.5px; color:var(--ink-soft); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:1px; }
@@ -851,6 +857,7 @@
     </div>
     <div id="sharedHistoryList" style="display:flex; flex-direction:column; gap:8px; margin-top:14px;"></div>
     <div id="sharedHistoryEmpty" class="empty-note" style="display:none;"></div>
+    <button type="button" class="text-btn" id="deleteAllSharedHistoryBtn" style="display:none; color:var(--danger);" data-i18n="deleteAllAction">Delete All</button>
     <button class="text-btn" id="closeSharedHistoryBtn" data-i18n="close">Close</button>
   </div>
 </div>
@@ -1132,6 +1139,15 @@
     </label>
     <button class="primary-btn" id="confirmDeleteShareRecordBtn" style="margin-top:0; background:var(--danger); border-color:var(--danger);" data-i18n="deleteAction">Delete</button>
     <button class="text-btn" id="cancelDeleteShareRecordBtn" data-i18n="cancel">Cancel</button>
+  </div>
+</div>
+
+<div class="sheet-overlay" id="deleteAllShareRecordsOverlay" style="z-index:495;">
+  <div class="sheet" style="max-width:340px;">
+    <h2 data-i18n="deleteAllAction">Delete All</h2>
+    <p style="font-size:13px; color:var(--ink-soft); margin:-8px 0 14px; line-height:1.5;" data-i18n="confirmDeleteAllShareRecords">Delete all of your recent share history? This only clears your own records — it won't affect anything the other people already received.</p>
+    <button class="primary-btn" id="confirmDeleteAllShareRecordsBtn" style="margin-top:0; background:var(--danger); border-color:var(--danger);" data-i18n="deleteAllAction">Delete All</button>
+    <button class="text-btn" id="cancelDeleteAllShareRecordsBtn" data-i18n="cancel">Cancel</button>
   </div>
 </div>
 
@@ -1429,6 +1445,8 @@
       deleteRecordAction: "删除这条记录",
       dontShowAgainLabel: "不再显示这条消息",
       confirmDeleteShareRecord: "删掉这条记录吗？这只是清掉你这边的历史记录，不影响对方那边已经收到的内容。",
+      deleteAllAction: "全部删除",
+      confirmDeleteAllShareRecords: "删掉你所有的最近分享记录吗？这只是清掉你这边的历史记录，不影响对方那边已经收到的内容。",
       sharedByMeLabel: "我分享出去的",
       unknownSender: "未知用户",
       statusSaved: "已保存",
@@ -1820,6 +1838,8 @@
       confirmDeleteShareRecord: "刪掉這條記錄嗎？這只是清掉你這邊的歷史記錄，不影響對方那邊已經收到的內容。",
       dontShowAgainLabel: "不再顯示這條訊息",
       statusPending: "還沒處理",
+      deleteAllAction: "全部刪除",
+      confirmDeleteAllShareRecords: "刪掉你所有的最近分享記錄嗎？這只是清掉你這邊的歷史記錄，不影響對方那邊已經收到的內容。",
       noSharedWithMeYet: "還沒有人分享過東西給你",
       noSharedByMeYet: "你還沒分享過東西",
       tagBundleShareSummary: (n, tag) => `打包了 ${n} 則「${tag}」標籤下的筆記`,
@@ -2209,6 +2229,8 @@
       deleteAction: "Delete",
       dontShowAgainLabel: "Don't show this again",
       infoToggle: "ⓘ Details",
+      deleteAllAction: "Delete All",
+      confirmDeleteAllShareRecords: "Delete all of your recent share history? This only clears your own records \u2014 it won't affect anything the other people already received.",
       fileLabel: "File",
       addFile: "Add PDF",
       stopCoEditingAction: "Stop co-editing",
@@ -3037,6 +3059,7 @@
   const ICON_CALENDAR = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16.5" rx="2.3"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><circle cx="12" cy="15" r="1.7"/></svg>';
   const ICON_TAG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.6 2H4a2 2 0 00-2 2v8.6a2 2 0 00.59 1.41l9.4 9.4a2 2 0 002.82 0l8.6-8.6a2 2 0 000-2.82l-9.4-9.4A2 2 0 0012.6 2z"/><circle cx="8" cy="8" r="1.3"/></svg>';
   const ICON_LOCK = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg>';
+  const ICON_COEDIT = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>';
   const ICON_LOCATION_LG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0119 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.3"/></svg>';
   const ICON_ALL = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>';
   const ICON_UNTAGGED = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.6 2H4a2 2 0 00-2 2v8.6a2 2 0 00.59 1.41l9.4 9.4a2 2 0 002.82 0l8.6-8.6a2 2 0 000-2.82l-9.4-9.4A2 2 0 0012.6 2z" stroke-dasharray="3 3"/></svg>';
@@ -3607,7 +3630,7 @@
     const coEditRow = document.createElement('div');
     coEditRow.className = 'tag-row';
     const coEditCount = entries.filter(e => e.sharedId).length;
-    coEditRow.innerHTML = `<span>🤝</span><span class="tag-name">${T().coEditingLabel}</span><span class="tag-count">${coEditCount}</span>`;
+    coEditRow.innerHTML = `<span>${ICON_COEDIT}</span><span class="tag-name">${T().coEditingLabel}</span><span class="tag-count">${coEditCount}</span>`;
     coEditRow.addEventListener('click', ()=> openSharedCategory('coediting'));
     list.appendChild(coEditRow);
 
@@ -3681,7 +3704,8 @@
         const group = groupsMap[email];
         const row = document.createElement('div');
         row.className = 'tag-row';
-        row.innerHTML = `<span>👤</span><span class="tag-name">${escapeHtml(group.label)}</span><span class="tag-count">${group.notes.length}</span>`;
+        const initial = (group.label || '?').trim().charAt(0).toUpperCase();
+        row.innerHTML = `<div class="contact-avatar-sm">${escapeHtml(initial)}</div><span class="tag-name">${escapeHtml(group.label)}</span><span class="tag-count">${group.notes.length}</span>`;
         row.addEventListener('click', ()=> openTagDetail({
           title: group.label,
           filterFn: () => group.notes,
@@ -3709,8 +3733,10 @@
     if(items.length === 0){
       $('sharedHistoryEmpty').textContent = T().noSharedByMeYet;
       $('sharedHistoryEmpty').style.display = 'block';
+      $('deleteAllSharedHistoryBtn').style.display = 'none';
       return;
     }
+    $('deleteAllSharedHistoryBtn').style.display = 'block';
 
     items.forEach(item => {
       const row = document.createElement('div');
@@ -3735,6 +3761,7 @@
               persistIndex();
             }
           }
+          await deleteMyShareRecord(item.id); // a successfully-unsent share no longer belongs in this list
           showUnsendFlash(true, T().unsendSuccessMessage(who));
           openMyRecentSharesPanel();
           renderSharedTab();
@@ -6640,6 +6667,18 @@
     $('deleteShareRecordOverlay').classList.remove('open');
   });
 
+  $('deleteAllSharedHistoryBtn').addEventListener('click', ()=>{
+    $('deleteAllShareRecordsOverlay').classList.add('open');
+  });
+  $('confirmDeleteAllShareRecordsBtn').addEventListener('click', async ()=>{
+    $('deleteAllShareRecordsOverlay').classList.remove('open');
+    await deleteAllMyShareRecords();
+    openMyRecentSharesPanel();
+  });
+  $('cancelDeleteAllShareRecordsBtn').addEventListener('click', ()=>{
+    $('deleteAllShareRecordsOverlay').classList.remove('open');
+  });
+
   $('toggleLockEntryBtn').addEventListener('click', ()=>{
     $('moreMenu').classList.remove('open');
     const entry = entries.find(e=>e.id === currentDetailId);
@@ -7189,6 +7228,11 @@
       await fb.deleteDoc(fb.doc(fb.db, 'users', fb.auth.currentUser.uid, 'myShares', id));
       return true;
     }catch(e){ console.error('delete my share record failed', e); return false; }
+  }
+
+  async function deleteAllMyShareRecords(){
+    const all = await listMyShares();
+    await Promise.all(all.map(item => deleteMyShareRecord(item.id)));
   }
 
   function refreshInboxBadgeFromCount(n){
