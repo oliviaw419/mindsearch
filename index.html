@@ -708,7 +708,6 @@
     </div>
 
     <div id="detailTagsRow" style="display:none; flex-wrap:wrap; gap:6px; margin-top:12px;"></div>
-    <div id="detailSharedToWrap" style="display:none; margin-top:12px; flex-direction:column; gap:8px;"></div>
     <button class="info-toggle" id="infoToggle" data-i18n="infoToggle">ⓘ Details</button>
     <div class="info-box" id="infoBox"></div>
 
@@ -1123,6 +1122,19 @@
   </div>
 </div>
 
+<div class="sheet-overlay" id="deleteShareRecordOverlay" style="z-index:495;">
+  <div class="sheet" style="max-width:340px;">
+    <h2 data-i18n="deleteRecordAction">Delete this record</h2>
+    <p style="font-size:13px; color:var(--ink-soft); margin:-8px 0 14px; line-height:1.5;" data-i18n="confirmDeleteShareRecord">Delete this record? This only clears it from your own history — it won't affect what the other person already received.</p>
+    <label style="display:flex; align-items:center; gap:8px; margin-bottom:14px; font-size:12.5px; color:var(--ink-soft); cursor:pointer;">
+      <input type="checkbox" id="dontShowDeleteRecordConfirmCheckbox" style="width:15px; height:15px; flex-shrink:0;">
+      <span data-i18n="dontShowAgainLabel">Don't show this again</span>
+    </label>
+    <button class="primary-btn" id="confirmDeleteShareRecordBtn" style="margin-top:0; background:var(--danger); border-color:var(--danger);" data-i18n="deleteAction">Delete</button>
+    <button class="text-btn" id="cancelDeleteShareRecordBtn" data-i18n="cancel">Cancel</button>
+  </div>
+</div>
+
 <div id="reauthOverlay" style="display:none; position:fixed; inset:0; z-index:998; background:var(--paper); align-items:center; justify-content:center; flex-direction:column; gap:14px; padding:24px;">
   <div style="width:56px; height:56px; border-radius:50%; background:var(--paper-raised); display:flex; align-items:center; justify-content:center; color:var(--ink-soft);">
     <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0116 0v1"/></svg>
@@ -1263,6 +1275,7 @@
   const LEGACY_KEY = 'mind-search-entries';
   const TAGS_KEY = 'mind-search-tags';
   const PINNED_TAGS_KEY = 'mind-search-pinned-tags';
+  const SKIP_DELETE_SHARE_CONFIRM_KEY = 'mind-search-skip-delete-share-confirm';
   const SECURE_NOTES_KEY = 'mind-search-secure-notes';
   const APP_LOCK_KEY = 'mind-search-app-lock';
   const TAB_PREFS_KEY = 'mind-search-tab-prefs';
@@ -1270,6 +1283,7 @@
 
   let allTags = [];
   let pinnedTags = [];
+  let skipDeleteShareConfirm = false;
   let secureNotesPasswordHash = null; // one shared password for the whole Secured Notes folder
   let secureNotesUnlockedThisSession = false; // resets on reload — never persisted
   let appLockEnabled = false;
@@ -1412,6 +1426,9 @@
       sharedWithMeLabel: "别人分享给我的",
       coEditingLabel: "共同编辑",
       myRecentSharesAction: "我的最近分享",
+      deleteRecordAction: "删除这条记录",
+      dontShowAgainLabel: "不再显示这条消息",
+      confirmDeleteShareRecord: "删掉这条记录吗？这只是清掉你这边的历史记录，不影响对方那边已经收到的内容。",
       sharedByMeLabel: "我分享出去的",
       unknownSender: "未知用户",
       statusSaved: "已保存",
@@ -1551,7 +1568,9 @@
       toastReminderDiscarded: "已取消这条提醒",
       goToReminders: "去看看",
       sharedByLabel: "分享自：",
-      sharedToLabel: "分享给了",
+      andConnector: "和",
+      listSeparator: "、",
+      sharedToLabel: "分享给：",
       viaPublicLink: "（通过公开链接）",
       unsendAction: "撤回",
       confirmUnsendShare: (who) => `撤回分享给 ${who} 的这份？`,
@@ -1797,6 +1816,9 @@
       myRecentSharesAction: "我的最近分享",
       statusSaved: "已儲存",
       statusDiscarded: "已丟棄",
+      deleteRecordAction: "刪除這條記錄",
+      confirmDeleteShareRecord: "刪掉這條記錄嗎？這只是清掉你這邊的歷史記錄，不影響對方那邊已經收到的內容。",
+      dontShowAgainLabel: "不再顯示這條訊息",
       statusPending: "還沒處理",
       noSharedWithMeYet: "還沒有人分享過東西給你",
       noSharedByMeYet: "你還沒分享過東西",
@@ -1840,7 +1862,9 @@
       toastTagRenamed: "標籤已重新命名",
       sharedByLabel: "分享自：",
       confirmSendShare: (who) => `確定要分享給${who}嗎？`,
+      andConnector: "和",
       confirmDiscardEdits: "有還沒儲存的改動，確定要離開嗎？改動會遺失。",
+      listSeparator: "、",
       dblClickToRenameHint: "雙擊可以重新命名",
       tagsLabel: "標籤：",
       close: "關閉",
@@ -1848,7 +1872,7 @@
       addReminderAction: "+ 設定提醒日期",
       reminderLabelShort: "提醒日期",
       reminderLabel: "提醒日期：",
-      sharedToLabel: "分享給了",
+      sharedToLabel: "分享給：",
       viaPublicLink: "（透過公開連結）",
       unsendAction: "撤回",
       confirmUnsendShare: (who) => `撤回分享給 ${who} 的這份？`,
@@ -2180,7 +2204,10 @@
       noSharedWithMeYet: "No one has shared anything with you yet.",
       noSharedByMeYet: "You haven't shared anything yet.",
       tagBundleShareSummary: (n, tag) => `Bundled ${n} notes under "${tag}"`,
+      deleteRecordAction: "Delete this record",
+      confirmDeleteShareRecord: "Delete this record? This only clears it from your own history \u2014 it won't affect what the other person already received.",
       deleteAction: "Delete",
+      dontShowAgainLabel: "Don't show this again",
       infoToggle: "ⓘ Details",
       fileLabel: "File",
       addFile: "Add PDF",
@@ -2204,12 +2231,14 @@
       lastEdited: "Last edited",
       sharedByLabel: "Shared by:",
       close: "Close",
+      andConnector: "and",
       tagsLabel: "Tags:",
       starTitle: "Review often",
+      listSeparator: ", ",
       decideLaterTitle: "Decide later",
       confirmRemoveTagFromNote: (tag) => `Remove this note from the "${tag}" tag?`,
       addReminderAction: "+ Set reminder date",
-      sharedToLabel: "Shared to",
+      sharedToLabel: "Shared to:",
       viaPublicLink: "(via public link)",
       unsendAction: "Unsend",
       confirmUnsendShare: (who) => `Unsend the copy shared with ${who}?`,
@@ -2817,6 +2846,19 @@
 
   function persistPinnedTags(){
     storageAdapter.set(PINNED_TAGS_KEY, JSON.stringify(pinnedTags), false).catch(()=>{});
+  }
+
+  async function loadSkipDeleteShareConfirm(){
+    try{
+      const res = await storageAdapter.get(SKIP_DELETE_SHARE_CONFIRM_KEY, false);
+      skipDeleteShareConfirm = !!(res && res.value === 'true');
+    }catch(e){
+      skipDeleteShareConfirm = false;
+    }
+  }
+
+  function persistSkipDeleteShareConfirm(){
+    storageAdapter.set(SKIP_DELETE_SHARE_CONFIRM_KEY, String(skipDeleteShareConfirm), false).catch(()=>{});
   }
 
   function showCustomConfirm({ title, text, yesLabel, noLabel }){
@@ -3686,8 +3728,19 @@
         if(!confirm(T().confirmUnsendShare(who))) return;
         const result = await revokeShare(item);
         if(result.ok){
+          if(item.kind === 'note' && item.entryId){
+            const entry = entries.find(e => e.id === item.entryId);
+            if(entry && entry.sharedTo){
+              entry.sharedTo = entry.sharedTo.filter(s => s.email !== item.toEmail);
+              persistIndex();
+            }
+          }
           showUnsendFlash(true, T().unsendSuccessMessage(who));
           openMyRecentSharesPanel();
+          renderSharedTab();
+          if($('tagDetailOverlay').classList.contains('open')){
+            $('tagDetailOverlay').classList.remove('open'); // its cached note list is now stale
+          }
         } else if(result.reason === 'saved'){
           showUnsendFlash(false, T().unsendFailedSavedMessage(who));
         } else if(result.reason === 'discarded'){
@@ -3697,6 +3750,25 @@
         }
       });
       row.appendChild(unsendBtn);
+
+      const deleteBtn = document.createElement('button');
+      deleteBtn.type = 'button';
+      deleteBtn.textContent = '✕';
+      deleteBtn.title = T().deleteRecordAction;
+      deleteBtn.style.cssText = 'color:var(--ink-soft); font-weight:600; font-size:14px; background:none; border:none; cursor:pointer; flex-shrink:0; padding:0 2px;';
+      deleteBtn.addEventListener('click', async ()=>{
+        if(skipDeleteShareConfirm){
+          const ok = await deleteMyShareRecord(item.id);
+          if(ok){ openMyRecentSharesPanel(); }
+          else { showToast(T().shareCreateFail); }
+          return;
+        }
+        pendingDeleteShareRecordId = item.id;
+        $('dontShowDeleteRecordConfirmCheckbox').checked = false;
+        $('deleteShareRecordOverlay').classList.add('open');
+      });
+      row.appendChild(deleteBtn);
+
       list.appendChild(row);
     });
   }
@@ -6013,10 +6085,20 @@
     if(entry.sharedBy){
       const nickname = await getContactNickname(entry.sharedBy);
       const displayName = nickname || entry.sharedBy;
-      sharedLine = `<br><br>${T().sharedByLabel} ${escapeHtml(displayName)}<br>${formatDate(entry.sharedAt || entry.createdAt)}`;
+      sharedLine += `<br><br>${T().sharedByLabel} ${escapeHtml(displayName)}<br>${formatDate(entry.sharedAt || entry.createdAt)}`;
+    }
+    if(entry.sharedTo && entry.sharedTo.length > 0){
+      const names = await Promise.all(entry.sharedTo.map(async (share) => {
+        const who = share.email || T().viaPublicLink;
+        const nickname = share.email ? await getContactNickname(share.email) : null;
+        return nickname || who;
+      }));
+      let namesJoined;
+      if(names.length === 1){ namesJoined = names[0]; }
+      else { namesJoined = names.slice(0, -1).join(T().listSeparator) + ' ' + T().andConnector + ' ' + names[names.length - 1]; }
+      sharedLine += `<br><br>${T().sharedToLabel} ${escapeHtml(namesJoined)}`;
     }
     renderDetailTagsRow(entry);
-    renderDetailSharedTo(entry);
     $('toggleLockEntryBtn').classList.toggle('active', !!entry.locked);
     $('toggleLockEntryBtn').title = entry.locked ? T().unlockThisNoteAction : T().lockThisNoteAction;
     detailDateLogRange = 'all';
@@ -6071,45 +6153,7 @@
   $('unsendFlashCloseBtn').addEventListener('click', ()=> $('unsendFlashOverlay').classList.remove('open'));
   $('unsendFlashOverlay').addEventListener('click', (e)=>{ if(e.target.id==='unsendFlashOverlay') $('unsendFlashOverlay').classList.remove('open'); });
 
-  function renderDetailSharedTo(entry){
-    const wrap = $('detailSharedToWrap');
-    wrap.innerHTML = '';
-    const shares = entry.sharedTo || [];
-    if(shares.length === 0){
-      wrap.style.display = 'none';
-      return;
-    }
-    const label = document.createElement('div');
-    label.style.cssText = 'font-size:12px; font-weight:600; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.06em;';
-    label.textContent = T().sharedToLabel;
-    wrap.appendChild(label);
-    shares.forEach((share, idx) => {
-      const row = document.createElement('div');
-      row.className = 'file-chip-row';
-      const who = share.email || T().viaPublicLink;
-      row.innerHTML = `<span>👤</span><span class="file-chip-name">${escapeHtml(who)}</span><button type="button" class="unsend-share-btn" style="color:var(--danger); font-weight:600; font-size:12px; background:none; border:none; cursor:pointer; flex-shrink:0;">${T().unsendAction}</button>`;
-      row.querySelector('.unsend-share-btn').addEventListener('click', async ()=>{
-        if(!confirm(T().confirmUnsendShare(who))) return;
-        const result = await revokeShare(share);
-        if(result.ok){
-          entry.sharedTo = entry.sharedTo.filter((s,i) => i !== idx);
-          persistIndex();
-          renderDetailSharedTo(entry);
-          showUnsendFlash(true, T().unsendSuccessMessage(who));
-        } else if(result.reason === 'saved'){
-          showUnsendFlash(false, T().unsendFailedSavedMessage(who));
-        } else if(result.reason === 'discarded'){
-          showUnsendFlash(false, T().unsendFailedDiscardedMessage(who));
-        } else if(result.reason === 'notFound'){
-          showUnsendFlash(false, T().unsendFailedSavedMessage(who));
-        } else {
-          showUnsendFlash(false, T().shareCreateFail);
-        }
-      });
-      wrap.appendChild(row);
-    });
-    wrap.style.display = 'flex';
-  }
+
 
   $('closeDetailBtn').addEventListener('click', ()=> $('detailOverlay').classList.remove('open'));
   $('infoToggle').addEventListener('click', ()=> $('infoBox').classList.toggle('open'));
@@ -6556,6 +6600,7 @@
   }
 
   let pendingLockNewNoteEntry = null;
+  let pendingDeleteShareRecordId = null;
   function promptLockNewNote(entry, tag){
     pendingLockNewNoteEntry = entry;
     $('lockNewNoteExplain').textContent = T().confirmLockNewNoteInSecuredTag(tag);
@@ -6575,6 +6620,24 @@
   $('lockNewNoteNoBtn').addEventListener('click', ()=>{
     pendingLockNewNoteEntry = null;
     $('lockNewNoteOverlay').classList.remove('open');
+  });
+
+  $('confirmDeleteShareRecordBtn').addEventListener('click', async ()=>{
+    if($('dontShowDeleteRecordConfirmCheckbox').checked){
+      skipDeleteShareConfirm = true;
+      persistSkipDeleteShareConfirm();
+    }
+    const id = pendingDeleteShareRecordId;
+    pendingDeleteShareRecordId = null;
+    $('deleteShareRecordOverlay').classList.remove('open');
+    if(!id) return;
+    const ok = await deleteMyShareRecord(id);
+    if(ok){ openMyRecentSharesPanel(); }
+    else { showToast(T().shareCreateFail); }
+  });
+  $('cancelDeleteShareRecordBtn').addEventListener('click', ()=>{
+    pendingDeleteShareRecordId = null;
+    $('deleteShareRecordOverlay').classList.remove('open');
   });
 
   $('toggleLockEntryBtn').addEventListener('click', ()=>{
@@ -7117,6 +7180,15 @@
       const snap = await fb.getDocs(q);
       return snap.docs.map(d => ({ id: d.id, ...d.data() }));
     }catch(e){ console.error('list my shares failed', e); return []; }
+  }
+
+  async function deleteMyShareRecord(id){
+    const fb = window.__firebase;
+    if(!fb.auth.currentUser) return false;
+    try{
+      await fb.deleteDoc(fb.doc(fb.db, 'users', fb.auth.currentUser.uid, 'myShares', id));
+      return true;
+    }catch(e){ console.error('delete my share record failed', e); return false; }
   }
 
   function refreshInboxBadgeFromCount(n){
@@ -7876,6 +7948,7 @@
       loadLanguage();
       loadTabPreferences();
       loadLockSettings().then(checkAppLockOnLoad);
+  loadSkipDeleteShareConfirm();
     });
   }
 
@@ -7883,6 +7956,7 @@
   loadLanguage();
   loadTabPreferences();
   loadLockSettings().then(checkAppLockOnLoad);
+  loadSkipDeleteShareConfirm();
 
   if('serviceWorker' in navigator){
     navigator.serviceWorker.register('sw.js').catch(e => console.error('service worker registration failed', e));
