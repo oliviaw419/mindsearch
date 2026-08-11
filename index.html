@@ -1722,6 +1722,8 @@
       sharedWithMeArchiveExplain: "这里显示你已经保存下来的、别人分享给你的笔记。",
       pendingInboxCrossLink: (n) => `你还有 ${n} 条待处理的分享，去收件箱看看 →`,
       discardAction: "不要了",
+      recentSharesCrossLink: "想撤回最近分享出去的东西？去『我的最近分享』撤回 →",
+      sharedByMeCrossLink: "想浏览你分享出去的全部笔记？去『分享』标签页的『我分享的』 →",
       inboxMenuLabel: "分享收件箱",
       shareSentToContact: "已分享",
       shareSentFlashText: (email) => `已经分享给 ${email} 啦！`,
@@ -2096,6 +2098,8 @@
       pendingInboxCrossLink: (n) => `你還有 ${n} 條待處理的分享，去收件匣看看 →`,
       inboxMenuLabel: "分享收件匣",
       shareSentToContact: "已分享",
+      recentSharesCrossLink: "想撤回最近分享出去的東西？去『我的最近分享』撤回 →",
+      sharedByMeCrossLink: "想瀏覽你分享出去的全部筆記？去『分享』標籤頁的『我分享的』 →",
       shareRecipientNotFound: "這個電子郵件還沒註冊 Mind Search，試試直接複製連結分享給對方",
       shareOpenedEmail: "已幫你打開郵件 App，寫好邀請連結了，確認傳送就行",
       shareSentFlashText: (email) => `已經分享給 ${email} 囉！`,
@@ -2471,6 +2475,8 @@
       shareRecipientNotFound: "That email hasn't signed up for Mind Search yet — try copying the link instead",
       shareOpenedEmail: "Opened your email app with an invite link ready to send",
       mailtoSubject: (title) => `${title} — shared from Mind Search`,
+      recentSharesCrossLink: "Want to unsend something you recently shared? Go to My Recent Shares \u2192",
+      sharedByMeCrossLink: "Want to browse everything you've shared out, by friend? See Shared by me in the Shared tab \u2192",
       mailtoBody: (fromEmail, url) => `${fromEmail} shared a note with you on Mind Search:\n\n${url}\n\nOpen the link to see it. If you'd like to keep and search your own notes too, sign up for Mind Search — once you do, this note will sync straight into your account.`,
       shareSentFlashText: (email) => `Shared with ${email}!`,
       shareTagSentFlashText: (n, email) => `Shared ${n} notes with ${email}!`,
@@ -2558,6 +2564,7 @@
       sharedBy: e.sharedBy || null, sharedAt: e.sharedAt || null,
       sharedId: e.sharedId || null, isSharedOwner: !!e.isSharedOwner,
       sharedWithEmail: e.sharedWithEmail || null,
+      sharedTo: e.sharedTo || [],
       locked: !!e.locked,
       createdAt: e.createdAt, updatedAt: e.updatedAt, lastViewedAt: e.lastViewedAt || null
     };
@@ -3728,6 +3735,17 @@
       }
     }
 
+    if(category === 'byMe'){
+      const banner = document.createElement('div');
+      banner.style.cssText = 'background:var(--paper-raised); color:var(--ink-soft); border-radius:12px; padding:10px 14px; margin-bottom:14px; font-size:12.5px; font-weight:600; cursor:pointer;';
+      banner.textContent = T().recentSharesCrossLink;
+      banner.addEventListener('click', ()=>{
+        $('tagDetailOverlay').classList.remove('open');
+        openMyRecentSharesPanel();
+      });
+      list.appendChild(banner);
+    }
+
     if(baseNotes.length > 0){
       const allRow = document.createElement('div');
       allRow.className = 'tag-row';
@@ -3768,6 +3786,21 @@
     const allShares = await listMyShares();
     const items = allShares.slice(0, RECENT_SHARES_LIMIT);
     sharedHistoryItemsCache = items;
+
+    const crossLink = document.createElement('div');
+    crossLink.style.cssText = 'background:var(--paper-raised); color:var(--ink-soft); border-radius:12px; padding:10px 14px; margin-bottom:14px; font-size:12.5px; font-weight:600; cursor:pointer;';
+    crossLink.textContent = T().sharedByMeCrossLink;
+    crossLink.addEventListener('click', ()=>{
+      $('sharedHistoryOverlay').classList.remove('open');
+      const sharedTabBtn = $('sectionTabsBar').querySelector('[data-tab="shared"]');
+      if(!sharedTabBtn){
+        showToast(T().toastEnableSharedTabFirst);
+        return;
+      }
+      switchToTab('shared');
+      openSharedCategory('byMe');
+    });
+    list.appendChild(crossLink);
 
     if(items.length === 0){
       $('sharedHistoryEmpty').textContent = T().noSharedByMeYet;
