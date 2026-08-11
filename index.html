@@ -418,6 +418,7 @@
       <div class="more-menu" id="accountMenu" style="min-width:200px;">
         <div id="accountEmailLabel" style="padding:12px 16px; font-size:12px; color:var(--ink-soft); border-bottom:1px solid var(--line);"></div>
         <button type="button" id="openInboxBtn" style="position:relative;"><span data-i18n="inboxMenuLabel">Shared with you</span><span id="accountMenuBadge" style="display:none; position:absolute; top:10px; right:14px; width:8px; height:8px; border-radius:50%; background:var(--danger);"></span></button>
+        <button type="button" id="openAccountRecentSharesBtn" data-i18n="myRecentSharesAction">My Recent Shares</button>
         <button type="button" id="signOutBtn" class="danger" data-i18n="signOut">Sign out</button>
       </div>
     </div>
@@ -490,6 +491,7 @@
       </div>
       <div id="sharedTabContent" style="display:none;">
         <div id="sharedTabList"></div>
+        <button type="button" class="text-btn" id="openMyRecentSharesBtn" style="margin-top:6px; display:block;" data-i18n="myRecentSharesAction">My Recent Shares</button>
         <div style="height:70px;"></div>
       </div>
       <div id="upcomingDatesTabContent" style="display:none;">
@@ -1408,6 +1410,8 @@
       noFavoritesYet: "还没有收藏过的笔记，点笔记详情页的星标试试",
       sharedTabLabel: "分享",
       sharedWithMeLabel: "别人分享给我的",
+      coEditingLabel: "共同编辑",
+      myRecentSharesAction: "我的最近分享",
       sharedByMeLabel: "我分享出去的",
       unknownSender: "未知用户",
       statusSaved: "已保存",
@@ -1789,6 +1793,8 @@
       sharedWithMeLabel: "別人分享給我的",
       sharedByMeLabel: "我分享出去的",
       unknownSender: "未知使用者",
+      coEditingLabel: "共同編輯",
+      myRecentSharesAction: "我的最近分享",
       statusSaved: "已儲存",
       statusDiscarded: "已丟棄",
       statusPending: "還沒處理",
@@ -2168,6 +2174,8 @@
       unknownSender: "Unknown sender",
       statusSaved: "Saved",
       statusDiscarded: "Discarded",
+      coEditingLabel: "Co-editing",
+      myRecentSharesAction: "My Recent Shares",
       statusPending: "Not yet handled",
       noSharedWithMeYet: "No one has shared anything with you yet.",
       noSharedByMeYet: "You haven't shared anything yet.",
@@ -3553,108 +3561,147 @@
   function renderSharedTab(){
     const list = $('sharedTabList');
     list.innerHTML = '';
+
+    const coEditRow = document.createElement('div');
+    coEditRow.className = 'tag-row';
+    const coEditCount = entries.filter(e => e.sharedId).length;
+    coEditRow.innerHTML = `<span>🤝</span><span class="tag-name">${T().coEditingLabel}</span><span class="tag-count">${coEditCount}</span>`;
+    coEditRow.addEventListener('click', ()=> openSharedCategory('coediting'));
+    list.appendChild(coEditRow);
+
     const withMeRow = document.createElement('div');
     withMeRow.className = 'tag-row';
-    withMeRow.innerHTML = `<span>${ICON_INBOX}</span><span class="tag-name">${T().sharedWithMeLabel}</span>`;
-    withMeRow.addEventListener('click', ()=> openSharedGroups('withMe'));
+    const withMeCount = entries.filter(e => e.sharedBy).length;
+    withMeRow.innerHTML = `<span>${ICON_INBOX}</span><span class="tag-name">${T().sharedWithMeLabel}</span><span class="tag-count">${withMeCount}</span>`;
+    withMeRow.addEventListener('click', ()=> openSharedCategory('withMe'));
     list.appendChild(withMeRow);
 
     const byMeRow = document.createElement('div');
     byMeRow.className = 'tag-row';
-    byMeRow.innerHTML = `<span>${ICON_SHARE_OUT}</span><span class="tag-name">${T().sharedByMeLabel}</span>`;
-    byMeRow.addEventListener('click', ()=> openSharedGroups('byMe'));
+    const byMeCount = entries.filter(e => e.sharedTo && e.sharedTo.length > 0).length;
+    byMeRow.innerHTML = `<span>${ICON_SHARE_OUT}</span><span class="tag-name">${T().sharedByMeLabel}</span><span class="tag-count">${byMeCount}</span>`;
+    byMeRow.addEventListener('click', ()=> openSharedCategory('byMe'));
     list.appendChild(byMeRow);
   }
 
-  async function openSharedGroups(mode){
-    $('sharedHistoryTitle').textContent = mode === 'withMe' ? T().sharedWithMeLabel : T().sharedByMeLabel;
+  async function openSharedCategory(category){
+    let baseNotes;
+    if(category === 'coediting'){ baseNotes = entries.filter(e => e.sharedId); }
+    else if(category === 'withMe'){ baseNotes = entries.filter(e => e.sharedBy); }
+    else { baseNotes = entries.filter(e => e.sharedTo && e.sharedTo.length > 0); }
+
+    const groupsMap = {}; // email -> { label, notes: Set-like array (deduped) }
+    for(const e of baseNotes){
+      let peerEmails;
+      if(category === 'coediting'){ peerEmails = [e.isSharedOwner ? e.sharedWithEmail : e.sharedBy].filter(Boolean); }
+      else if(category === 'withMe'){ peerEmails = [e.sharedBy].filter(Boolean); }
+      else { peerEmails = [...new Set((e.sharedTo || []).map(s => s.email))]; }
+
+      for(const email of peerEmails){
+        if(!groupsMap[email]){
+          const nickname = await getContactNickname(email);
+          groupsMap[email] = { label: nickname || email, notes: [] };
+        }
+        if(!groupsMap[email].notes.includes(e)){ groupsMap[email].notes.push(e); }
+      }
+    }
+
+    renderSharedCategoryGroups(category, baseNotes, groupsMap);
+  }
+
+  function renderSharedCategoryGroups(category, baseNotes, groupsMap){
+    const titleMap = { coediting: T().coEditingLabel, withMe: T().sharedWithMeLabel, byMe: T().sharedByMeLabel };
+    $('tagDetailTitle').textContent = titleMap[category];
+    $('tagRenameIconBtn').style.display = 'none';
+    $('tagShareIconBtn').style.display = 'none';
+    $('tagBulkLockIconBtn').style.display = 'none';
+    $('tagDetailAddBtn').style.display = 'none';
+    $('tagSortWrap').style.display = 'none';
+    $('tagDetailSearchWrap').style.display = 'none';
+    currentTagDetailContext = null;
+
+    const list = $('tagDetailList');
+    list.innerHTML = '';
+    $('tagDetailEmpty').style.display = baseNotes.length === 0 ? 'block' : 'none';
+
+    if(baseNotes.length > 0){
+      const allRow = document.createElement('div');
+      allRow.className = 'tag-row';
+      allRow.innerHTML = `<span>${ICON_ALL}</span><span class="tag-name">${T().allFilterLabel}</span><span class="tag-count">${baseNotes.length}</span>`;
+      allRow.addEventListener('click', ()=> openTagDetail({
+        title: titleMap[category],
+        filterFn: () => baseNotes,
+        presetTag: null
+      }));
+      list.appendChild(allRow);
+
+      Object.keys(groupsMap).sort((a,b) => groupsMap[a].label.localeCompare(groupsMap[b].label)).forEach(email => {
+        const group = groupsMap[email];
+        const row = document.createElement('div');
+        row.className = 'tag-row';
+        row.innerHTML = `<span>👤</span><span class="tag-name">${escapeHtml(group.label)}</span><span class="tag-count">${group.notes.length}</span>`;
+        row.addEventListener('click', ()=> openTagDetail({
+          title: group.label,
+          filterFn: () => group.notes,
+          presetTag: null
+        }));
+        list.appendChild(row);
+      });
+    }
+    $('tagDetailOverlay').classList.add('open');
+  }
+
+  const RECENT_SHARES_LIMIT = 20;
+
+  async function openMyRecentSharesPanel(){
+    $('sharedHistoryTitle').textContent = T().myRecentSharesAction;
     const list = $('sharedHistoryList');
     list.innerHTML = '';
     $('sharedHistoryEmpty').style.display = 'none';
     $('sharedHistoryOverlay').classList.add('open');
 
-    const items = mode === 'withMe' ? await listInboxHistory() : await listMyShares();
+    const allShares = await listMyShares();
+    const items = allShares.slice(0, RECENT_SHARES_LIMIT);
     sharedHistoryItemsCache = items;
 
-    const groups = {};
-    for(const item of items){
-      let key, label;
-      if(mode === 'withMe'){
-        key = item.fromEmail || 'unknown';
-        label = (await getContactNickname(item.fromEmail)) || item.fromEmail || T().unknownSender;
-      } else {
-        key = item.toEmail || '__link__';
-        label = item.toEmail ? ((await getContactNickname(item.toEmail)) || item.toEmail) : T().viaPublicLink;
-      }
-      if(!groups[key]){ groups[key] = { label, count: 0 }; }
-      groups[key].count++;
-    }
-
-    list.innerHTML = '';
-    const keys = Object.keys(groups);
-    if(keys.length === 0){
-      $('sharedHistoryEmpty').textContent = mode === 'withMe' ? T().noSharedWithMeYet : T().noSharedByMeYet;
+    if(items.length === 0){
+      $('sharedHistoryEmpty').textContent = T().noSharedByMeYet;
       $('sharedHistoryEmpty').style.display = 'block';
       return;
     }
-    keys.forEach(key => {
-      const row = document.createElement('div');
-      row.className = 'tag-row';
-      row.innerHTML = `<span>👤</span><span class="tag-name">${escapeHtml(groups[key].label)}</span><span class="tag-count">${groups[key].count}</span>`;
-      row.addEventListener('click', ()=> openSharedGroupItems(mode, key, groups[key].label));
-      list.appendChild(row);
-    });
-  }
 
-  function openSharedGroupItems(mode, groupKey, groupLabel){
-    $('sharedHistoryTitle').textContent = groupLabel;
-    const items = sharedHistoryItemsCache.filter(item => {
-      if(mode === 'withMe'){ return (item.fromEmail || 'unknown') === groupKey; }
-      return (item.toEmail || '__link__') === groupKey;
-    }).sort((a,b) => b.createdAt - a.createdAt);
-
-    const list = $('sharedHistoryList');
-    list.innerHTML = '';
     items.forEach(item => {
       const row = document.createElement('div');
       row.className = 'file-chip-row';
-      const isBundle = item.type === 'tagBundle' || item.kind === 'tagBundle';
-      let title, statusText;
-      if(mode === 'withMe'){
-        title = isBundle ? T().tagBundleInboxTitle(item.noteCount, item.tagName) : item.title;
-        statusText = item.status === 'saved' ? T().statusSaved : (item.status === 'discarded' ? T().statusDiscarded : T().statusPending);
-      } else {
-        title = isBundle ? T().tagBundleShareSummary(item.noteCount, item.tagName) : item.entryTitle;
-        statusText = formatDate(item.createdAt);
-      }
+      const isBundle = item.kind === 'tagBundle';
+      const title = isBundle ? T().tagBundleShareSummary(item.noteCount, item.tagName) : item.entryTitle;
+      const statusText = formatDate(item.createdAt) + (item.toEmail ? ' · ' + item.toEmail : ' · ' + T().viaPublicLink);
       row.innerHTML = `<span>${isBundle ? '📦' : '📄'}</span><div style="flex:1; min-width:0;"><div class="file-chip-name">${escapeHtml(title || '')}</div><div style="font-size:11px; color:var(--ink-soft);">${escapeHtml(statusText || '')}</div></div>`;
-      if(mode === 'byMe'){
-        const unsendBtn = document.createElement('button');
-        unsendBtn.type = 'button';
-        unsendBtn.textContent = T().unsendAction;
-        unsendBtn.style.cssText = 'color:var(--danger); font-weight:600; font-size:12px; background:none; border:none; cursor:pointer; flex-shrink:0;';
-        unsendBtn.addEventListener('click', async ()=>{
-          const who = item.toEmail || T().viaPublicLink;
-          if(!confirm(T().confirmUnsendShare(who))) return;
-          const result = await revokeShare(item);
-          if(result.ok){
-            showUnsendFlash(true, T().unsendSuccessMessage(who));
-            openSharedGroupItems(mode, groupKey, groupLabel);
-          } else if(result.reason === 'saved'){
-            showUnsendFlash(false, T().unsendFailedSavedMessage(who));
-          } else if(result.reason === 'discarded'){
-            showUnsendFlash(false, T().unsendFailedDiscardedMessage(who));
-          } else {
-            showUnsendFlash(false, T().shareCreateFail);
-          }
-        });
-        row.appendChild(unsendBtn);
-      }
+      const unsendBtn = document.createElement('button');
+      unsendBtn.type = 'button';
+      unsendBtn.textContent = T().unsendAction;
+      unsendBtn.style.cssText = 'color:var(--danger); font-weight:600; font-size:12px; background:none; border:none; cursor:pointer; flex-shrink:0;';
+      unsendBtn.addEventListener('click', async ()=>{
+        const who = item.toEmail || T().viaPublicLink;
+        if(!confirm(T().confirmUnsendShare(who))) return;
+        const result = await revokeShare(item);
+        if(result.ok){
+          showUnsendFlash(true, T().unsendSuccessMessage(who));
+          openMyRecentSharesPanel();
+        } else if(result.reason === 'saved'){
+          showUnsendFlash(false, T().unsendFailedSavedMessage(who));
+        } else if(result.reason === 'discarded'){
+          showUnsendFlash(false, T().unsendFailedDiscardedMessage(who));
+        } else {
+          showUnsendFlash(false, T().shareCreateFail);
+        }
+      });
+      row.appendChild(unsendBtn);
       list.appendChild(row);
     });
-    $('sharedHistoryEmpty').style.display = items.length === 0 ? 'block' : 'none';
   }
 
+  $('openMyRecentSharesBtn').addEventListener('click', openMyRecentSharesPanel);
   $('closeSharedHistoryBtn').addEventListener('click', ()=> $('sharedHistoryOverlay').classList.remove('open'));
   $('sharedHistoryOverlay').addEventListener('click', (e)=>{ if(e.target.id==='sharedHistoryOverlay') $('sharedHistoryOverlay').classList.remove('open'); });
 
@@ -7113,6 +7160,10 @@
     $('accountMenu').classList.remove('open');
     renderInboxList();
     $('inboxOverlay').classList.add('open');
+  });
+  $('openAccountRecentSharesBtn').addEventListener('click', ()=>{
+    $('accountMenu').classList.remove('open');
+    openMyRecentSharesPanel();
   });
   $('closeInboxBtn').addEventListener('click', ()=> $('inboxOverlay').classList.remove('open'));
   $('inboxOverlay').addEventListener('click', (e)=>{ if(e.target.id==='inboxOverlay') $('inboxOverlay').classList.remove('open'); });
