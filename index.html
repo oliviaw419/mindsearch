@@ -1443,6 +1443,7 @@
       sharedTabLabel: "分享",
       sharedWithMeLabel: "别人分享给我的",
       coEditingLabel: "共同编辑",
+      fromBundleLabel: (tag) => `来自「${tag}」打包`,
       myRecentSharesAction: "我的最近分享",
       deleteRecordAction: "删除这条记录",
       dontShowAgainLabel: "不再显示这条消息",
@@ -1843,6 +1844,7 @@
       unknownSender: "未知使用者",
       coEditingLabel: "共同編輯",
       myRecentSharesAction: "我的最近分享",
+      fromBundleLabel: (tag) => `來自「${tag}」打包`,
       statusSaved: "已儲存",
       statusDiscarded: "已丟棄",
       deleteRecordAction: "刪除這條記錄",
@@ -2241,6 +2243,7 @@
       coEditingLabel: "Co-editing",
       myRecentSharesAction: "My Recent Shares",
       statusPending: "Not yet handled",
+      fromBundleLabel: (tag) => `From "${tag}" bundle`,
       noSharedWithMeYet: "No one has shared anything with you yet.",
       noSharedByMeYet: "You haven't shared anything yet.",
       tagBundleShareSummary: (n, tag) => `Bundled ${n} notes under "${tag}"`,
@@ -2573,6 +2576,8 @@
       sharedId: e.sharedId || null, isSharedOwner: !!e.isSharedOwner,
       sharedWithEmail: e.sharedWithEmail || null,
       sharedTo: e.sharedTo || [],
+      receivedBundleId: e.receivedBundleId || null,
+      receivedBundleTagName: e.receivedBundleTagName || null,
       locked: !!e.locked,
       createdAt: e.createdAt, updatedAt: e.updatedAt, lastViewedAt: e.lastViewedAt || null
     };
@@ -3096,6 +3101,13 @@
   const ICON_STAR = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2.5l2.9 6.5 7.1.7-5.4 4.7 1.6 7-6.2-3.7-6.2 3.7 1.6-7-5.4-4.7 7.1-.7z"/></svg>';
   const BADGE_ICON_SHARED = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>';
 
+  function bundleOriginLabel(entry){
+    if(entry.receivedBundleTagName){ return T().fromBundleLabel(entry.receivedBundleTagName); }
+    const bundleShare = (entry.sharedTo || []).find(s => s.bundleTagName);
+    if(bundleShare){ return T().fromBundleLabel(bundleShare.bundleTagName); }
+    return null;
+  }
+
   function buildEntryRow(entry){
     const row = document.createElement('div');
     row.className = 'entry-row';
@@ -3105,11 +3117,14 @@
     const pdfBadge = (entry.files && entry.files.length) ? `<span class="badge">${BADGE_ICON_FILE}</span>` : '';
     const locationBadge = entry.location ? `<span class="badge">${BADGE_ICON_LOCATION}</span>` : '';
     const sharedBadge = entry.sharedId ? `<span class="badge">${BADGE_ICON_SHARED}</span>` : '';
+    const bundleLabel = bundleOriginLabel(entry);
+    const bundleLine = bundleLabel ? `<div style="font-size:11px; color:var(--ink-soft); margin-top:2px;">📦 ${escapeHtml(bundleLabel)}</div>` : '';
     row.innerHTML = `
       <div class="delete-bg">${T().deleteSwipeLabel}</div>
       <div class="entry-card" data-id="${entry.id}">
         <div class="etitle">${escapeHtml(entry.title)}</div>
         <div class="esnippet">${escapeHtml(snippet(entry))}</div>
+        ${bundleLine}
         <div class="ebadges">${photoBadge}${videoBadge}${audioBadge}${pdfBadge}${locationBadge}${sharedBadge}</div>
       </div>`;
     return row;
@@ -3764,11 +3779,13 @@
       const allRow = document.createElement('div');
       allRow.className = 'tag-row';
       allRow.innerHTML = `<span>${ICON_ALL}</span><span class="tag-name">${T().allFilterLabel}</span><span class="tag-count">${baseNotes.length}</span>`;
-      allRow.addEventListener('click', ()=> openTagDetail({
-        title: titleMap[category],
-        filterFn: () => baseNotes,
-        presetTag: null
-      }));
+      allRow.addEventListener('click', ()=>{
+        if(category === 'coediting'){
+          openTagDetail({ title: titleMap[category], filterFn: () => baseNotes, presetTag: null });
+        } else {
+          openSharedMixedList(titleMap[category], baseNotes, category, null);
+        }
+      });
       list.appendChild(allRow);
 
       Object.keys(groupsMap).sort((a,b) => groupsMap[a].label.localeCompare(groupsMap[b].label)).forEach(email => {
@@ -3777,11 +3794,13 @@
         row.className = 'tag-row';
         const initial = (group.label || '?').trim().charAt(0).toUpperCase();
         row.innerHTML = `<div class="contact-avatar-sm">${escapeHtml(initial)}</div><span class="tag-name">${escapeHtml(group.label)}</span><span class="tag-count">${group.notes.length}</span>`;
-        row.addEventListener('click', ()=> openTagDetail({
-          title: group.label,
-          filterFn: () => group.notes,
-          presetTag: null
-        }));
+        row.addEventListener('click', ()=>{
+          if(category === 'coediting'){
+            openTagDetail({ title: group.label, filterFn: () => group.notes, presetTag: null });
+          } else {
+            openSharedMixedList(group.label, group.notes, category, email);
+          }
+        });
         list.appendChild(row);
       });
     }
@@ -3800,6 +3819,109 @@
     }
 
     $('tagDetailOverlay').classList.add('open');
+  }
+
+  function buildMixedItems(notesList, category, friendEmailFilter){
+    const bundleGroups = {}; // bundleId -> { bundleId, tagName, notes, sortTime }
+    const individuals = [];
+
+    notesList.forEach(e => {
+      let bundleId = null, bundleTagName = null, sortTime = null;
+      if(category === 'withMe'){
+        if(e.receivedBundleId){
+          bundleId = e.receivedBundleId;
+          bundleTagName = e.receivedBundleTagName;
+          sortTime = e.sharedAt;
+        }
+      } else if(category === 'byMe'){
+        const relevantShares = (e.sharedTo || []).filter(s => !friendEmailFilter || s.email === friendEmailFilter);
+        const bundleShare = relevantShares.find(s => s.bundleId);
+        if(bundleShare){
+          bundleId = bundleShare.bundleId;
+          bundleTagName = bundleShare.bundleTagName;
+          sortTime = bundleShare.sharedAt;
+        }
+      }
+
+      if(bundleId){
+        if(!bundleGroups[bundleId]){
+          bundleGroups[bundleId] = { bundleId, tagName: bundleTagName, notes: [], sortTime };
+        }
+        bundleGroups[bundleId].notes.push(e);
+      } else {
+        individuals.push({ type: 'note', entry: e, sortTime: e.updatedAt || e.createdAt, sortTitle: e.title || '' });
+      }
+    });
+
+    const bundleItems = Object.values(bundleGroups).map(g => ({
+      type: 'bundle', bundleId: g.bundleId, tagName: g.tagName, notes: g.notes, sortTime: g.sortTime, sortTitle: g.tagName || ''
+    }));
+
+    return [...individuals, ...bundleItems];
+  }
+
+  function openSharedMixedList(title, notesList, category, friendEmail){
+    currentTagDetailContext = { isSharedMixed: true, title, notesList, category, friendEmail };
+    tagDetailSortMode = 'recent';
+    tagDetailSearchQuery = '';
+    $('tagDetailSearchInput').value = '';
+    $('tagDetailClearSearchBtn').style.display = 'none';
+    $('tagDetailSearchIcon').style.display = '';
+    $('tagSortMenu').classList.remove('open');
+    $('tagSortWrap').style.display = 'block';
+    $('tagDetailSearchWrap').style.display = 'block';
+    $('tagDetailTitle').textContent = title;
+    $('tagRenameIconBtn').style.display = 'none';
+    $('tagShareIconBtn').style.display = 'none';
+    $('tagBulkLockIconBtn').style.display = 'none';
+    $('tagDetailAddBtn').style.display = 'none';
+    renderSharedMixedList();
+    $('tagDetailOverlay').classList.add('open');
+  }
+
+  function renderSharedMixedList(){
+    if(!currentTagDetailContext || !currentTagDetailContext.isSharedMixed) return;
+    const { notesList, category, friendEmail } = currentTagDetailContext;
+    let items = buildMixedItems(notesList, category, friendEmail);
+
+    if(tagDetailSearchQuery){
+      const q = tagDetailSearchQuery.toLowerCase();
+      items = items.filter(item => {
+        if(item.type === 'note'){
+          return item.entry.title.toLowerCase().includes(q) || item.entry.content.toLowerCase().includes(q);
+        }
+        if(item.tagName.toLowerCase().includes(q)) return true;
+        return item.notes.some(n => n.title.toLowerCase().includes(q) || n.content.toLowerCase().includes(q));
+      });
+    }
+
+    if(tagDetailSortMode === 'alpha'){
+      items.sort((a,b) => a.sortTitle.localeCompare(b.sortTitle));
+    } else {
+      items.sort((a,b) => (b.sortTime||0) - (a.sortTime||0));
+    }
+
+    const list = $('tagDetailList');
+    list.innerHTML = '';
+    $('tagDetailEmpty').style.display = items.length === 0 ? 'block' : 'none';
+
+    items.forEach(item => {
+      if(item.type === 'note'){
+        const row = buildPlainEntryRow(item.entry);
+        list.appendChild(row);
+      } else {
+        const row = document.createElement('div');
+        row.className = 'tag-row';
+        row.style.background = 'var(--plum-tint)';
+        row.innerHTML = `<span>📦</span><span class="tag-name">${escapeHtml(item.tagName)}</span><span class="tag-count">${item.notes.length}</span>`;
+        row.addEventListener('click', ()=> openTagDetail({
+          title: item.tagName,
+          filterFn: () => item.notes,
+          presetTag: null
+        }));
+        list.appendChild(row);
+      }
+    });
   }
 
   const RECENT_SHARES_LIMIT = 20;
@@ -3993,21 +4115,25 @@
       $('tagSortMenu').classList.remove('open');
     }
   });
-  $('tagSortRecentBtn').addEventListener('click', ()=>{ tagDetailSortMode = 'recent'; $('tagSortMenu').classList.remove('open'); renderTagDetailList(); });
-  $('tagSortAlphaBtn').addEventListener('click', ()=>{ tagDetailSortMode = 'alpha'; $('tagSortMenu').classList.remove('open'); renderTagDetailList(); });
+  function renderCurrentTagDetailView(){
+    if(currentTagDetailContext && currentTagDetailContext.isSharedMixed){ renderSharedMixedList(); }
+    else { renderTagDetailList(); }
+  }
+  $('tagSortRecentBtn').addEventListener('click', ()=>{ tagDetailSortMode = 'recent'; $('tagSortMenu').classList.remove('open'); renderCurrentTagDetailView(); });
+  $('tagSortAlphaBtn').addEventListener('click', ()=>{ tagDetailSortMode = 'alpha'; $('tagSortMenu').classList.remove('open'); renderCurrentTagDetailView(); });
 
   $('tagDetailSearchInput').addEventListener('input', (e)=>{
     tagDetailSearchQuery = e.target.value.trim();
     $('tagDetailClearSearchBtn').style.display = tagDetailSearchQuery ? 'flex' : 'none';
     $('tagDetailSearchIcon').style.display = tagDetailSearchQuery ? 'none' : '';
-    renderTagDetailList();
+    renderCurrentTagDetailView();
   });
   $('tagDetailClearSearchBtn').addEventListener('click', ()=>{
     $('tagDetailSearchInput').value = '';
     tagDetailSearchQuery = '';
     $('tagDetailClearSearchBtn').style.display = 'none';
     $('tagDetailSearchIcon').style.display = '';
-    renderTagDetailList();
+    renderCurrentTagDetailView();
   });
 
   // config: { title, filterFn(entries)=>filtered[], presetTag: string|null }
@@ -4547,7 +4673,7 @@
     return new Promise((resolve, reject) => {
       const sandbox = $('videoProcessingSandbox');
       const sourceVideo = document.createElement('video');
-      sourceVideo.muted = true; // iOS blocks autoplay of unmuted video without a direct user gesture; the audio track is still captured regardless of this playback mute
+      sourceVideo.muted = true; // needed only so play() succeeds without a fresh user gesture in this async callback; we unmute right after playback actually starts (see below)
       sourceVideo.playsInline = true;
       sourceVideo.setAttribute('playsinline', '');
       sourceVideo.setAttribute('webkit-playsinline', '');
@@ -4595,6 +4721,12 @@
         const ctx = canvas.getContext('2d');
 
         sourceVideo.play().then(() => {
+          // Now that playback has genuinely started (past the autoplay-permission check), switch off
+          // `muted` — on several browsers (notably Safari/iOS) a muted media element's captureStream()
+          // audio track carries no real data at all, regardless of what plays through the speakers.
+          // volume=0 keeps it silent to the user while keeping the track "live" for capture purposes.
+          sourceVideo.muted = false;
+          sourceVideo.volume = 0;
           const canvasStream = canvas.captureStream(30);
           let audioTracks = [];
           try{
@@ -6055,7 +6187,7 @@
         tabRenderFn(getActiveTabId())();
       }
       if($('tagDetailOverlay').classList.contains('open') && currentTagDetailContext){
-        renderTagDetailList();
+        renderCurrentTagDetailView();
       }
       const activeSearchQuery = $('searchInput').value.trim().toLowerCase();
       if(activeSearchQuery !== ''){ runSearch(activeSearchQuery); }
@@ -6646,6 +6778,7 @@
     }
     const itemId = cryptoId();
     try{
+      const sharedAtTime = Date.now();
       await fb.setDoc(fb.doc(fb.db, 'users', recipientUid, 'inbox', itemId), {
         type: 'tagBundle',
         fromEmail: me.email,
@@ -6653,9 +6786,18 @@
         tagName: tagName,
         notes: snapshots,
         noteCount: snapshots.length,
-        createdAt: Date.now()
+        createdAt: sharedAtTime
       });
       touchContactSharedAt(email);
+      notes.forEach(entry => {
+        entry.sharedTo = entry.sharedTo || [];
+        entry.sharedTo.push({
+          email, sharedAt: sharedAtTime,
+          targetType: 'inbox', targetId: itemId, recipientUid,
+          bundleId: itemId, bundleTagName: tagName
+        });
+      });
+      persistIndex();
       await recordMyShare({
         kind: 'tagBundle',
         tagName: tagName,
@@ -6728,7 +6870,7 @@
     const activeSearchQuery = $('searchInput').value.trim().toLowerCase();
     if(activeSearchQuery !== ''){ runSearch(activeSearchQuery); }
     if($('tagDetailOverlay').classList.contains('open') && currentTagDetailContext){
-      renderTagDetailList();
+      renderCurrentTagDetailView();
     }
   }
 
@@ -7540,6 +7682,8 @@
         tags: [tagName],
         sharedBy: item.fromEmail || null,
         sharedAt: item.createdAt || now,
+        receivedBundleId: item.id,
+        receivedBundleTagName: tagName,
         createdAt: now, updatedAt: now
       };
       entries.push(newEntry);
@@ -7766,7 +7910,7 @@
     renderRandom();
     renderForgotten();
     if($('tagDetailOverlay').classList.contains('open') && currentTagDetailContext){
-      renderTagDetailList();
+      renderCurrentTagDetailView();
     }
     if($('sectionTabsBar').children.length){
       tabRenderFn(getActiveTabId())();
