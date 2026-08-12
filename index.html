@@ -3852,7 +3852,8 @@
       allRow.innerHTML = `<span>${ICON_ALL}</span><span class="tag-name">${T().allFilterLabel}</span><span class="tag-count">${baseNotes.length}</span>`;
       allRow.addEventListener('click', ()=>{
         if(category === 'coediting'){
-          openTagDetail({ title: titleMap[category], filterFn: () => baseNotes, presetTag: null });
+          const ids = baseNotes.map(n => n.id);
+          openTagDetail({ title: titleMap[category], filterFn: (es) => es.filter(e => ids.includes(e.id)), presetTag: null });
         } else {
           openSharedMixedList(titleMap[category], baseNotes, category, null);
         }
@@ -3867,7 +3868,8 @@
         row.innerHTML = `<div class="contact-avatar-sm">${escapeHtml(initial)}</div><span class="tag-name">${escapeHtml(group.label)}</span><span class="tag-count">${group.notes.length}</span>`;
         row.addEventListener('click', ()=>{
           if(category === 'coediting'){
-            openTagDetail({ title: group.label, filterFn: () => group.notes, presetTag: null });
+            const ids = group.notes.map(n => n.id);
+            openTagDetail({ title: group.label, filterFn: (es) => es.filter(e => ids.includes(e.id)), presetTag: null });
           } else {
             openSharedMixedList(group.label, group.notes, category, email);
           }
@@ -3937,7 +3939,7 @@
   }
 
   function openSharedMixedList(title, notesList, category, friendEmail){
-    currentTagDetailContext = { isSharedMixed: true, title, notesList, category, friendEmail };
+    currentTagDetailContext = { isSharedMixed: true, title, noteIds: notesList.map(n => n.id), category, friendEmail };
     tagDetailSortMode = 'recent';
     tagDetailSearchQuery = '';
     $('tagDetailSearchInput').value = '';
@@ -3960,7 +3962,8 @@
 
   function renderSharedMixedList(){
     if(!currentTagDetailContext || !currentTagDetailContext.isSharedMixed) return;
-    const { notesList, category, friendEmail } = currentTagDetailContext;
+    const { noteIds, category, friendEmail } = currentTagDetailContext;
+    const notesList = entries.filter(e => noteIds.includes(e.id));
     let items = buildMixedItems(notesList, category, friendEmail);
 
     if(tagDetailSearchQuery){
@@ -3998,10 +4001,11 @@
         row.innerHTML = `<span style="flex-shrink:0;">${ICON_BUNDLE}</span><span class="tag-name">${escapeHtml(item.tagName)}</span><span class="tag-count">${item.notes.length}</span>`;
         const searchTermAtClick = tagDetailSearchQuery;
         const returnContext = currentTagDetailContext;
+        const bundleNoteIds = item.notes.map(n => n.id);
         row.addEventListener('click', ()=>{
           openTagDetail({
             title: item.tagName,
-            filterFn: () => item.notes,
+            filterFn: (es) => es.filter(e => bundleNoteIds.includes(e.id)),
             presetTag: null
           });
           if(searchTermAtClick){
@@ -4235,7 +4239,8 @@
     if(!tagDetailReturnContext) return;
     const ctx = tagDetailReturnContext;
     tagDetailReturnContext = null;
-    openSharedMixedList(ctx.title, ctx.notesList, ctx.category, ctx.friendEmail);
+    const notesList = entries.filter(e => ctx.noteIds.includes(e.id));
+    openSharedMixedList(ctx.title, notesList, ctx.category, ctx.friendEmail);
   });
 
   // config: { title, filterFn(entries)=>filtered[], presetTag: string|null }
