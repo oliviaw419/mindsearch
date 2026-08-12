@@ -3171,8 +3171,6 @@
 
   function bundleOriginLabel(entry){
     if(entry.receivedBundleTagName){ return T().fromBundleLabel(entry.receivedBundleTagName); }
-    const bundleShare = (entry.sharedTo || []).find(s => s.bundleTagName);
-    if(bundleShare){ return T().fromBundleLabel(bundleShare.bundleTagName); }
     return null;
   }
 
@@ -7738,7 +7736,8 @@
   let pendingTagBundleItem = null;
 
   async function saveTagBundleToLibrary(item){
-    if(allTags.includes(item.tagName)){
+    const tagCurrentlyInUse = entries.some(e => e.tags && e.tags.includes(item.tagName));
+    if(tagCurrentlyInUse){
       pendingTagBundleItem = item;
       $('tagBundleConflictExplain').textContent = T().tagBundleConflictExplain(item.tagName);
       $('tagBundleConflictOverlay').classList.add('open');
