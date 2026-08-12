@@ -400,6 +400,7 @@
           <button type="button" id="openManageTagsBtn" data-i18n="manageTagsMenuLabel">Manage Tags</button>
           <button type="button" id="openManageRemindersBtn" data-i18n="manageRemindersMenuLabel">Manage Reminders</button>
           <button type="button" id="openAppLockSettingsBtn" data-i18n="appLockMenuLabel">App Password</button>
+          <button type="button" id="openNotificationSettingsBtn" data-i18n="notificationSettingsMenuLabel">Notifications</button>
           <button type="button" id="openHelpFeedbackBtn" style="position:relative;"><span data-i18n="helpFeedbackMenuLabel">Help &amp; Feedback</span><span id="feedbackMenuBadge" style="display:none; position:absolute; top:10px; right:14px; width:8px; height:8px; border-radius:50%; background:var(--danger);"></span></button>
         </div>
         <div id="settingsLanguagePanel" style="display:none;">
@@ -1112,6 +1113,47 @@
   </div>
 </div>
 
+<div class="sheet-overlay" id="notificationSettingsOverlay" style="z-index:450;">
+  <div class="sheet" style="max-width:380px;">
+    <h2 data-i18n="notificationSettingsMenuLabel">Notifications</h2>
+    <p style="font-size:12.5px; color:var(--ink-soft); margin:-8px 0 16px;" data-i18n="notificationSettingsExplain">Get a push notification when a reminder is due — even if the app isn't open.</p>
+
+    <div id="notifNotStandaloneState" style="display:none;">
+      <div style="display:flex; align-items:flex-start; gap:8px; background:var(--paper-raised); border-radius:12px; padding:12px 14px;">
+        <span style="color:var(--ink-soft); font-weight:700; flex-shrink:0;">–</span>
+        <span data-i18n="notifNeedsHomeScreen">On iPhone, notifications only work when this app is added to your Home Screen and opened from there — not from a regular Safari tab. Tap the Share icon in Safari, then "Add to Home Screen," and open the app from that icon before trying again.</span>
+      </div>
+    </div>
+
+    <div id="notifUnsupportedState" style="display:none;">
+      <div style="display:flex; align-items:flex-start; gap:8px; background:var(--paper-raised); border-radius:12px; padding:12px 14px;">
+        <span style="color:var(--ink-soft); font-weight:700; flex-shrink:0;">–</span>
+        <span data-i18n="notifUnsupportedDevice">This device or browser doesn't support push notifications.</span>
+      </div>
+    </div>
+
+    <div id="notifDefaultState" style="display:none;">
+      <button class="primary-btn" id="notifEnableBtn" style="margin-top:0;" data-i18n="enableNotificationsAction">Enable Notifications</button>
+    </div>
+
+    <div id="notifGrantedState" style="display:none;">
+      <div style="display:flex; align-items:center; gap:8px; background:var(--paper-raised); border-radius:12px; padding:12px 14px;">
+        <span style="color:var(--green); font-weight:700;">✓</span>
+        <span data-i18n="notifCurrentlyOn">Notifications are on.</span>
+      </div>
+    </div>
+
+    <div id="notifDeniedState" style="display:none;">
+      <div style="display:flex; align-items:flex-start; gap:8px; background:var(--paper-raised); border-radius:12px; padding:12px 14px;">
+        <span style="color:var(--danger); font-weight:700; flex-shrink:0;">✕</span>
+        <span data-i18n="notifDeniedExplain">Notifications were previously turned off for this app. To turn them back on, go to iPhone Settings → Notifications → Mind Search, and enable "Allow Notifications."</span>
+      </div>
+    </div>
+
+    <button class="text-btn" id="closeNotificationSettingsBtn" data-i18n="close">Close</button>
+  </div>
+</div>
+
 <div class="sheet-overlay" id="createLockedTagOverlay" style="z-index:496;">
   <div class="sheet" style="max-width:380px;">
     <h2 id="createLockedTagTitle" data-i18n="setUpSecuredNotesTitle">Set Up Secured Notes</h2>
@@ -1536,6 +1578,14 @@
       manageRemindersTitle: "管理提醒",
       manageRemindersMenuLabel: "管理提醒",
       appLockMenuLabel: "App 密码",
+      notificationSettingsMenuLabel: "通知",
+      notificationSettingsExplain: "提醒到期的时候会推送通知给你，就算 App 没打开也能收到。",
+      notifNeedsHomeScreen: "在 iPhone 上，通知只有在把这个 App 添加到主屏幕、并且从主屏幕图标打开的时候才能用——从 Safari 普通网页标签页打开是不行的。在 Safari 里点分享图标，选「添加到主屏幕」，然后从那个图标打开这个 App，再来试一次。",
+      notifUnsupportedDevice: "这个设备或者浏览器不支持推送通知。",
+      enableNotificationsAction: "开启通知",
+      notifCurrentlyOn: "通知已经开启了。",
+      notifDeniedExplain: "之前把这个 App 的通知关掉了。要重新开启，去 iPhone「设置」→「通知」→找到 Mind Search，把「允许通知」打开。",
+      toastNotificationsEnabled: "通知已开启",
       appLockTitle: "输入密码",
       passwordPlaceholder: "密码",
       incorrectPassword: "密码不对",
@@ -1941,6 +1991,14 @@
       confirmPasswordPlaceholder: "再輸一次密碼",
       enableAppLockAction: "開啟",
       appLockCurrentlyOn: "App 密碼目前是開啟狀態。",
+      notificationSettingsMenuLabel: "通知",
+      notificationSettingsExplain: "提醒到期的時候會推送通知給你，就算 App 沒打開也能收到。",
+      notifNeedsHomeScreen: "在 iPhone 上，通知只有在把這個 App 加到主畫面、並且從主畫面圖示打開的時候才能用——從 Safari 一般網頁分頁打開是不行的。在 Safari 裡點分享圖示，選「加入主畫面」，然後從那個圖示打開這個 App，再來試一次。",
+      notifUnsupportedDevice: "這個裝置或瀏覽器不支援推播通知。",
+      enableNotificationsAction: "開啟通知",
+      notifCurrentlyOn: "通知已經開啟了。",
+      notifDeniedExplain: "之前把這個 App 的通知關掉了。要重新開啟，去 iPhone「設定」→「通知」→找到 Mind Search，把「允許通知」打開。",
+      toastNotificationsEnabled: "通知已開啟",
       disableAppLockAction: "關閉",
       toastEnterPassword: "請輸入密碼",
       appLockCurrentlyOffKeptPassword: "App 密碼目前是關閉狀態——之前設定的密碼還留著。",
@@ -2347,6 +2405,14 @@
       confirmDisableAppLock: "Turn off the app password?",
       toastAppLockDisabled: "App password disabled",
       toastPasswordReset: "Password reset — your new password is now active", 
+      notificationSettingsMenuLabel: "Notifications",
+      notificationSettingsExplain: "Get a push notification when a reminder is due \u2014 even if the app isn't open.",
+      notifNeedsHomeScreen: "On iPhone, notifications only work when this app is added to your Home Screen and opened from there \u2014 not from a regular Safari tab. Tap the Share icon in Safari, then \"Add to Home Screen,\" and open the app from that icon before trying again.",
+      notifUnsupportedDevice: "This device or browser doesn't support push notifications.",
+      enableNotificationsAction: "Enable Notifications",
+      notifCurrentlyOn: "Notifications are on.",
+      notifDeniedExplain: "Notifications were previously turned off for this app. To turn them back on, go to iPhone Settings \u2192 Notifications \u2192 Mind Search, and enable \"Allow Notifications.\"",
+      toastNotificationsEnabled: "Notifications enabled",
       setUpSecuredNotesTitle: "Set Up Secured Notes",
       secureNotesExplain: "Locked notes are hidden everywhere else in the app — Recent, Search, tags, everything — until you unlock this folder with its password.",
       securedNotesLabel: "Secured Notes",
@@ -5961,6 +6027,56 @@
       await storageAdapter.set('push-subscription', JSON.stringify(subscription), false);
     }catch(e){ console.error('push subscription failed', e); }
   }
+
+  function isRunningStandalone(){
+    return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  }
+
+  function refreshNotificationSettingsPanel(){
+    $('notifNotStandaloneState').style.display = 'none';
+    $('notifUnsupportedState').style.display = 'none';
+    $('notifDefaultState').style.display = 'none';
+    $('notifGrantedState').style.display = 'none';
+    $('notifDeniedState').style.display = 'none';
+
+    if(!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)){
+      if(!isRunningStandalone()){
+        $('notifNotStandaloneState').style.display = 'block'; // most common real cause on iPhone — check this first
+      } else {
+        $('notifUnsupportedState').style.display = 'block';
+      }
+      return;
+    }
+    if(Notification.permission === 'granted'){ $('notifGrantedState').style.display = 'block'; }
+    else if(Notification.permission === 'denied'){ $('notifDeniedState').style.display = 'block'; }
+    else { $('notifDefaultState').style.display = 'block'; }
+  }
+
+  $('openNotificationSettingsBtn').addEventListener('click', ()=>{
+    $('settingsMenu').classList.remove('open');
+    if(!isSignedIn){
+      showToast(T().toastFileNeedsAccount);
+      showAuthOverlay();
+      return;
+    }
+    refreshNotificationSettingsPanel();
+    $('notificationSettingsOverlay').classList.add('open');
+  });
+  $('closeNotificationSettingsBtn').addEventListener('click', ()=> $('notificationSettingsOverlay').classList.remove('open'));
+  $('notificationSettingsOverlay').addEventListener('click', (e)=>{ if(e.target.id==='notificationSettingsOverlay') $('notificationSettingsOverlay').classList.remove('open'); });
+
+  $('notifEnableBtn').addEventListener('click', async ()=>{
+    // Notification.requestPermission() must be called directly inside a user-gesture handler on iOS — no
+    // awaited work before it — so this stays a plain click handler with the request as its first action.
+    try{
+      const permission = await Notification.requestPermission();
+      if(permission === 'granted'){
+        await ensurePushSubscriptionSaved();
+        showToast(T().toastNotificationsEnabled);
+      }
+    }catch(e){ console.error('notification permission request failed', e); }
+    refreshNotificationSettingsPanel();
+  });
 
   function openMapsChooser(location){
     currentDetailLocation = location;
