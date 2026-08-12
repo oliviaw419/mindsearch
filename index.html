@@ -671,6 +671,7 @@
     </div>
     <div class="detail-content" id="detailContent"></div>
     <div id="detailVideoWrap" style="display:none; margin-top:12px;">
+      <div id="detailVideoProcessingNote" style="display:none; font-size:11.5px; color:var(--ink-soft); margin-bottom:6px;" data-i18n="videoCompressingNote">Compressing in the background — this video will get smaller automatically, no action needed.</div>
       <video id="detailVideo" controls style="width:100%; border-radius:14px; display:block; background:#000;"></video>
     </div>
     <div class="audio-row" id="detailAudioRow" style="display:none;">
@@ -1251,7 +1252,7 @@
   } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
   import {
     getFirestore, doc, getDoc, setDoc, deleteDoc,
-    collection, getDocs, query, orderBy, limit
+    collection, getDocs, query, orderBy, limit, onSnapshot
   } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
   import {
     getStorage, ref, uploadBytes, uploadBytesResumable, getDownloadURL, deleteObject
@@ -1280,7 +1281,7 @@
     createUserWithEmailAndPassword, signInWithEmailAndPassword,
     sendPasswordResetEmail, onAuthStateChanged, signOut,
     EmailAuthProvider, reauthenticateWithCredential, reauthenticateWithPopup,
-    doc, getDoc, setDoc, deleteDoc,
+    doc, getDoc, setDoc, deleteDoc, onSnapshot,
     collection, getDocs, query, orderBy, limit,
     ref, uploadBytes, uploadBytesResumable, getDownloadURL, deleteObject
   };
@@ -1480,6 +1481,8 @@
       toastVideoNotSupported: "你的浏览器不支持视频压缩，换个新一点的浏览器试试",
       confirmReplaceVideo: "替换掉现在这个视频？",
       toastVideoTooLarge: "视频文件太大了，换个小一点的试试",
+      toastVideoTooLong: (mins) => `视频超过 ${mins} 分钟上限了，请先剪短一点再上传`,
+      videoCompressingNote: "正在后台压缩中——处理完会自动变小，不用你做任何操作",
       confirmVideoTruncate: (mins) => `这段视频有 ${mins} 分钟，只会截取前 5 分钟，要继续吗？`,
       videoProcessing: (cur, total) => `压缩中… ${cur} / ${total}`,
       toastVideoUncompressed: "压缩失败，已上传原始视频（体积可能偏大）",
@@ -1860,6 +1863,8 @@
       confirmReplaceVideo: "取代掉現在這個影片？",
       toastVideoTooLarge: "影片檔案太大了，換個小一點的試試",
       confirmVideoTruncate: (mins) => `這段影片有 ${mins} 分鐘，只會截取前 5 分鐘，要繼續嗎？`,
+      toastVideoTooLong: (mins) => `影片超過 ${mins} 分鐘上限了，請先剪短一點再上傳`,
+      videoCompressingNote: "正在後台壓縮中——處理完會自動變小，不用你做任何操作",
       videoProcessing: (cur, total) => `壓縮中… ${cur} / ${total}`,
       toastVideoCompressFail: "影片壓縮失敗，請重試或換一段影片",
       toastVideoUncompressed: "壓縮失敗，已上傳原始影片（體積可能偏大）",
@@ -2222,6 +2227,8 @@
       toastVideoTooLarge: "That video file is too large — try a smaller one",
       confirmVideoTruncate: (mins) => `This video is ${mins} minutes long — only the first 5 minutes will be used. Continue?`,
       videoProcessing: (cur, total) => `Compressing… ${cur} / ${total}`,
+      toastVideoTooLong: (mins) => `That video is over the ${mins}-minute limit — please trim it before uploading`,
+      videoCompressingNote: "Compressing in the background \u2014 this video will get smaller automatically, no action needed.",
       toastVideoCompressFail: "Video compression failed — please try again or use a different video",
       addVoice: "Add Voice",
       toastVideoUncompressed: "Compression failed — uploaded the original video instead (may be larger)",
@@ -2647,6 +2654,58 @@
     }
   }
 
+  const activeVideoWatchers = {}; // entryId -> unsubscribe function, so we never double-listen
+
+  function renderDetailVideo(entry){
+    if(entry.video){
+      $('detailVideo').src = entry.video.url;
+      $('detailVideoProcessingNote').style.display = entry.video.status === 'processing' ? 'block' : 'none';
+      $('detailVideoWrap').style.display = 'block';
+    } else {
+      $('detailVideoWrap').style.display = 'none';
+    }
+  }
+
+  function watchVideoCompression(entryId){
+    if(activeVideoWatchers[entryId]) return; // already watching
+    const fb = window.__firebase;
+    if(!fb.auth.currentUser) return;
+    const uid = fb.auth.currentUser.uid;
+    const ref = fb.doc(fb.db, 'users', uid, 'videoStatus', entryId);
+    const unsubscribe = fb.onSnapshot(ref, (snap) => {
+      if(!snap.exists()) return;
+      const data = snap.data();
+      if(data.status !== 'done' && data.status !== 'failed') return;
+
+      const entry = entries.find(e => e.id === entryId);
+      if(entry && entry.video){
+        if(data.status === 'done'){
+          const oldPath = entry.video.path;
+          entry.video = {
+            url: data.compressedUrl, path: data.compressedPath,
+            duration: entry.video.duration, size: data.compressedSize,
+            status: null
+          };
+          deleteFileFromStorage(oldPath).catch(()=>{}); // the original, now-superseded upload
+        } else {
+          entry.video.status = null; // compression failed — keep the original video, just stop showing "processing"
+        }
+        persistIndex();
+        if(currentDetailId === entryId){ renderDetailVideo(entry); }
+        renderRecent(); renderRandom(); renderForgotten();
+        if($('sectionTabsBar').children.length){ tabRenderFn(getActiveTabId())(); }
+      }
+
+      unsubscribe();
+      delete activeVideoWatchers[entryId];
+      fb.deleteDoc(ref).catch(()=>{});
+    }, (err) => {
+      console.error('video status watch failed', err);
+      delete activeVideoWatchers[entryId];
+    });
+    activeVideoWatchers[entryId] = unsubscribe;
+  }
+
   async function persistMediaFor(entry){
     if(entry.hasAudio){
       try{
@@ -2715,6 +2774,7 @@
     if(entries.some(e => e.reminderDate) && isSignedIn && window.Notification && Notification.permission === 'granted'){
       ensurePushSubscriptionSaved(); // safe to do silently — permission was already granted, no new prompt involved
     }
+    entries.filter(e => e.video && e.video.status === 'processing').forEach(e => watchVideoCompression(e.id));
   }
 
   function todayDateStr(){
@@ -4626,7 +4686,7 @@
     pendingTags = [...(entry.tags || [])];
     renderTagPicker();
     if(entry.video){
-      pendingVideo = { isNew:false, url: entry.video.url, path: entry.video.path, duration: entry.video.duration, size: entry.video.size };
+      pendingVideo = { isNew:false, url: entry.video.url, path: entry.video.path, duration: entry.video.duration, size: entry.video.size, status: entry.video.status || null };
       renderVideoPreview();
     }
     if(entry.location){
@@ -4721,12 +4781,6 @@
         const ctx = canvas.getContext('2d');
 
         sourceVideo.play().then(() => {
-          // Now that playback has genuinely started (past the autoplay-permission check), switch off
-          // `muted` — on several browsers (notably Safari/iOS) a muted media element's captureStream()
-          // audio track carries no real data at all, regardless of what plays through the speakers.
-          // volume=0 keeps it silent to the user while keeping the track "live" for capture purposes.
-          sourceVideo.muted = false;
-          sourceVideo.volume = 0;
           const canvasStream = canvas.captureStream(30);
           let audioTracks = [];
           try{
@@ -5230,43 +5284,24 @@
       return;
     }
 
-    // Peek duration first so we can warn about truncation before committing to compression
+    // Peek duration — videos over the cap are rejected here rather than auto-truncated,
+    // since truncating requires re-encoding, which now happens server-side (after upload)
+    // rather than in the browser. Re-encoding here first would mean uploading a second,
+    // large intermediate file just to check length, which isn't worth it for this case.
     const probe = document.createElement('video');
     probe.preload = 'metadata';
     probe.src = URL.createObjectURL(file);
-    probe.onloadedmetadata = async () => {
+    probe.onloadedmetadata = () => {
       const durationSec = probe.duration || 0;
       URL.revokeObjectURL(probe.src);
       if(durationSec > VIDEO_MAX_DURATION_SEC){
-        const mins = (durationSec / 60).toFixed(1);
-        if(!confirm(T().confirmVideoTruncate(mins))) return;
+        showToast(T().toastVideoTooLong(Math.round(VIDEO_MAX_DURATION_SEC/60)));
+        return;
       }
 
       if(pendingVideo && pendingVideo.isNew && pendingVideo.previewUrl){ URL.revokeObjectURL(pendingVideo.previewUrl); }
-      $('videoProcessingStatus').style.display = 'block';
-      $('videoProcessingStatus').textContent = T().videoProcessing(0, Math.min(durationSec, VIDEO_MAX_DURATION_SEC));
-      $('videoToolbarBtn').style.pointerEvents = 'none';
-
-      try{
-        const { blob, duration, uncompressed } = await compressVideo(file, (current, total) => {
-          $('videoProcessingStatus').textContent = T().videoProcessing(formatDuration(current), formatDuration(total));
-        });
-        const outType = blob.type || 'video/webm';
-        let ext = 'webm';
-        if(outType.includes('mp4')) ext = 'mp4';
-        else if(outType.includes('quicktime')) ext = 'mov';
-        else if(uncompressed && file.name && file.name.includes('.')) ext = file.name.split('.').pop();
-        const compressedFile = new File([blob], 'video.' + ext, { type: outType });
-        pendingVideo = { isNew:true, file: compressedFile, duration, previewUrl: URL.createObjectURL(compressedFile) };
-        renderVideoPreview();
-        if(uncompressed){ showToast(T().toastVideoUncompressed); }
-      }catch(err){
-        console.error('video compression failed', err);
-        showToast(T().toastVideoCompressFail);
-      } finally {
-        $('videoProcessingStatus').style.display = 'none';
-        $('videoToolbarBtn').style.pointerEvents = '';
-      }
+      pendingVideo = { isNew:true, file, duration: durationSec, previewUrl: URL.createObjectURL(file), compressionStatus: 'pending' };
+      renderVideoPreview();
     };
     probe.onerror = () => showToast(T().toastVideoCompressFail);
   });
@@ -6152,13 +6187,14 @@
             const meta = isShared
               ? await uploadFileToSharedStorage(entry.sharedId, pendingVideo.file, onProgress)
               : await uploadFileToStorage(entry.id, pendingVideo.file, onProgress);
-            entry.video = { url: meta.url, path: meta.path, duration: pendingVideo.duration, size: pendingVideo.file.size };
+            entry.video = { url: meta.url, path: meta.path, duration: pendingVideo.duration, size: pendingVideo.file.size, status: isShared ? null : 'processing' };
+            if(!isShared){ watchVideoCompression(entry.id); }
           }catch(e){
             console.error('video upload failed', e);
             showToast(T().toastFileUploadFail);
           }
         } else {
-          entry.video = { url: pendingVideo.url, path: pendingVideo.path, duration: pendingVideo.duration, size: pendingVideo.size };
+          entry.video = { url: pendingVideo.url, path: pendingVideo.path, duration: pendingVideo.duration, size: pendingVideo.size, status: pendingVideo.status || null };
         }
       } else {
         entry.video = null;
@@ -6307,12 +6343,7 @@
     $('detailTitle').textContent = entry.title;
     $('detailContent').innerHTML = renderFormattedContent(entry.content);
 
-    if(entry.video){
-      $('detailVideo').src = entry.video.url;
-      $('detailVideoWrap').style.display = 'block';
-    } else {
-      $('detailVideoWrap').style.display = 'none';
-    }
+    renderDetailVideo(entry);
 
     if(entry.images && entry.images.length){
       $('detailPhotos').innerHTML = entry.images.map(img => `<img src="${img.url}">`).join('');
