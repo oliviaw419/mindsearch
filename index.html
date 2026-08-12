@@ -1439,6 +1439,7 @@
       moreThanMonthLabel: "1个月后",
       moreThanYearLabel: "1年后",
       sortRecent: "最近添加",
+      sortRecentShared: "最近分享",
       sortAlpha: "按字母",
       tagSearchPlaceholder: "在这个标签下搜索…",
       noNotesInTag: "这里还没有笔记",
@@ -1827,6 +1828,7 @@
       moreThanYearLabel: "1年後",
       sortRecent: "最近新增",
       sortAlpha: "按字母",
+      sortRecentShared: "最近分享",
       noNotesInTag: "這裡還沒有筆記",
       tagSearchPlaceholder: "在這個標籤下搜尋…",
       mySpotsLabel: "我的\n地點",
@@ -2215,6 +2217,7 @@
       sortRecent: "Recently Added",
       sortAlpha: "A–Z",
       noNotesInTag: "No notes here yet.",
+      sortRecentShared: "Recently Shared",
       mySpotsLabel: "My Spots",
       tagSearchPlaceholder: "Search in this tag…",
       noTagsYet: "No tags yet — you can add one while editing a note.",
@@ -3159,6 +3162,7 @@
   const ICON_TAG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.6 2H4a2 2 0 00-2 2v8.6a2 2 0 00.59 1.41l9.4 9.4a2 2 0 002.82 0l8.6-8.6a2 2 0 000-2.82l-9.4-9.4A2 2 0 0012.6 2z"/><circle cx="8" cy="8" r="1.3"/></svg>';
   const ICON_LOCK = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg>';
   const ICON_COEDIT = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>';
+  const ICON_BUNDLE = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 5.5H16l5 5v6.5a1.5 1.5 0 01-1.5 1.5H9.5A1.5 1.5 0 018 17V7a1.5 1.5 0 011.5-1.5z" opacity="0.55"/><circle cx="12" cy="10.5" r="1" opacity="0.55"/><path d="M5.5 2.5H12l5 5v6.5A1.5 1.5 0 0115.5 15.5h-10A1.5 1.5 0 014 14V4a1.5 1.5 0 011.5-1.5z"/><circle cx="8" cy="7.5" r="1"/></svg>';
   const ICON_LOCATION_LG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0119 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.3"/></svg>';
   const ICON_ALL = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>';
   const ICON_UNTAGGED = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.6 2H4a2 2 0 00-2 2v8.6a2 2 0 00.59 1.41l9.4 9.4a2 2 0 002.82 0l8.6-8.6a2 2 0 000-2.82l-9.4-9.4A2 2 0 0012.6 2z" stroke-dasharray="3 3"/></svg>';
@@ -3182,7 +3186,7 @@
     const locationBadge = entry.location ? `<span class="badge">${BADGE_ICON_LOCATION}</span>` : '';
     const sharedBadge = entry.sharedId ? `<span class="badge">${BADGE_ICON_SHARED}</span>` : '';
     const bundleLabel = bundleOriginLabel(entry);
-    const bundleLine = bundleLabel ? `<div style="font-size:11px; color:var(--ink-soft); margin-top:2px;">📦 ${escapeHtml(bundleLabel)}</div>` : '';
+    const bundleLine = bundleLabel ? `<div style="font-size:11px; color:var(--ink-soft); margin-top:2px; display:flex; align-items:center; gap:3px;">${ICON_BUNDLE}${escapeHtml(bundleLabel)}</div>` : '';
     row.innerHTML = `
       <div class="delete-bg">${T().deleteSwipeLabel}</div>
       <div class="entry-card" data-id="${entry.id}">
@@ -3899,6 +3903,8 @@
           bundleId = e.receivedBundleId;
           bundleTagName = e.receivedBundleTagName;
           sortTime = e.sharedAt;
+        } else {
+          sortTime = e.sharedAt || e.updatedAt || e.createdAt;
         }
       } else if(category === 'byMe'){
         const relevantShares = (e.sharedTo || []).filter(s => !friendEmailFilter || s.email === friendEmailFilter);
@@ -3907,6 +3913,9 @@
           bundleId = bundleShare.bundleId;
           bundleTagName = bundleShare.bundleTagName;
           sortTime = bundleShare.sharedAt;
+        } else {
+          // most recent share time among the relevant shares for this note (falls back to note timestamps if somehow untracked)
+          sortTime = relevantShares.length ? Math.max(...relevantShares.map(s => s.sharedAt || 0)) : (e.updatedAt || e.createdAt);
         }
       }
 
@@ -3916,7 +3925,7 @@
         }
         bundleGroups[bundleId].notes.push(e);
       } else {
-        individuals.push({ type: 'note', entry: e, sortTime: e.updatedAt || e.createdAt, sortTitle: e.title || '' });
+        individuals.push({ type: 'note', entry: e, sortTime, sortTitle: e.title || '' });
       }
     });
 
@@ -3939,6 +3948,7 @@
     $('tagDetailSearchWrap').style.display = 'block';
     $('tagDetailBackBtn').style.display = 'none';
     tagDetailReturnContext = null;
+    $('tagSortRecentBtn').textContent = T().sortRecentShared;
     $('tagDetailTitle').textContent = title;
     $('tagRenameIconBtn').style.display = 'none';
     $('tagShareIconBtn').style.display = 'none';
@@ -3983,7 +3993,9 @@
         row.className = 'tag-row';
         row.style.background = 'var(--plum-tint)';
         row.style.boxShadow = '0 4px 16px -6px rgba(0,0,0,0.14)';
-        row.innerHTML = `<span>📦</span><span class="tag-name">${escapeHtml(item.tagName)}</span><span class="tag-count">${item.notes.length}</span>`;
+        row.style.padding = '14px 16px';
+        row.style.marginBottom = '10px';
+        row.innerHTML = `<span style="flex-shrink:0;">${ICON_BUNDLE}</span><span class="tag-name">${escapeHtml(item.tagName)}</span><span class="tag-count">${item.notes.length}</span>`;
         const searchTermAtClick = tagDetailSearchQuery;
         const returnContext = currentTagDetailContext;
         row.addEventListener('click', ()=>{
@@ -4053,7 +4065,7 @@
       const isBundle = item.kind === 'tagBundle';
       const title = isBundle ? T().tagBundleShareSummary(item.noteCount, item.tagName) : item.entryTitle;
       const statusText = formatDate(item.createdAt) + (item.toEmail ? ' · ' + item.toEmail : ' · ' + T().viaPublicLink);
-      row.innerHTML = `<span>${isBundle ? '📦' : '📄'}</span><div style="flex:1; min-width:0;"><div class="file-chip-name">${escapeHtml(title || '')}</div><div style="font-size:11px; color:var(--ink-soft);">${escapeHtml(statusText || '')}</div></div>`;
+      row.innerHTML = `<span style="flex-shrink:0;">${isBundle ? ICON_BUNDLE : '📄'}</span><div style="flex:1; min-width:0;"><div class="file-chip-name">${escapeHtml(title || '')}</div><div style="font-size:11px; color:var(--ink-soft);">${escapeHtml(statusText || '')}</div></div>`;
       const unsendBtn = document.createElement('button');
       unsendBtn.type = 'button';
       unsendBtn.textContent = T().unsendAction;
@@ -4239,6 +4251,7 @@
     $('tagDetailSearchWrap').style.display = 'block';
     $('tagDetailBackBtn').style.display = 'none';
     tagDetailReturnContext = null;
+    $('tagSortRecentBtn').textContent = T().sortRecent;
     $('tagDetailTitle').textContent = config.title;
     $('tagRenameIconBtn').style.display = config.presetTag ? 'flex' : 'none';
     renderTagDetailList();
