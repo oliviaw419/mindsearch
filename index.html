@@ -1178,6 +1178,15 @@
   </div>
 </div>
 
+<div class="sheet-overlay" id="afterDiscardReminderOverlay" style="z-index:495;">
+  <div class="sheet" style="max-width:340px;">
+    <h2 data-i18n="afterDiscardReminderTitle">Also delete this note?</h2>
+    <p style="font-size:13px; color:var(--ink-soft); margin:-8px 0 16px; line-height:1.5;" data-i18n="afterDiscardReminderExplain">You've turned off the reminder. Do you want to keep the note itself, or delete it too?</p>
+    <button class="primary-btn" id="keepNoteAfterDiscardBtn" style="margin-top:0;" data-i18n="keepNoteAction">Keep the note</button>
+    <button class="text-btn" id="deleteNoteAfterDiscardBtn" style="margin-top:10px; color:var(--danger);" data-i18n="deleteNoteAction">Delete the note</button>
+  </div>
+</div>
+
 <div class="sheet-overlay" id="deleteShareRecordOverlay" style="z-index:495;">
   <div class="sheet" style="max-width:340px;">
     <h2 data-i18n="deleteRecordAction">Delete this record</h2>
@@ -1649,6 +1658,10 @@
       reminderDueNow: "已到期",
       keepNextYearAction: "明年这天继续提醒",
       discardReminderAction: "不再提醒",
+      afterDiscardReminderTitle: "也要删除这条笔记吗？",
+      afterDiscardReminderExplain: "你已经取消了这条提醒。要保留这条笔记本身，还是也一起删掉？",
+      keepNoteAction: "保留笔记",
+      deleteNoteAction: "删除笔记",
       toastReminderKept: "好的，明年这天会再提醒你",
       toastReminderDiscarded: "已取消这条提醒",
       goToReminders: "去看看",
@@ -2050,6 +2063,10 @@
       lockAllInTagAction: "🔒 把這個標籤下所有筆記移到安全筆記",
       toastNothingToLock: "這個標籤下沒有能上鎖的筆記了",
       confirmBulkLockTag: (n, tag) => `把「${tag}」標籤下的 ${n} 則筆記都移到安全筆記嗎？這些筆記會從這個標籤的一般列表裡消失。`,
+      afterDiscardReminderTitle: "也要刪除這則筆記嗎？",
+      afterDiscardReminderExplain: "你已經取消了這條提醒。要保留這則筆記本身，還是也一起刪掉？",
+      keepNoteAction: "保留筆記",
+      deleteNoteAction: "刪除筆記",
       toastBulkLocked: (n) => `已經把 ${n} 則筆記移到安全筆記`,
       starTitle: "常復習",
       allowEditLabel: "允許對方也能編輯這則筆記",
@@ -2389,6 +2406,10 @@
       sharedOwnerBadge: "Shared for co-editing — their changes will sync to you",
       sharedCollabBadge: (who) => who ? `Shared with ${who} for co-editing` : `Shared for co-editing`,
       sharedCollabBadgeMore: (n) => ` and ${n} more`,
+      afterDiscardReminderTitle: "Also delete this note?",
+      afterDiscardReminderExplain: "You've turned off the reminder. Do you want to keep the note itself, or delete it too?",
+      keepNoteAction: "Keep the note",
+      deleteNoteAction: "Delete the note",
       langBtnTitle: "Switch language",
       languageMenuLabelZh: "Language: 中文",
       languageMenuLabelEn: "Language: English",
@@ -2938,6 +2959,8 @@
           renderRemindersList();
           checkRemindersDue();
           showToast(T().toastReminderDiscarded);
+          pendingAfterDiscardEntryId = entry.id;
+          $('afterDiscardReminderOverlay').classList.add('open');
         });
       }
       list.appendChild(row);
@@ -5980,6 +6003,14 @@
     $('addReminderBtn').style.display = 'none';
     $('reminderChipWrap').style.display = 'none';
     $('reminderInputRow').style.display = 'block';
+    if(!$('reminderDateInput').value){
+      const tomorrow = new Date(Date.now() + 86400000);
+      $('reminderDateInput').value = tomorrow.getFullYear() + '-' + String(tomorrow.getMonth()+1).padStart(2,'0') + '-' + String(tomorrow.getDate()).padStart(2,'0');
+    }
+    setTimeout(()=>{
+      if($('reminderDateInput').showPicker){ try{ $('reminderDateInput').showPicker(); }catch(e){ $('reminderDateInput').focus(); } }
+      else { $('reminderDateInput').focus(); }
+    }, 50);
   }
 
   $('addReminderBtn').addEventListener('click', openReminderPicker);
@@ -7106,6 +7137,7 @@
   }
 
   let pendingLockNewNoteEntry = null;
+  let pendingAfterDiscardEntryId = null;
   let pendingDeleteShareRecordId = null;
   function promptLockNewNote(entry, tag){
     pendingLockNewNoteEntry = entry;
@@ -7126,6 +7158,17 @@
   $('lockNewNoteNoBtn').addEventListener('click', ()=>{
     pendingLockNewNoteEntry = null;
     $('lockNewNoteOverlay').classList.remove('open');
+  });
+
+  $('keepNoteAfterDiscardBtn').addEventListener('click', ()=>{
+    pendingAfterDiscardEntryId = null;
+    $('afterDiscardReminderOverlay').classList.remove('open');
+  });
+  $('deleteNoteAfterDiscardBtn').addEventListener('click', ()=>{
+    const id = pendingAfterDiscardEntryId;
+    pendingAfterDiscardEntryId = null;
+    $('afterDiscardReminderOverlay').classList.remove('open');
+    if(id) deleteEntry(id);
   });
 
   $('confirmDeleteShareRecordBtn').addEventListener('click', async ()=>{
