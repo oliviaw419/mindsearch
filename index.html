@@ -564,7 +564,9 @@
       </div>
     </div>
     <div id="reminderInputRow" style="display:none; margin-top:10px;">
-      <input type="date" id="reminderDateInput" style="display:block; width:100%; max-width:100%; box-sizing:border-box; border:1px solid var(--line); border-radius:10px; padding:9px 12px; font-size:13px; background:var(--paper-raised); color:var(--ink); font-family:inherit;">
+      <div style="width:100%; box-sizing:border-box; overflow:hidden; border:1px solid var(--line); border-radius:10px; background:var(--paper-raised);">
+        <input type="date" id="reminderDateInput" style="display:block; width:100%; box-sizing:border-box; border:none; padding:9px 12px; font-size:13px; background:transparent; color:var(--ink); font-family:inherit; outline:none;">
+      </div>
     </div>
 
     <label class="field-label" data-i18n="attachmentsLabel" style="margin:14px 0 0;">Attachments</label>
