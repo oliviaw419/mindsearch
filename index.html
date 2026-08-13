@@ -1141,6 +1141,7 @@
         <span style="color:var(--green); font-weight:700;">✓</span>
         <span data-i18n="notifCurrentlyOn">Notifications are on.</span>
       </div>
+      <button class="text-btn" id="notifDisableBtn" style="margin-top:12px; color:var(--danger);" data-i18n="disableNotificationsAction">Turn Off</button>
     </div>
 
     <div id="notifDeniedState" style="display:none;">
@@ -1586,6 +1587,8 @@
       notifCurrentlyOn: "通知已经开启了。",
       notifDeniedExplain: "之前把这个 App 的通知关掉了。要重新开启，去 iPhone「设置」→「通知」→找到 Mind Search，把「允许通知」打开。",
       toastNotificationsEnabled: "通知已开启",
+      disableNotificationsAction: "关闭",
+      toastNotificationsDisabled: "通知已关闭",
       appLockTitle: "输入密码",
       passwordPlaceholder: "密码",
       incorrectPassword: "密码不对",
@@ -2001,6 +2004,8 @@
       toastNotificationsEnabled: "通知已開啟",
       disableAppLockAction: "關閉",
       toastEnterPassword: "請輸入密碼",
+      disableNotificationsAction: "關閉",
+      toastNotificationsDisabled: "通知已關閉",
       appLockCurrentlyOffKeptPassword: "App 密碼目前是關閉狀態——之前設定的密碼還留著。",
       setNewPasswordInsteadAction: "改設一個新密碼",
       toastPasswordsDontMatch: "兩次密碼不一致",
@@ -2416,6 +2421,8 @@
       setUpSecuredNotesTitle: "Set Up Secured Notes",
       secureNotesExplain: "Locked notes are hidden everywhere else in the app — Recent, Search, tags, everything — until you unlock this folder with its password.",
       securedNotesLabel: "Secured Notes",
+      disableNotificationsAction: "Turn Off",
+      toastNotificationsDisabled: "Notifications turned off",
       newPasswordLabel: "Password",
       resetSecuredNotesTitle: "Reset Secured Notes Password",
       resetAction: "Reset",
@@ -5986,7 +5993,7 @@
   });
 
   // ---------- Push notifications ----------
-  const VAPID_PUBLIC_KEY = 'BIHvwMoeAD8KhlcndbiYfWOafZCW5MCQ1tiGKOL-jvZcmoVGBSHtialJd21aE-b2C0WIRlXsPKbwdaA_xy1zxtU';
+  const VAPID_PUBLIC_KEY = 'BNATjRZkand3gSm4jYDbyAJmIK8WoJUEZp4aWr6rlQPqOEDY0XWcINukANhLKIw4-TXtmP2iQka5m4FtKCxomIM';
 
   function urlBase64ToUint8Array(base64String){
     const padding = '='.repeat((4 - base64String.length % 4) % 4);
@@ -6032,7 +6039,7 @@
     return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
   }
 
-  function refreshNotificationSettingsPanel(){
+  async function refreshNotificationSettingsPanel(){
     $('notifNotStandaloneState').style.display = 'none';
     $('notifUnsupportedState').style.display = 'none';
     $('notifDefaultState').style.display = 'none';
@@ -6047,19 +6054,30 @@
       }
       return;
     }
-    if(Notification.permission === 'granted'){ $('notifGrantedState').style.display = 'block'; }
-    else if(Notification.permission === 'denied'){ $('notifDeniedState').style.display = 'block'; }
-    else { $('notifDefaultState').style.display = 'block'; }
+    if(Notification.permission === 'denied'){ $('notifDeniedState').style.display = 'block'; return; }
+    if(Notification.permission === 'granted'){
+      // OS-level permission can't be un-granted from JS — whether notifications are actually "on"
+      // depends on whether we still have a live, saved subscription (which "Turn Off" clears).
+      let hasSavedSubscription = false;
+      try{
+        const res = await storageAdapter.get('push-subscription', false);
+        hasSavedSubscription = !!(res && res.value);
+      }catch(e){ /* no subscription saved */ }
+      if(hasSavedSubscription){ $('notifGrantedState').style.display = 'block'; }
+      else { $('notifDefaultState').style.display = 'block'; }
+      return;
+    }
+    $('notifDefaultState').style.display = 'block';
   }
 
-  $('openNotificationSettingsBtn').addEventListener('click', ()=>{
+  $('openNotificationSettingsBtn').addEventListener('click', async ()=>{
     $('settingsMenu').classList.remove('open');
     if(!isSignedIn){
       showToast(T().toastFileNeedsAccount);
       showAuthOverlay();
       return;
     }
-    refreshNotificationSettingsPanel();
+    await refreshNotificationSettingsPanel();
     $('notificationSettingsOverlay').classList.add('open');
   });
   $('closeNotificationSettingsBtn').addEventListener('click', ()=> $('notificationSettingsOverlay').classList.remove('open'));
@@ -6075,7 +6093,20 @@
         showToast(T().toastNotificationsEnabled);
       }
     }catch(e){ console.error('notification permission request failed', e); }
-    refreshNotificationSettingsPanel();
+    await refreshNotificationSettingsPanel();
+  });
+
+  $('notifDisableBtn').addEventListener('click', async ()=>{
+    try{
+      const registration = await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.getSubscription();
+      if(subscription){ await subscription.unsubscribe(); }
+      await storageAdapter.delete('push-subscription', false);
+      showToast(T().toastNotificationsDisabled);
+    }catch(e){
+      console.error('failed to disable notifications', e);
+    }
+    await refreshNotificationSettingsPanel();
   });
 
   function openMapsChooser(location){
