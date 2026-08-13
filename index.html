@@ -3841,34 +3841,36 @@
   function renderSharedTab(){
     const list = $('sharedTabList');
     list.innerHTML = '';
+    const visible = visibleEntries();
 
     const coEditRow = document.createElement('div');
     coEditRow.className = 'tag-row';
-    const coEditCount = entries.filter(e => e.sharedId).length;
+    const coEditCount = visible.filter(e => e.sharedId).length;
     coEditRow.innerHTML = `<span>${ICON_COEDIT}</span><span class="tag-name">${T().coEditingLabel}</span><span class="tag-count">${coEditCount}</span>`;
     coEditRow.addEventListener('click', ()=> openSharedCategory('coediting'));
     list.appendChild(coEditRow);
 
     const withMeRow = document.createElement('div');
     withMeRow.className = 'tag-row';
-    const withMeCount = entries.filter(e => e.sharedBy).length;
+    const withMeCount = visible.filter(e => e.sharedBy).length;
     withMeRow.innerHTML = `<span>${ICON_INBOX}</span><span class="tag-name">${T().sharedWithMeLabel}</span><span class="tag-count">${withMeCount}</span>`;
     withMeRow.addEventListener('click', ()=> openSharedCategory('withMe'));
     list.appendChild(withMeRow);
 
     const byMeRow = document.createElement('div');
     byMeRow.className = 'tag-row';
-    const byMeCount = entries.filter(e => e.sharedTo && e.sharedTo.length > 0).length;
+    const byMeCount = visible.filter(e => e.sharedTo && e.sharedTo.length > 0).length;
     byMeRow.innerHTML = `<span>${ICON_SHARE_OUT}</span><span class="tag-name">${T().sharedByMeLabel}</span><span class="tag-count">${byMeCount}</span>`;
     byMeRow.addEventListener('click', ()=> openSharedCategory('byMe'));
     list.appendChild(byMeRow);
   }
 
   async function openSharedCategory(category){
+    const visible = visibleEntries();
     let baseNotes;
-    if(category === 'coediting'){ baseNotes = entries.filter(e => e.sharedId); }
-    else if(category === 'withMe'){ baseNotes = entries.filter(e => e.sharedBy); }
-    else { baseNotes = entries.filter(e => e.sharedTo && e.sharedTo.length > 0); }
+    if(category === 'coediting'){ baseNotes = visible.filter(e => e.sharedId); }
+    else if(category === 'withMe'){ baseNotes = visible.filter(e => e.sharedBy); }
+    else { baseNotes = visible.filter(e => e.sharedTo && e.sharedTo.length > 0); }
 
     const groupsMap = {}; // email -> { label, notes: Set-like array (deduped) }
     for(const e of baseNotes){
@@ -4534,12 +4536,13 @@
   }
 
   function pickRandomEntry(){
-    if(entries.length === 0) return null;
-    if(entries.length === 1) return entries[0];
-    const maxExclude = Math.min(5, entries.length - 1);
+    const pool0 = visibleEntries();
+    if(pool0.length === 0) return null;
+    if(pool0.length === 1) return pool0[0];
+    const maxExclude = Math.min(5, pool0.length - 1);
     recentRandomIds = recentRandomIds.slice(-maxExclude);
-    let pool = entries.filter(e => !recentRandomIds.includes(e.id));
-    if(pool.length === 0) pool = entries;
+    let pool = pool0.filter(e => !recentRandomIds.includes(e.id));
+    if(pool.length === 0) pool = pool0;
     const pick = pool[Math.floor(Math.random() * pool.length)];
     recentRandomIds.push(pick.id);
     return pick;
@@ -4589,7 +4592,7 @@
   }
 
   function pickForgottenEntry(){
-    const pool = entries.filter(e => e.forgetCount > 0 || e.pinned);
+    const pool = visibleEntries().filter(e => e.forgetCount > 0 || e.pinned);
     if(pool.length === 0) return null;
     if(pool.length === 1) return pool[0];
     const maxExclude = Math.min(5, pool.length - 1);
