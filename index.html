@@ -742,14 +742,20 @@
     </div>
 
     <div id="detailChecklistWrap" style="display:none; margin-top:12px;">
-      <span style="font-size:12px; font-weight:600; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.06em; white-space:nowrap;" data-i18n="checklistLabel">Checklist</span>
-      <div id="detailChecklistActive" style="display:flex; flex-direction:column; gap:6px; margin-top:6px;"></div>
-      <div style="display:flex; gap:6px; margin-top:8px;">
-        <input class="field" id="detailChecklistQuickAddInput" type="text" data-i18n-placeholder="checklistItemPlaceholder" placeholder="Add an item…" style="flex:1; min-width:0; padding:8px 10px; font-size:13px;">
-        <button type="button" id="detailChecklistQuickAddBtn" class="text-btn" style="margin:0; padding:0 8px; flex-shrink:0; font-weight:700;" data-i18n="addAction">Add</button>
+      <div style="display:flex; align-items:center; justify-content:space-between;">
+        <span style="font-size:12px; font-weight:600; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.06em; white-space:nowrap;" data-i18n="checklistLabel">Checklist</span>
+        <button type="button" id="detailChecklistGridToggleBtn" class="text-btn" style="display:none; width:auto; margin:0; padding:0;" data-i18n="checklistGridViewAction">Grid view</button>
       </div>
-      <button type="button" id="detailChecklistCompletedToggleBtn" style="display:none; margin-top:10px; padding:0; background:none; border:none; color:var(--ink-soft); font-size:12.5px; cursor:pointer;"></button>
-      <div id="detailChecklistCompletedList" style="display:none; flex-direction:column; gap:6px; margin-top:8px;"></div>
+      <div id="detailChecklistListModeWrap">
+        <div id="detailChecklistActive" style="display:flex; flex-direction:column; gap:6px; margin-top:6px;"></div>
+        <div style="display:flex; gap:6px; margin-top:8px;">
+          <input class="field" id="detailChecklistQuickAddInput" type="text" data-i18n-placeholder="checklistItemPlaceholder" placeholder="Add an item…" style="flex:1; min-width:0; padding:8px 10px; font-size:13px;">
+          <button type="button" id="detailChecklistQuickAddBtn" class="text-btn" style="width:auto; margin:0; padding:0 8px; flex-shrink:0; font-weight:700;" data-i18n="addAction">Add</button>
+        </div>
+        <button type="button" id="detailChecklistCompletedToggleBtn" style="display:none; margin-top:10px; padding:0; background:none; border:none; color:var(--ink-soft); font-size:12.5px; cursor:pointer;"></button>
+        <div id="detailChecklistCompletedList" style="display:none; flex-direction:column; gap:6px; margin-top:8px;"></div>
+      </div>
+      <div id="detailChecklistGridModeWrap" style="display:none; margin-top:8px;"></div>
     </div>
 
     <div id="detailHabitWrap" style="display:none; margin-top:12px;">
@@ -1916,6 +1922,8 @@
       checklistCommentsTitle: "评论",
       checklistCommentPlaceholder: "写句短评…",
       checklistNoCommentsYet: "还没有人留评论",
+      checklistTapToEdit: "点一下可以改",
+      checklistAddCommentAction: "加一句评论",
       checklistGridViewAction: "网格视图",
       checklistListViewAction: "列表视图",
       habitTrackerLabel: "习惯打卡",
@@ -2397,6 +2405,8 @@
       checklistNoCommentsYet: "還沒有人留評論",
       checklistGridViewAction: "網格檢視",
       checklistListViewAction: "清單檢視",
+      checklistTapToEdit: "點一下可以改",
+      checklistAddCommentAction: "加一句評論",
       exportPdfAction: "匯出 PDF",
       exportExcelAction: "匯出 Excel",
       noteColumnLabel: "備註",
@@ -2878,6 +2888,8 @@
       checklistListViewAction: "List view",
       setReminderForPrediction: "Set a reminder for this date",
       dateLogPredictionText: (avg, next) => `Averaging every ${avg} days · Next expected: ${next}`,
+      checklistTapToEdit: "Tap to edit",
+      checklistAddCommentAction: "Add a comment",
       dateLogSummary: (n, latest) => `${n} entries · Most recent ${latest}`,
       toastDateLogAdded: "Added",
       toastReminderSetFromPrediction: "Reminder set",
@@ -6265,8 +6277,8 @@
   function checklistCheckboxEl(item, onToggle){
     const checkbox = document.createElement('button');
     checkbox.type = 'button';
-    checkbox.style.cssText = `flex-shrink:0; width:20px; height:20px; border-radius:6px; border:1.5px solid ${item.done ? 'var(--green)' : 'var(--line)'}; background:${item.done ? 'var(--green)' : 'transparent'}; color:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:12px; padding:0;`;
-    checkbox.innerHTML = item.done ? '✓' : '';
+    checkbox.style.cssText = `flex-shrink:0; width:22px; height:22px; border-radius:50%; border:2px solid ${item.done ? 'var(--amber-deep)' : 'var(--line)'}; background:${item.done ? 'var(--amber-deep)' : 'transparent'}; display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; transition:background .2s ease, border-color .2s ease;`;
+    checkbox.innerHTML = item.done ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>' : '';
     checkbox.addEventListener('click', onToggle);
     return checkbox;
   }
@@ -6298,19 +6310,52 @@
     return { email: me.email, name: me.displayName || (me.email ? me.email.split('@')[0] : 'Me') };
   }
 
+  function beginEditCommentInline(item, anchorEl, existingComment, getList, setList, rerender){
+    const me = getMyIdentity();
+    if(!me) return;
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'field';
+    input.placeholder = T().checklistCommentPlaceholder;
+    input.value = existingComment ? existingComment.text : '';
+    input.style.cssText = 'width:100%; box-sizing:border-box; padding:5px 8px; font-size:12.5px;';
+    anchorEl.replaceWith(input);
+    input.focus();
+    let committed = false;
+    const commit = ()=>{
+      if(committed) return;
+      committed = true;
+      const text = input.value.trim();
+      const others = (item.comments||[]).filter(c => c.authorEmail !== me.email);
+      const newComments = text ? [...others, { authorEmail: me.email, authorName: me.name, text, timestamp: Date.now() }] : others;
+      setList(getList().map(it => it.id === item.id ? {...it, comments: newComments} : it));
+      rerender();
+    };
+    input.addEventListener('blur', commit);
+    input.addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ input.blur(); } });
+  }
+
   let checklistExpandedCommentIds = {}; // itemId -> bool, which items currently have their comment area open
 
   // getList()/setList() abstract over "editing pendingChecklist" vs "editing a saved entry's checklist" so
   // the overlay (new note) and the note-detail view (existing note) can share one row-building implementation.
   function buildChecklistItemRow(item, getList, setList, rerender){
     const wrap = document.createElement('div');
-    wrap.style.cssText = 'background:var(--paper-raised); border-radius:12px; padding:8px 10px;';
+    wrap.style.cssText = 'background:var(--paper-raised); border-radius:12px; padding:8px 10px; transition:opacity .45s ease;';
 
     const row = document.createElement('div');
-    row.style.cssText = 'display:flex; align-items:center; gap:8px;';
+    row.style.cssText = 'display:flex; align-items:center; gap:10px;';
     row.appendChild(checklistCheckboxEl(item, ()=>{
-      setList(getList().map(it => it.id === item.id ? {...it, done: !it.done} : it));
-      rerender();
+      const newDone = !item.done;
+      setList(getList().map(it => it.id === item.id ? {...it, done: newDone} : it));
+      if(newDone){
+        // Apple Reminders-style: mark done in place, brief pause so an accidental tap is easy to reverse
+        // right where it happened, THEN move it into the Completed section on the next render.
+        wrap.style.opacity = '0.45';
+        setTimeout(rerender, 550);
+      } else {
+        rerender();
+      }
     }));
 
     const textSpan = document.createElement('span');
@@ -6353,10 +6398,17 @@
       commentArea.style.cssText = 'margin-top:8px; padding-top:8px; border-top:1px solid var(--line); display:flex; flex-direction:column; gap:6px;';
 
       const me = getMyIdentity();
+      const myComment = me ? comments.find(c => c.authorEmail === me.email) : null;
+
       comments.forEach(c => {
+        const isMine = me && c.authorEmail === me.email;
         const cRow = document.createElement('div');
-        cRow.style.cssText = 'font-size:12.5px; line-height:1.4;';
+        cRow.style.cssText = `font-size:12.5px; line-height:1.4; ${isMine ? 'cursor:text;' : ''}`;
         cRow.innerHTML = `<span style="font-weight:700; color:var(--ink);">${escapeHtml(c.authorName)}</span><span style="color:var(--ink-soft);">: ${escapeHtml(c.text)}</span>`;
+        if(isMine){
+          cRow.title = T().checklistTapToEdit;
+          cRow.addEventListener('click', ()=> beginEditCommentInline(item, cRow, c, getList, setList, rerender));
+        }
         commentArea.appendChild(cRow);
       });
       if(comments.length === 0){
@@ -6366,27 +6418,13 @@
         commentArea.appendChild(emptyHint);
       }
 
-      if(me){
-        const myExisting = comments.find(c => c.authorEmail === me.email);
-        const inputRow = document.createElement('div');
-        inputRow.style.cssText = 'display:flex; gap:6px; margin-top:2px;';
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.className = 'field';
-        input.placeholder = T().checklistCommentPlaceholder;
-        input.value = myExisting ? myExisting.text : '';
-        input.style.cssText = 'flex:1; min-width:0; padding:5px 8px; font-size:12.5px;';
-        const saveComment = ()=>{
-          const text = input.value.trim();
-          const others = comments.filter(c => c.authorEmail !== me.email);
-          const newComments = text ? [...others, { authorEmail: me.email, authorName: me.name, text, timestamp: Date.now() }] : others;
-          setList(getList().map(it => it.id === item.id ? {...it, comments: newComments} : it));
-          rerender();
-        };
-        input.addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ input.blur(); } });
-        input.addEventListener('blur', saveComment);
-        inputRow.appendChild(input);
-        commentArea.appendChild(inputRow);
+      if(me && !myComment){
+        const addLink = document.createElement('button');
+        addLink.type = 'button';
+        addLink.textContent = '+ ' + T().checklistAddCommentAction;
+        addLink.style.cssText = 'background:none; border:none; color:var(--plum-deep); font-size:12px; font-weight:600; cursor:pointer; padding:2px 0; text-align:left;';
+        addLink.addEventListener('click', ()=> beginEditCommentInline(item, addLink, null, getList, setList, rerender));
+        commentArea.appendChild(addLink);
       }
 
       wrap.appendChild(commentArea);
@@ -6418,13 +6456,13 @@
     $('checklistGridToggleBtn').style.display = hasAnyComments ? 'block' : 'none';
   }
 
-  function renderChecklistGridView(){
-    const items = getActiveChecklist();
+  function renderChecklistGridView(getList, wrapEl){
+    const items = getList();
     const authorsMap = {};
     items.forEach(item => (item.comments||[]).forEach(c => { authorsMap[c.authorEmail] = c.authorName; }));
     const authors = Object.keys(authorsMap);
 
-    const wrap = $('checklistGridModeWrap');
+    const wrap = wrapEl;
     wrap.innerHTML = '';
     if(authors.length === 0){
       wrap.innerHTML = `<div class="empty-note">${T().checklistNoCommentsYet}</div>`;
@@ -6474,7 +6512,7 @@
     $('checklistGridToggleBtn').textContent = checklistGridMode ? T().checklistListViewAction : T().checklistGridViewAction;
     $('checklistListModeWrap').style.display = checklistGridMode ? 'none' : 'block';
     $('checklistGridModeWrap').style.display = checklistGridMode ? 'block' : 'none';
-    if(checklistGridMode){ renderChecklistGridView(); }
+    if(checklistGridMode){ renderChecklistGridView(getActiveChecklist, $('checklistGridModeWrap')); }
   });
 
   function openChecklistOverlay(){
@@ -6542,8 +6580,22 @@
       completed.forEach(item => completedWrap.appendChild(buildChecklistItemRow(item, getList, setList, rerender)));
     }
 
+    const hasAnyComments = items.some(it => it.comments && it.comments.length > 0);
+    $('detailChecklistGridToggleBtn').style.display = hasAnyComments ? 'block' : 'none';
+    if(detailChecklistGridMode){ renderChecklistGridView(getList, $('detailChecklistGridModeWrap')); }
+
     $('detailChecklistWrap').style.display = 'block';
   }
+
+  let detailChecklistGridMode = false;
+  $('detailChecklistGridToggleBtn').addEventListener('click', ()=>{
+    detailChecklistGridMode = !detailChecklistGridMode;
+    $('detailChecklistGridToggleBtn').textContent = detailChecklistGridMode ? T().checklistListViewAction : T().checklistGridViewAction;
+    $('detailChecklistListModeWrap').style.display = detailChecklistGridMode ? 'none' : 'block';
+    $('detailChecklistGridModeWrap').style.display = detailChecklistGridMode ? 'block' : 'none';
+    const entry = entries.find(e => e.id === currentDetailId);
+    if(entry) renderDetailChecklist(entry);
+  });
 
   $('detailChecklistCompletedToggleBtn').addEventListener('click', ()=>{
     checklistShowCompleted = !checklistShowCompleted;
@@ -7712,6 +7764,10 @@
     $('toggleLockEntryBtn').title = entry.locked ? T().unlockThisNoteAction : T().lockThisNoteAction;
     detailDateLogRange = 'all';
     checklistShowCompleted = false;
+    detailChecklistGridMode = false;
+    $('detailChecklistGridToggleBtn').textContent = T().checklistGridViewAction;
+    $('detailChecklistListModeWrap').style.display = 'block';
+    $('detailChecklistGridModeWrap').style.display = 'none';
     renderDetailDateLog(entry);
     renderDetailChecklist(entry);
     renderDetailHabitSummary(entry);
