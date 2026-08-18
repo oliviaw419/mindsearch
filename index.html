@@ -1027,7 +1027,7 @@
 
     <div id="habitWeeklySection" style="display:none; margin-top:18px;">
       <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
-        <span style="font-size:12px; font-weight:600; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.06em;" data-i18n="habitThisWeekLabel">This Week</span>
+        <span id="habitWeeklySectionTitle" style="font-size:12px; font-weight:600; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.06em;"></span>
         <div style="display:flex; align-items:center; gap:8px;">
           <button type="button" id="habitWeekPrevBtn" style="background:none; border:none; cursor:pointer; color:var(--ink-soft); padding:2px;">◀</button>
           <span id="habitWeekRangeLabel" style="font-size:12px; color:var(--ink-soft); white-space:nowrap;"></span>
@@ -1039,7 +1039,7 @@
 
     <div id="habitMonthlySection" style="display:none; margin-top:18px;">
       <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
-        <span style="font-size:12px; font-weight:600; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.06em;" data-i18n="habitThisYearLabel">This Year</span>
+        <span id="habitMonthlySectionTitle" style="font-size:12px; font-weight:600; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.06em;"></span>
         <div style="display:flex; align-items:center; gap:8px;">
           <button type="button" id="habitYearPrevBtn" style="background:none; border:none; cursor:pointer; color:var(--ink-soft); padding:2px;">◀</button>
           <span id="habitYearLabel" style="font-size:12px; color:var(--ink-soft); white-space:nowrap;"></span>
@@ -1933,6 +1933,8 @@
       noHabitsYet: "还没有要追踪的习惯，先加一个吧",
       habitThisWeekLabel: "本周",
       habitThisYearLabel: "今年",
+      habitWeeklyGenericLabel: "周打卡",
+      habitYearlyGenericLabel: "月打卡",
       manageHabitsAction: "打卡或管理习惯 →",
       deleteHabitTitle: "删除这个习惯吗？",
       deleteHabitExplain: "可以只删掉这个习惯、保留它的打卡记录，也可以两个都清掉。",
@@ -2432,6 +2434,8 @@
       habitThisYearLabel: "今年",
       manageHabitsAction: "打卡或管理習慣 →",
       deleteHabitTitle: "刪除這個習慣嗎？",
+      habitWeeklyGenericLabel: "週打卡",
+      habitYearlyGenericLabel: "月打卡",
       deleteHabitExplain: "可以只刪掉這個習慣、保留它的打卡記錄，也可以兩個都清掉。",
       deleteHabitKeepHistoryAction: "刪除，保留記錄",
       deleteHabitEraseHistoryAction: "全部清除",
@@ -2931,6 +2935,8 @@
       deleteHabitTitle: "Delete this habit?",
       deleteHabitExplain: "You can remove just the habit and keep its check-in history, or clear both.",
       deleteHabitKeepHistoryAction: "Delete, keep history",
+      habitWeeklyGenericLabel: "Weekly",
+      habitYearlyGenericLabel: "Monthly",
       deleteHabitEraseHistoryAction: "Delete everything",
       habitDayLabels: () => ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"],
       habitMonthLabels: () => ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],
@@ -6866,6 +6872,7 @@
     const dates = getHabitWeekDates(habitWeekOffset);
     const dayLabels = T().habitDayLabels();
     $('habitWeekRangeLabel').textContent = formatHabitWeekRangeLabel(dates[0], dates[6]);
+    $('habitWeeklySectionTitle').textContent = habitWeekOffset === 0 ? T().habitThisWeekLabel : T().habitWeeklyGenericLabel;
 
     const nameColWidth = 96, dayColWidth = 34, countColWidth = 32;
     const grid = document.createElement('div');
@@ -6926,6 +6933,7 @@
 
     const year = new Date().getFullYear() + habitYearOffset;
     $('habitYearLabel').textContent = String(year);
+    $('habitMonthlySectionTitle').textContent = habitYearOffset === 0 ? T().habitThisYearLabel : T().habitYearlyGenericLabel;
     const monthLabels = T().habitMonthLabels();
     const nowYear = new Date().getFullYear(), nowMonth = new Date().getMonth();
 
@@ -7044,25 +7052,69 @@
     const summaryWrap = $('detailHabitSummary');
     summaryWrap.innerHTML = '';
     const weekDates = getHabitWeekDates(0);
+    const todayKey = habitDateKey(new Date());
     const nowYear = new Date().getFullYear();
-    tracker.habits.forEach(habit => {
-      let count = 0, total;
-      if(habit.cadence === 'weekly'){
-        total = 7;
-        weekDates.forEach(d => { if((tracker.checks||{})[habit.id+'_'+habitDateKey(d)]) count++; });
-      } else {
-        total = 12;
+
+    const weeklyHabits = tracker.habits.filter(h => h.cadence === 'weekly');
+    const monthlyHabits = tracker.habits.filter(h => h.cadence === 'monthly');
+
+    if(weeklyHabits.length){
+      const header = document.createElement('div');
+      header.style.cssText = 'font-size:10.5px; font-weight:700; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.05em; margin-bottom:2px;';
+      header.textContent = T().habitThisWeekLabel;
+      summaryWrap.appendChild(header);
+
+      weeklyHabits.forEach(habit => {
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex; align-items:center; justify-content:space-between; gap:8px;';
+        const nameEl = document.createElement('span');
+        nameEl.style.cssText = 'font-size:12.5px; font-weight:600; color:var(--ink); flex-shrink:0;';
+        nameEl.textContent = habit.name;
+        row.appendChild(nameEl);
+
+        const dotsWrap = document.createElement('div');
+        dotsWrap.style.cssText = 'display:flex; gap:4px;';
+        weekDates.forEach(d => {
+          const key = habit.id + '_' + habitDateKey(d);
+          const checked = !!(tracker.checks||{})[key];
+          const isToday = habitDateKey(d) === todayKey;
+          const dot = document.createElement('button');
+          dot.type = 'button';
+          dot.title = `${d.getMonth()+1}/${d.getDate()}`;
+          dot.style.cssText = `width:16px; height:16px; border-radius:50%; border:${isToday ? '2px solid var(--amber-deep)' : '1.5px solid var(--line)'}; background:${checked ? 'var(--amber-deep)' : 'transparent'}; padding:0; cursor:pointer; flex-shrink:0;`;
+          dot.addEventListener('click', ()=>{
+            const newChecks = { ...(tracker.checks||{}) };
+            if(checked){ delete newChecks[key]; } else { newChecks[key] = true; }
+            entry.habitTracker = { ...tracker, checks: newChecks };
+            persistIndex();
+            renderDetailHabitSummary(entry);
+          });
+          dotsWrap.appendChild(dot);
+        });
+        row.appendChild(dotsWrap);
+        summaryWrap.appendChild(row);
+      });
+    }
+
+    if(monthlyHabits.length){
+      const header = document.createElement('div');
+      header.style.cssText = `font-size:10.5px; font-weight:700; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.05em; margin-bottom:2px; ${weeklyHabits.length ? 'margin-top:10px;' : ''}`;
+      header.textContent = T().habitThisYearLabel;
+      summaryWrap.appendChild(header);
+
+      monthlyHabits.forEach(habit => {
+        let count = 0;
         for(let m=0;m<12;m++){
           const monthKey = nowYear + '-' + String(m+1).padStart(2,'0');
           if((tracker.checks||{})[habit.id+'_'+monthKey]) count++;
         }
-      }
-      const cadenceLabel = habit.cadence === 'weekly' ? T().habitThisWeekLabel : T().habitThisYearLabel;
-      const row = document.createElement('div');
-      row.style.cssText = 'font-size:12.5px; display:flex; justify-content:space-between; gap:8px;';
-      row.innerHTML = `<span style="color:var(--ink); font-weight:600;">${escapeHtml(habit.name)}</span><span style="color:var(--ink-soft); flex-shrink:0;">${cadenceLabel} ${count}/${total}</span>`;
-      summaryWrap.appendChild(row);
-    });
+        const row = document.createElement('div');
+        row.style.cssText = 'font-size:12.5px; display:flex; justify-content:space-between; gap:8px;';
+        row.innerHTML = `<span style="color:var(--ink); font-weight:600;">${escapeHtml(habit.name)}</span><span style="color:var(--ink-soft); flex-shrink:0;">${count}/12</span>`;
+        summaryWrap.appendChild(row);
+      });
+    }
+
     $('detailHabitWrap').style.display = 'block';
   }
 
