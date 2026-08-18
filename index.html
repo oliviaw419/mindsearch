@@ -395,6 +395,7 @@
       <button class="more-btn small" id="settingsBtn" title="Settings" style="position:relative;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><circle cx="9" cy="6" r="2"/><line x1="4" y1="12" x2="20" y2="12"/><circle cx="15" cy="12" r="2"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="11" cy="18" r="2"/></svg><span id="settingsBadge" style="display:none; position:absolute; top:-2px; right:-2px; width:9px; height:9px; border-radius:50%; background:var(--danger); border:1.5px solid var(--paper);"></span></button>
       <div class="more-menu" id="settingsMenu" style="min-width:200px;">
         <div id="settingsMainPanel">
+          <button type="button" id="openInspirationBtn" data-i18n="inspirationMenuLabel">Ideas &amp; Inspiration</button>
           <button type="button" id="openLanguagePanelBtn" data-i18n="languageMenuEntry">Language</button>
           <button type="button" id="openContactsBtn" data-i18n="manageFriends">Manage Friends</button>
           <button type="button" id="openManageTagsBtn" data-i18n="manageTagsMenuLabel">Manage Tags</button>
@@ -609,6 +610,22 @@
       <div id="dateLogPreviewList" style="display:flex; flex-direction:column; gap:6px;"></div>
     </div>
 
+    <div id="checklistPreviewWrap" style="display:none; margin-top:8px; flex-direction:column; gap:6px;">
+      <div style="display:flex; align-items:center; justify-content:space-between;">
+        <span style="font-size:12px; font-weight:600; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.06em; white-space:nowrap;" data-i18n="checklistLabel">Checklist</span>
+        <button type="button" id="checklistViewAllBtn" class="text-btn" style="margin:0; padding:0; white-space:nowrap; flex-shrink:0;" data-i18n="viewAllAction">View all</button>
+      </div>
+      <div id="checklistPreviewList" style="display:flex; flex-direction:column; gap:6px;"></div>
+    </div>
+
+    <div id="habitPreviewWrap" style="display:none; margin-top:8px; flex-direction:column; gap:6px;">
+      <div style="display:flex; align-items:center; justify-content:space-between;">
+        <span style="font-size:12px; font-weight:600; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.06em; white-space:nowrap;" data-i18n="habitTrackerLabel">Habit Tracker</span>
+        <button type="button" id="habitViewAllBtn" class="text-btn" style="margin:0; padding:0; white-space:nowrap; flex-shrink:0;" data-i18n="viewAllAction">View all</button>
+      </div>
+      <div id="habitPreviewList" style="font-size:12px; color:var(--ink-soft);"></div>
+    </div>
+
     <div class="attach-toolbar">
       <button type="button" class="toolbar-icon-btn" id="photoToolbarBtn" title="Add Photo">
         <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="15" rx="2.5"/><circle cx="8.5" cy="10.5" r="1.7"/><path d="M21 16.5l-5-5-9 9"/></svg>
@@ -628,6 +645,12 @@
       </button>
       <button type="button" class="toolbar-icon-btn" id="dateLogToolbarBtn" title="Track a Date">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16.5" rx="2.3"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><circle cx="12" cy="15" r="2"/></svg>
+      </button>
+      <button type="button" class="toolbar-icon-btn" id="checklistToolbarBtn" title="Add Checklist">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6l1.8 1.8L9 4.5"/><line x1="12" y1="6" x2="20" y2="6"/><path d="M4 13l1.8 1.8L9 11.5"/><line x1="12" y1="13" x2="20" y2="13"/><path d="M4 20l1.8 1.8L9 18.5"/><line x1="12" y1="20" x2="20" y2="20"/></svg>
+      </button>
+      <button type="button" class="toolbar-icon-btn" id="habitToolbarBtn" title="Add Habit Tracker">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M16.5 15.5l2 2 3.5-4"/></svg>
       </button>
     </div>
     <p id="recordingStatusLine" style="display:none; font-size:11.5px; font-weight:600; color:var(--danger); margin:6px 2px 0;" data-i18n="recording"></p>
@@ -716,6 +739,23 @@
       <div id="detailDateLogTotal" style="display:none; font-size:13px; font-weight:700; color:var(--ink-soft); margin-bottom:6px;"></div>
       <div id="detailDateLogTimeline" style="display:flex; flex-direction:column; gap:6px;"></div>
       <button type="button" id="detailDateLogManageBtn" class="text-btn" style="margin-top:6px; padding:0;" data-i18n="manageDateLogAction">Add entry, export, or set a reminder →</button>
+    </div>
+
+    <div id="detailChecklistWrap" style="display:none; margin-top:12px;">
+      <span style="font-size:12px; font-weight:600; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.06em; white-space:nowrap;" data-i18n="checklistLabel">Checklist</span>
+      <div id="detailChecklistActive" style="display:flex; flex-direction:column; gap:6px; margin-top:6px;"></div>
+      <div style="display:flex; gap:6px; margin-top:8px;">
+        <input class="field" id="detailChecklistQuickAddInput" type="text" data-i18n-placeholder="checklistItemPlaceholder" placeholder="Add an item…" style="flex:1; min-width:0; padding:8px 10px; font-size:13px;">
+        <button type="button" id="detailChecklistQuickAddBtn" class="text-btn" style="margin:0; padding:0 8px; flex-shrink:0; font-weight:700;" data-i18n="addAction">Add</button>
+      </div>
+      <button type="button" id="detailChecklistCompletedToggleBtn" style="display:none; margin-top:10px; padding:0; background:none; border:none; color:var(--ink-soft); font-size:12.5px; cursor:pointer;"></button>
+      <div id="detailChecklistCompletedList" style="display:none; flex-direction:column; gap:6px; margin-top:8px;"></div>
+    </div>
+
+    <div id="detailHabitWrap" style="display:none; margin-top:12px;">
+      <span style="font-size:12px; font-weight:600; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.06em; white-space:nowrap;" data-i18n="habitTrackerLabel">Habit Tracker</span>
+      <div id="detailHabitSummary" style="display:flex; flex-direction:column; gap:5px; margin-top:6px;"></div>
+      <button type="button" id="detailHabitManageBtn" class="text-btn" style="margin-top:6px; padding:0;" data-i18n="manageHabitsAction">Check in or manage habits →</button>
     </div>
 
     <div id="detailTagsRow" style="display:none; flex-wrap:wrap; gap:6px; margin-top:12px;"></div>
@@ -939,6 +979,85 @@
   </div>
 </div>
 
+<div class="sheet-overlay" id="checklistOverlay" style="z-index:490;">
+  <div class="sheet" style="max-width:420px;">
+    <div style="display:flex; align-items:center; justify-content:space-between;">
+      <h2 style="margin:0;" data-i18n="checklistLabel">Checklist</h2>
+      <button type="button" id="checklistGridToggleBtn" class="text-btn" style="display:none; margin:0; padding:0;" data-i18n="checklistGridViewAction">Grid view</button>
+    </div>
+
+    <div id="checklistListModeWrap">
+      <div style="display:flex; gap:8px;">
+        <input class="field" id="checklistNewItemInput" type="text" data-i18n-placeholder="checklistItemPlaceholder" placeholder="Add an item…" style="flex:1; min-width:0;">
+        <button class="primary-btn" id="checklistAddItemBtn" style="margin-top:0; width:auto; padding:0 16px; flex-shrink:0;" data-i18n="addAction">Add</button>
+      </div>
+
+      <div id="checklistActiveList" style="display:flex; flex-direction:column; gap:8px; margin-top:14px;"></div>
+      <div id="checklistEmpty" class="empty-note" style="display:none;" data-i18n="noChecklistItems">No items yet.</div>
+
+      <button type="button" class="text-btn" id="checklistCompletedToggleBtn" style="display:none; margin-top:10px;"></button>
+      <div id="checklistCompletedList" style="display:none; flex-direction:column; gap:8px; margin-top:8px;"></div>
+    </div>
+
+    <div id="checklistGridModeWrap" style="display:none; margin-top:14px;"></div>
+
+    <button class="text-btn" id="closeChecklistBtn" data-i18n="close">Close</button>
+  </div>
+</div>
+
+<div class="sheet-overlay" id="habitOverlay" style="z-index:490;">
+  <div class="sheet" style="max-width:460px;">
+    <h2 data-i18n="habitTrackerLabel">Habit Tracker</h2>
+
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <input class="field" id="habitNewNameInput" type="text" data-i18n-placeholder="habitNamePlaceholder" placeholder="e.g. Yoga" style="flex:1; min-width:120px;">
+      <select id="habitNewCadenceSelect" class="field" style="width:auto; flex-shrink:0;">
+        <option value="weekly" data-i18n="habitCadenceWeekly">Weekly</option>
+        <option value="monthly" data-i18n="habitCadenceMonthly">Monthly</option>
+      </select>
+      <button class="primary-btn" id="habitAddBtn" style="margin-top:0; width:auto; padding:0 16px; flex-shrink:0;" data-i18n="addAction">Add</button>
+    </div>
+
+    <div id="habitEmpty" class="empty-note" style="display:none; margin-top:14px;" data-i18n="noHabitsYet">No habits yet — add one above.</div>
+
+    <div id="habitWeeklySection" style="display:none; margin-top:18px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+        <span style="font-size:12px; font-weight:600; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.06em;" data-i18n="habitThisWeekLabel">This Week</span>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button type="button" id="habitWeekPrevBtn" style="background:none; border:none; cursor:pointer; color:var(--ink-soft); padding:2px;">◀</button>
+          <span id="habitWeekRangeLabel" style="font-size:12px; color:var(--ink-soft); white-space:nowrap;"></span>
+          <button type="button" id="habitWeekNextBtn" style="background:none; border:none; cursor:pointer; color:var(--ink-soft); padding:2px;">▶</button>
+        </div>
+      </div>
+      <div id="habitWeeklyGrid" style="overflow-x:auto; -webkit-overflow-scrolling:touch; border-radius:12px;"></div>
+    </div>
+
+    <div id="habitMonthlySection" style="display:none; margin-top:18px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+        <span style="font-size:12px; font-weight:600; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.06em;" data-i18n="habitThisYearLabel">This Year</span>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button type="button" id="habitYearPrevBtn" style="background:none; border:none; cursor:pointer; color:var(--ink-soft); padding:2px;">◀</button>
+          <span id="habitYearLabel" style="font-size:12px; color:var(--ink-soft); white-space:nowrap;"></span>
+          <button type="button" id="habitYearNextBtn" style="background:none; border:none; cursor:pointer; color:var(--ink-soft); padding:2px;">▶</button>
+        </div>
+      </div>
+      <div id="habitMonthlyGrid" style="overflow-x:auto; -webkit-overflow-scrolling:touch; border-radius:12px;"></div>
+    </div>
+
+    <button class="text-btn" id="closeHabitBtn" style="margin-top:18px;" data-i18n="close">Close</button>
+  </div>
+</div>
+
+<div class="sheet-overlay" id="deleteHabitOverlay" style="z-index:496;">
+  <div class="sheet" style="max-width:340px;">
+    <h2 data-i18n="deleteHabitTitle">Delete this habit?</h2>
+    <p style="font-size:13px; color:var(--ink-soft); margin:-8px 0 16px; line-height:1.5;" data-i18n="deleteHabitExplain">You can remove just the habit and keep its check-in history, or clear both.</p>
+    <button class="primary-btn" id="deleteHabitKeepHistoryBtn" style="margin-top:0;" data-i18n="deleteHabitKeepHistoryAction">Delete, keep history</button>
+    <button class="text-btn" id="deleteHabitEraseHistoryBtn" style="margin-top:10px; color:var(--danger);" data-i18n="deleteHabitEraseHistoryAction">Delete everything</button>
+    <button class="text-btn" id="cancelDeleteHabitBtn" style="margin-top:6px;" data-i18n="cancel">Cancel</button>
+  </div>
+</div>
+
 <!-- Location picker -->
 <div class="sheet-overlay" id="locationPickerOverlay" style="z-index:490;">
   <div class="sheet" style="max-width:400px;">
@@ -1156,6 +1275,15 @@
     <p style="font-size:11px; color:var(--ink-soft); margin:14px 0 0; line-height:1.5;" data-i18n="notifTroubleshootHint">Not receiving notifications even though this says they're on? Check iPhone Settings → Notifications → Mind Search, and make sure "Allow Notifications" is switched on there too.</p>
 
     <button class="text-btn" id="closeNotificationSettingsBtn" data-i18n="close">Close</button>
+  </div>
+</div>
+
+<div class="sheet-overlay" id="inspirationOverlay" style="z-index:450;">
+  <div class="sheet" style="max-width:420px;">
+    <h2 data-i18n="inspirationMenuLabel">Ideas &amp; Inspiration</h2>
+    <p style="font-size:12.5px; color:var(--ink-soft); margin:-8px 0 16px; line-height:1.5;" data-i18n="inspirationIntro">A few ways people use this app in everyday life — steal whatever's useful to you.</p>
+    <div id="inspirationList" style="display:flex; flex-direction:column; gap:10px;"></div>
+    <button class="text-btn" id="closeInspirationBtn" data-i18n="close">Close</button>
   </div>
 </div>
 
@@ -1388,6 +1516,14 @@
   let pendingLocation = null; // {lat, lng, label}
   let pendingDateLog = []; // [{date:'YYYY-MM-DD', note:string}]
   let dateLogContext = null; // { mode: 'pending' } while editing a note, or { mode: 'entry', entryId } from the detail view
+  let pendingChecklist = []; // [{id, text, done}]
+  let checklistContext = null; // { mode: 'pending' } while editing a note, or { mode: 'entry', entryId } from the detail view
+  let checklistShowCompleted = false;
+  let pendingHabitTracker = null; // { habits: [{id,name,cadence}], checks: {} }
+  let habitContext = null; // { mode: 'pending' } or { mode: 'entry', entryId }
+  let habitWeekOffset = 0;
+  let habitYearOffset = 0;
+  let pendingDeleteHabitId = null;
   let dateLogSumRange = 'all'; // 'all' | 'month' | 'year'
   let pendingReminderDate = null; // 'YYYY-MM-DD' string
   let pendingLocked = false;
@@ -1552,6 +1688,8 @@
       voiceLabel: "语音",
       addVoice: "添加语音",
       replaceVoice: "替换语音",
+      stopAndSave: "停止并保存",
+      stopAndReplace: "停止并替换",
       fileLabel: "文件",
       addFile: "添加 PDF",
       replaceFile: "更换 PDF",
@@ -1593,6 +1731,43 @@
       manageRemindersMenuLabel: "管理提醒",
       appLockMenuLabel: "App 密码",
       notificationSettingsMenuLabel: "通知",
+      inspirationMenuLabel: "使用灵感",
+      inspirationIntro: "分享几个大家日常怎么用这个 App 的场景，挑你用得上的看看。",
+      inspirationSections: () => [
+        {
+          sectionTitle: "生活场景",
+          items: [
+            { icon: "📚", title: "背单词、复习功课", body: "建一个「单词」标签，每次复习就往里面记一条，以后想找哪个词，直接搜关键词就能翻出来。" },
+            { icon: "🔒", title: "存银行、税务、房产这类私密信息", body: "银行卡号、税务资料、房产合同这些，放进「安全笔记」，需要密码才能看到，别人拿到你手机也翻不到。" },
+            { icon: "📍", title: "记住吃过的好餐厅", body: "吃到好吃的，拍张照、打上定位和「餐厅」标签，下次想不起店名了，靠照片和位置也能找回来。" },
+            { icon: "🩸", title: "记录生理周期", body: "用「日期记录」功能记周期，记够几次以后，会自动帮你预测下一次大概是哪天。" },
+            { icon: "🛂", title: "记出入境日期", body: "同样用「日期记录」，就算日期不规律，也能整理导出成表格，报税、办证的时候能直接用上。" },
+            { icon: "💰", title: "记流水账", body: "「日期记录」还能带上金额，适合记牌局输赢、零散收支这种，自动帮你算总账。" },
+            { icon: "⏰", title: "账单、续费到期提醒", body: "容易忘的事，设个提醒日期，到时间会直接推送通知给你，不用自己惦记。" },
+            { icon: "🤝", title: "跟家人朋友一起管理", body: "共同筹备一件事的时候，把笔记分享给对方，还能开启「共同编辑」，两边都能改。" },
+            { icon: "📦", title: "一次性分享一整批笔记", body: "一个标签下攒了不少笔记，想整个发给别人，不用一条条发，打包一次性分享出去就行。" }
+          ]
+        },
+        {
+          sectionTitle: "附件图标是干嘛的",
+          items: [
+            { icon: "📷", title: "照片", body: "给笔记加一张或者几张图片。" },
+            { icon: "🎥", title: "视频", body: "录一段视频或者上传现有的，上传后会在后台自动压缩，不用等、也不占太多空间。" },
+            { icon: "📎", title: "文件", body: "上传 PDF 这类文件。" },
+            { icon: "🎙️", title: "录音", body: "直接在这条笔记里录一段语音。" },
+            { icon: "📍", title: "位置", body: "给这条笔记打一个定位，比如记一家餐厅在哪。" },
+            { icon: "🗓️", title: "日期记录", body: "记录反复发生的事，比如周期、出入境日期，还能带上金额自动算总账。" },
+            { icon: "🔒", title: "上锁", body: "把这条笔记锁起来，需要密码才能看到，藏进「安全笔记」里。" }
+          ]
+        },
+        {
+          sectionTitle: "怎么把它变成手机 App",
+          items: [
+            { icon: "📲", title: "iPhone（Safari 浏览器）", body: "打开这个网址，点底部分享图标（方框带箭头），往下滑找到「添加到主屏幕」，点一下，桌面就会多一个图标，以后像用普通 App 一样打开，还能收到推送通知。" },
+            { icon: "🤖", title: "安卓手机（Chrome 浏览器）", body: "打开这个网址，点右上角三个点，选「添加到主屏幕」或者「安装应用」，操作方式跟 iPhone 类似。" }
+          ]
+        }
+      ],
       notificationSettingsExplain: "提醒到期的时候会推送通知给你，就算 App 没打开也能收到。",
       notifNeedsHomeScreen: "在 iPhone 上，通知只有在把这个 App 添加到主屏幕、并且从主屏幕图标打开的时候才能用——从 Safari 普通网页标签页打开是不行的。在 Safari 里点分享图标，选「添加到主屏幕」，然后从那个图标打开这个 App，再来试一次。",
       notifUnsupportedDevice: "这个设备或者浏览器不支持推送通知。",
@@ -1732,6 +1907,31 @@
       manageTagsTitle: "管理标签",
       addLocationTitle: "添加位置",
       dateLogLabel: "日期记录",
+      checklistLabel: "清单",
+      checklistItemPlaceholder: "加一条…",
+      addAction: "添加",
+      noChecklistItems: "还没有清单项",
+      checklistMoreItems: (n) => `还有 ${n} 条`,
+      checklistCompletedCount: (n) => `已完成（${n}）`,
+      checklistCommentsTitle: "评论",
+      checklistCommentPlaceholder: "写句短评…",
+      checklistNoCommentsYet: "还没有人留评论",
+      checklistGridViewAction: "网格视图",
+      checklistListViewAction: "列表视图",
+      habitTrackerLabel: "习惯打卡",
+      habitNamePlaceholder: "比如：瑜伽",
+      habitCadenceWeekly: "按周",
+      habitCadenceMonthly: "按月",
+      noHabitsYet: "还没有要追踪的习惯，先加一个吧",
+      habitThisWeekLabel: "本周",
+      habitThisYearLabel: "今年",
+      manageHabitsAction: "打卡或管理习惯 →",
+      deleteHabitTitle: "删除这个习惯吗？",
+      deleteHabitExplain: "可以只删掉这个习惯、保留它的打卡记录，也可以两个都清掉。",
+      deleteHabitKeepHistoryAction: "删除，保留记录",
+      deleteHabitEraseHistoryAction: "全部清除",
+      habitDayLabels: () => ["一","二","三","四","五","六","日"],
+      habitMonthLabels: () => ["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"],
       viewAllAction: "查看全部",
       dateLabel: "日期",
       dateLogNotePlaceholder: "备注（选填）",
@@ -1950,6 +2150,8 @@
       replaceVoice: "取代語音",
       recording: "錄音中… 點擊停止儲存",
       recordingShort: "錄音中",
+      stopAndSave: "停止並保存",
+      stopAndReplace: "停止並取代",
       download: "⬇ 下載",
       deleteAudio: "✕ 刪除",
       deleteAudioFull: "✕ 刪除錄音",
@@ -2013,6 +2215,43 @@
       enableAppLockAction: "開啟",
       appLockCurrentlyOn: "App 密碼目前是開啟狀態。",
       notificationSettingsMenuLabel: "通知",
+      inspirationMenuLabel: "使用靈感",
+      inspirationIntro: "分享幾個大家日常怎麼用這個 App 的場景，挑你用得上的看看。",
+      inspirationSections: () => [
+        {
+          sectionTitle: "生活場景",
+          items: [
+            { icon: "📚", title: "背單字、複習功課", body: "建一個「單字」標籤，每次複習就往裡面記一條，以後想找哪個詞，直接搜關鍵字就能翻出來。" },
+            { icon: "🔒", title: "存銀行、稅務、房產這類私密資訊", body: "銀行卡號、稅務資料、房產合約這些，放進「安全筆記」，需要密碼才能看到，別人拿到你手機也翻不到。" },
+            { icon: "📍", title: "記住吃過的好餐廳", body: "吃到好吃的，拍張照、打上定位和「餐廳」標籤，下次想不起店名了，靠照片和位置也能找回來。" },
+            { icon: "🩸", title: "記錄生理週期", body: "用「日期記錄」功能記週期，記夠幾次以後，會自動幫你預測下一次大概是哪天。" },
+            { icon: "🛂", title: "記出入境日期", body: "同樣用「日期記錄」，就算日期不規律，也能整理匯出成表格，報稅、辦證的時候能直接用上。" },
+            { icon: "💰", title: "記流水帳", body: "「日期記錄」還能帶上金額，適合記牌局輸贏、零散收支這種，自動幫你算總帳。" },
+            { icon: "⏰", title: "帳單、續費到期提醒", body: "容易忘的事，設個提醒日期，到時間會直接推播通知給你，不用自己惦記。" },
+            { icon: "🤝", title: "跟家人朋友一起管理", body: "共同籌備一件事的時候，把筆記分享給對方，還能開啟「共同編輯」，兩邊都能改。" },
+            { icon: "📦", title: "一次性分享一整批筆記", body: "一個標籤下攢了不少筆記，想整個發給別人，不用一條條發，打包一次性分享出去就行。" }
+          ]
+        },
+        {
+          sectionTitle: "附件圖示是幹嘛的",
+          items: [
+            { icon: "📷", title: "照片", body: "給筆記加一張或者幾張圖片。" },
+            { icon: "🎥", title: "影片", body: "錄一段影片或者上傳現有的，上傳後會在後台自動壓縮，不用等、也不占太多空間。" },
+            { icon: "📎", title: "檔案", body: "上傳 PDF 這類檔案。" },
+            { icon: "🎙️", title: "錄音", body: "直接在這條筆記裡錄一段語音。" },
+            { icon: "📍", title: "位置", body: "給這條筆記打一個定位，比如記一家餐廳在哪。" },
+            { icon: "🗓️", title: "日期記錄", body: "記錄反覆發生的事，比如週期、出入境日期，還能帶上金額自動算總帳。" },
+            { icon: "🔒", title: "上鎖", body: "把這條筆記鎖起來，需要密碼才能看到，藏進「安全筆記」裡。" }
+          ]
+        },
+        {
+          sectionTitle: "怎麼把它變成手機 App",
+          items: [
+            { icon: "📲", title: "iPhone（Safari 瀏覽器）", body: "打開這個網址，點底部分享圖示（方框帶箭頭），往下滑找到「加入主畫面」，點一下，桌面就會多一個圖示，以後像用一般 App 一樣打開，還能收到推播通知。" },
+            { icon: "🤖", title: "安卓手機（Chrome 瀏覽器）", body: "打開這個網址，點右上角三個點，選「加入主畫面」或者「安裝應用程式」，操作方式跟 iPhone 類似。" }
+          ]
+        }
+      ],
       notificationSettingsExplain: "提醒到期的時候會推送通知給你，就算 App 沒打開也能收到。",
       notifNeedsHomeScreen: "在 iPhone 上，通知只有在把這個 App 加到主畫面、並且從主畫面圖示打開的時候才能用——從 Safari 一般網頁分頁打開是不行的。在 Safari 裡點分享圖示，選「加入主畫面」，然後從那個圖示打開這個 App，再來試一次。",
       notifUnsupportedDevice: "這個裝置或瀏覽器不支援推播通知。",
@@ -2142,11 +2381,22 @@
       manualCopyPrompt: "複製不了？長按下面的文字手動複製：",
       dateLogLabel: "日期記錄",
       viewAllAction: "查看全部",
+      checklistLabel: "清單",
+      checklistItemPlaceholder: "加一條…",
+      addAction: "新增",
+      noChecklistItems: "還沒有清單項",
+      checklistMoreItems: (n) => `還有 ${n} 條`,
+      checklistCompletedCount: (n) => `已完成（${n}）`,
       dateLabel: "日期",
       dateLogNotePlaceholder: "備註（選填）",
       addEntryAction: "+ 新增一筆",
       allEntriesLabel: "全部記錄",
       exportAction: "匯出",
+      checklistCommentsTitle: "評論",
+      checklistCommentPlaceholder: "寫句短評…",
+      checklistNoCommentsYet: "還沒有人留評論",
+      checklistGridViewAction: "網格檢視",
+      checklistListViewAction: "清單檢視",
       exportPdfAction: "匯出 PDF",
       exportExcelAction: "匯出 Excel",
       noteColumnLabel: "備註",
@@ -2162,6 +2412,20 @@
       dateLogAmountPlaceholder: "+/- 金額（選填）",
       rangeAll: "全部",
       rangeMonth: "本月",
+      habitTrackerLabel: "習慣打卡",
+      habitNamePlaceholder: "比如：瑜伽",
+      habitCadenceWeekly: "按週",
+      habitCadenceMonthly: "按月",
+      noHabitsYet: "還沒有要追蹤的習慣，先加一個吧",
+      habitThisWeekLabel: "本週",
+      habitThisYearLabel: "今年",
+      manageHabitsAction: "打卡或管理習慣 →",
+      deleteHabitTitle: "刪除這個習慣嗎？",
+      deleteHabitExplain: "可以只刪掉這個習慣、保留它的打卡記錄，也可以兩個都清掉。",
+      deleteHabitKeepHistoryAction: "刪除，保留記錄",
+      deleteHabitEraseHistoryAction: "全部清除",
+      habitDayLabels: () => ["一","二","三","四","五","六","日"],
+      habitMonthLabels: () => ["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"],
       rangeYear: "今年",
       dateLogTotalLabel: "總計",
       dateLogWinLoss: (w, l) => `${w} 次正 · ${l} 次負`,
@@ -2328,6 +2592,8 @@
       replaceVoice: "Replace Voice",
       recording: "Recording… tap to stop & save",
       recordingShort: "Recording",
+      stopAndSave: "Stop & Save",
+      stopAndReplace: "Stop & Replace",
       download: "⬇ Download",
       deleteAudio: "✕ Delete",
       deleteAudioFull: "✕ Delete recording",
@@ -2438,6 +2704,43 @@
       toastAppLockDisabled: "App password disabled",
       toastPasswordReset: "Password reset — your new password is now active", 
       notificationSettingsMenuLabel: "Notifications",
+      inspirationMenuLabel: "Ideas & Inspiration",
+      inspirationIntro: "A few ways people use this app in everyday life \u2014 steal whatever's useful to you.",
+      inspirationSections: () => [
+        {
+          sectionTitle: "Everyday scenarios",
+          items: [
+            { icon: "\ud83d\udcda", title: "Vocabulary review", body: "Create a \"Vocab\" tag and log a note every time you review \u2014 later, just search the word to find it again." },
+            { icon: "\ud83d\udd12", title: "Banking, tax, and property details", body: "Bank info, tax documents, property paperwork \u2014 keep it in Secured Notes, which needs a password to view, even if someone else picks up your phone." },
+            { icon: "\ud83d\udccd", title: "Remember great restaurants", body: "Had a great meal? Snap a photo, tag the location and a \"Restaurants\" tag \u2014 next time you forget the name, the photo and location will bring it back." },
+            { icon: "\ud83e\ude78", title: "Track a cycle", body: "Use Date Log to track it \u2014 after a few entries, it'll start predicting roughly when the next one is due." },
+            { icon: "\ud83d\udee2\ufe0f", title: "Log border crossings", body: "Also with Date Log \u2014 even if the dates are irregular, you can export the whole list as a spreadsheet for taxes or visa paperwork." },
+            { icon: "\ud83d\udcb0", title: "Track a running tally", body: "Date Log can also carry an amount \u2014 handy for poker winnings, odd income/expenses, anything you want a running total of." },
+            { icon: "\u23f0", title: "Bill and renewal reminders", body: "Set a reminder date on anything easy to forget \u2014 you'll get a push notification when it's due." },
+            { icon: "\ud83e\udd1d", title: "Manage something together", body: "Planning something with family or friends? Share the note, and turn on co-editing so you can both update it." },
+            { icon: "\ud83d\udce6", title: "Share a whole batch at once", body: "Built up a bunch of notes under one tag and want to send them all? Bundle-share the tag instead of sending one by one." }
+          ]
+        },
+        {
+          sectionTitle: "What each attachment icon does",
+          items: [
+            { icon: "\ud83d\udcf7", title: "Photo", body: "Add one or more photos to the note." },
+            { icon: "\ud83c\udfa5", title: "Video", body: "Record a video or upload one \u2014 it's compressed automatically in the background afterward, so it doesn't take up much space." },
+            { icon: "\ud83d\udcce", title: "File", body: "Attach a PDF or similar file." },
+            { icon: "\ud83c\udfa4", title: "Voice", body: "Record a voice note right in this entry." },
+            { icon: "\ud83d\udccd", title: "Location", body: "Pin a location to this note \u2014 handy for remembering where a place was." },
+            { icon: "\ud83d\uddd3\ufe0f", title: "Date Log", body: "Track something that happens more than once \u2014 cycles, border crossings, and it can carry an amount too." },
+            { icon: "\ud83d\udd12", title: "Lock", body: "Lock this note so it needs a password to view \u2014 it moves into Secured Notes." }
+          ]
+        },
+        {
+          sectionTitle: "Turning this into a phone app",
+          items: [
+            { icon: "\ud83d\udcf2", title: "iPhone (Safari)", body: "Open this site, tap the Share icon (a square with an arrow), scroll down and tap \"Add to Home Screen.\" An icon appears on your home screen \u2014 open it from there like any other app, including push notifications." },
+            { icon: "\ud83e\udd16", title: "Android (Chrome)", body: "Open this site, tap the three-dot menu in the top right, choose \"Add to Home Screen\" or \"Install app.\" Similar idea to iPhone." }
+          ]
+        }
+      ],
       notificationSettingsExplain: "Get a push notification when a reminder is due \u2014 even if the app isn't open.",
       notifNeedsHomeScreen: "On iPhone, notifications only work when this app is added to your Home Screen and opened from there \u2014 not from a regular Safari tab. Tap the Share icon in Safari, then \"Add to Home Screen,\" and open the app from that icon before trying again.",
       notifUnsupportedDevice: "This device or browser doesn't support push notifications.",
@@ -2552,6 +2855,12 @@
       dateLogLabel: "Date Log",
       viewAllAction: "View all",
       dateLabel: "Date",
+      checklistLabel: "Checklist",
+      checklistItemPlaceholder: "Add an item\u2026",
+      addAction: "Add",
+      noChecklistItems: "No items yet.",
+      checklistMoreItems: (n) => `${n} more`,
+      checklistCompletedCount: (n) => `Completed (${n})`,
       dateLogNotePlaceholder: "Optional note",
       addEntryAction: "+ Add entry",
       allEntriesLabel: "All Entries",
@@ -2562,6 +2871,11 @@
       manageDateLogAction: "Add entry, export, or set a reminder →",
       dateLogIrregularText: "These dates don't follow a consistent enough pattern to predict reliably yet.",
       noDateLogEntries: "No entries yet.",
+      checklistCommentsTitle: "Comments",
+      checklistCommentPlaceholder: "Write a short comment\u2026",
+      checklistNoCommentsYet: "No comments yet.",
+      checklistGridViewAction: "Grid view",
+      checklistListViewAction: "List view",
       setReminderForPrediction: "Set a reminder for this date",
       dateLogPredictionText: (avg, next) => `Averaging every ${avg} days · Next expected: ${next}`,
       dateLogSummary: (n, latest) => `${n} entries · Most recent ${latest}`,
@@ -2592,6 +2906,20 @@
       inboxMenuLabel: "Share Inbox",
       shareSentToContact: "Shared",
       inboxEmptyCrossLink: "Already-saved shares → Shared with me",
+      habitTrackerLabel: "Habit Tracker",
+      habitNamePlaceholder: "e.g. Yoga",
+      habitCadenceWeekly: "Weekly",
+      habitCadenceMonthly: "Monthly",
+      noHabitsYet: "No habits yet \u2014 add one above.",
+      habitThisWeekLabel: "This Week",
+      habitThisYearLabel: "This Year",
+      manageHabitsAction: "Check in or manage habits \u2192",
+      deleteHabitTitle: "Delete this habit?",
+      deleteHabitExplain: "You can remove just the habit and keep its check-in history, or clear both.",
+      deleteHabitKeepHistoryAction: "Delete, keep history",
+      deleteHabitEraseHistoryAction: "Delete everything",
+      habitDayLabels: () => ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"],
+      habitMonthLabels: () => ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],
       toastSuggestAddSharedTab: "Tip: you can pin the Shared tab in tab settings",
       sharedWithMeArchiveExplain: "Notes shared with you that you've saved.",
       pendingInboxCrossLink: (n) => `${n} pending \u2192 Inbox`,
@@ -2684,6 +3012,8 @@
       video: e.video || null,
       location: e.location || null,
       dateLog: e.dateLog || [],
+      checklist: e.checklist || [],
+      habitTracker: e.habitTracker || null,
       reminderDate: e.reminderDate || null,
       tags: e.tags || [],
       isSample: !!e.isSample,
@@ -3261,6 +3591,8 @@
   const BADGE_ICON_VOICE = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v4"/></svg>';
   const BADGE_ICON_FILE = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 12.5l-8.4 8.4a5 5 0 01-7.1-7.1l9-9a3.5 3.5 0 015 5l-9 9a2 2 0 01-2.8-2.8l8-8"/></svg>';
   const BADGE_ICON_LOCATION = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0119 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.3"/></svg>';
+  const BADGE_ICON_CHECKLIST = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6l1.8 1.8L9 4.5"/><line x1="12" y1="6" x2="20" y2="6"/><path d="M4 13l1.8 1.8L9 11.5"/><line x1="12" y1="13" x2="20" y2="13"/></svg>';
+  const BADGE_ICON_HABIT = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.2"/><rect x="14" y="3" width="7" height="7" rx="1.2"/><rect x="3" y="14" width="7" height="7" rx="1.2"/><path d="M16.5 15.5l2 2 3.5-4"/></svg>';
   const ICON_CALENDAR = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16.5" rx="2.3"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><circle cx="12" cy="15" r="1.7"/></svg>';
   const ICON_TAG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.6 2H4a2 2 0 00-2 2v8.6a2 2 0 00.59 1.41l9.4 9.4a2 2 0 002.82 0l8.6-8.6a2 2 0 000-2.82l-9.4-9.4A2 2 0 0012.6 2z"/><circle cx="8" cy="8" r="1.3"/></svg>';
   const ICON_LOCK = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg>';
@@ -3286,6 +3618,8 @@
     const pdfBadge = (entry.files && entry.files.length) ? `<span class="badge">${BADGE_ICON_FILE}</span>` : '';
     const locationBadge = entry.location ? `<span class="badge">${BADGE_ICON_LOCATION}</span>` : '';
     const sharedBadge = entry.sharedId ? `<span class="badge">${BADGE_ICON_SHARED}</span>` : '';
+    const checklistBadge = (entry.checklist && entry.checklist.length) ? `<span class="badge">${BADGE_ICON_CHECKLIST}${entry.checklist.filter(it=>it.done).length}/${entry.checklist.length}</span>` : '';
+    const habitBadge = (entry.habitTracker && entry.habitTracker.habits && entry.habitTracker.habits.length) ? `<span class="badge">${BADGE_ICON_HABIT}${entry.habitTracker.habits.length}</span>` : '';
     const bundleLabel = bundleOriginLabel(entry);
     const bundleLine = bundleLabel ? `<div style="font-size:11px; color:var(--ink-soft); margin-top:2px; display:flex; align-items:center; gap:3px;">${ICON_BUNDLE}${escapeHtml(bundleLabel)}</div>` : '';
     row.innerHTML = `
@@ -3294,7 +3628,7 @@
         <div class="etitle">${escapeHtml(entry.title)}</div>
         <div class="esnippet">${escapeHtml(snippet(entry))}</div>
         ${bundleLine}
-        <div class="ebadges">${photoBadge}${videoBadge}${audioBadge}${pdfBadge}${locationBadge}${sharedBadge}</div>
+        <div class="ebadges">${photoBadge}${videoBadge}${audioBadge}${pdfBadge}${locationBadge}${sharedBadge}${checklistBadge}${habitBadge}</div>
       </div>`;
     return row;
   }
@@ -4658,7 +4992,9 @@
     const results = visibleEntries().filter(entry =>
       entry.title.toLowerCase().includes(q) ||
       entry.content.toLowerCase().includes(q) ||
-      (entry.tags || []).some(tag => tag.toLowerCase().includes(q))
+      (entry.tags || []).some(tag => tag.toLowerCase().includes(q)) ||
+      (entry.checklist || []).some(item => item.text.toLowerCase().includes(q)) ||
+      (entry.habitTracker && entry.habitTracker.habits ? entry.habitTracker.habits.some(h => h.name.toLowerCase().includes(q)) : false)
     ).sort((a,b)=> b.updatedAt - a.updatedAt);
     const container = $('searchResults');
     container.innerHTML = '';
@@ -4698,6 +5034,10 @@
       const tile = document.createElement('div');
       tile.className = 'photo-tile';
       tile.innerHTML = `<img src="${src}"><button type="button" class="remove-attach">✕</button>`;
+      tile.querySelector('img').addEventListener('click', ()=>{
+        $('lightboxImg').src = src;
+        $('lightboxOverlay').classList.add('open');
+      });
       tile.querySelector('.remove-attach').addEventListener('click', ()=>{
         const removed = pendingPhotos.splice(idx, 1)[0];
         if(removed){
@@ -4762,6 +5102,9 @@
     pendingVideo = null;
     pendingLocation = null;
     pendingDateLog = [];
+    pendingChecklist = [];
+    checklistShowCompleted = false;
+    pendingHabitTracker = null;
     pendingReminderDate = null;
     $('reminderDateInput').value = '';
     pendingLocked = false;
@@ -4773,6 +5116,8 @@
     renderVideoPreview();
     renderLocationPreview();
     renderDateLogPreview();
+    renderChecklistPreview();
+    renderHabitPreview();
     renderReminderPreview();
     $('videoProcessingStatus').style.display = 'none';
     $('audioPreviewWrap').style.display = 'none';
@@ -4850,6 +5195,14 @@
     if(entry.dateLog && entry.dateLog.length){
       pendingDateLog = entry.dateLog.map(e => ({...e}));
       renderDateLogPreview();
+    }
+    if(entry.checklist && entry.checklist.length){
+      pendingChecklist = entry.checklist.map(it => ({...it}));
+      renderChecklistPreview();
+    }
+    if(entry.habitTracker && entry.habitTracker.habits && entry.habitTracker.habits.length){
+      pendingHabitTracker = JSON.parse(JSON.stringify(entry.habitTracker));
+      renderHabitPreview();
     }
     if(entry.reminderDate){
       pendingReminderDate = entry.reminderDate;
@@ -5859,6 +6212,673 @@
     $('detailDateLogWrap').style.display = 'block';
   }
 
+  function getActiveChecklist(){
+    if(!checklistContext) return [];
+    if(checklistContext.mode === 'pending') return pendingChecklist;
+    const entry = entries.find(e => e.id === checklistContext.entryId);
+    return entry ? (entry.checklist || []) : [];
+  }
+
+  function persistActiveChecklist(newList){
+    if(!checklistContext) return;
+    if(checklistContext.mode === 'pending'){
+      pendingChecklist = newList;
+      renderChecklistPreview();
+    } else {
+      const entry = entries.find(e => e.id === checklistContext.entryId);
+      if(!entry) return;
+      entry.checklist = newList;
+      persistIndex();
+      renderDetailChecklist(entry);
+    }
+  }
+
+  function renderChecklistPreview(){
+    const wrap = $('checklistPreviewWrap');
+    if(pendingChecklist.length === 0){
+      wrap.style.display = 'none';
+      return;
+    }
+    wrap.style.display = 'flex';
+    const list = $('checklistPreviewList');
+    list.innerHTML = '';
+    const activeItems = pendingChecklist.filter(it => !it.done);
+    const doneCount = pendingChecklist.length - activeItems.length;
+    activeItems.slice(0, 2).forEach(item => {
+      const row = document.createElement('div');
+      row.className = 'file-chip-row';
+      row.innerHTML = `<span>☐</span><span class="file-chip-name">${escapeHtml(item.text)}</span>`;
+      list.appendChild(row);
+    });
+    const remaining = Math.max(0, activeItems.length - 2);
+    if(remaining > 0 || doneCount > 0){
+      const parts = [];
+      if(remaining > 0) parts.push(T().checklistMoreItems(remaining));
+      if(doneCount > 0) parts.push(T().checklistCompletedCount(doneCount));
+      const summary = document.createElement('div');
+      summary.style.cssText = 'font-size:11px; color:var(--ink-soft); padding:2px 4px;';
+      summary.textContent = parts.join(' · ');
+      list.appendChild(summary);
+    }
+  }
+
+  function checklistCheckboxEl(item, onToggle){
+    const checkbox = document.createElement('button');
+    checkbox.type = 'button';
+    checkbox.style.cssText = `flex-shrink:0; width:20px; height:20px; border-radius:6px; border:1.5px solid ${item.done ? 'var(--green)' : 'var(--line)'}; background:${item.done ? 'var(--green)' : 'transparent'}; color:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:12px; padding:0;`;
+    checkbox.innerHTML = item.done ? '✓' : '';
+    checkbox.addEventListener('click', onToggle);
+    return checkbox;
+  }
+
+  function beginEditChecklistItemInline(item, row, textSpan, onSaved){
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = item.text;
+    input.className = 'field';
+    input.style.cssText = 'flex:1; min-width:0; padding:4px 8px; font-size:13px;';
+    row.replaceChild(input, textSpan);
+    input.focus();
+    input.select();
+    let committed = false;
+    const commit = ()=>{
+      if(committed) return;
+      committed = true;
+      const newText = input.value.trim();
+      onSaved(newText || item.text);
+    };
+    input.addEventListener('blur', commit);
+    input.addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ input.blur(); } });
+  }
+
+  function getMyIdentity(){
+    const fb = window.__firebase;
+    const me = fb.auth.currentUser;
+    if(!me) return null;
+    return { email: me.email, name: me.displayName || (me.email ? me.email.split('@')[0] : 'Me') };
+  }
+
+  let checklistExpandedCommentIds = {}; // itemId -> bool, which items currently have their comment area open
+
+  // getList()/setList() abstract over "editing pendingChecklist" vs "editing a saved entry's checklist" so
+  // the overlay (new note) and the note-detail view (existing note) can share one row-building implementation.
+  function buildChecklistItemRow(item, getList, setList, rerender){
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'background:var(--paper-raised); border-radius:12px; padding:8px 10px;';
+
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex; align-items:center; gap:8px;';
+    row.appendChild(checklistCheckboxEl(item, ()=>{
+      setList(getList().map(it => it.id === item.id ? {...it, done: !it.done} : it));
+      rerender();
+    }));
+
+    const textSpan = document.createElement('span');
+    textSpan.style.cssText = `flex:1; min-width:0; font-size:13.5px; ${item.done ? 'text-decoration:line-through; color:var(--ink-soft);' : 'color:var(--ink);'} cursor:text; overflow-wrap:break-word;`;
+    textSpan.textContent = item.text;
+    textSpan.addEventListener('click', ()=>{
+      beginEditChecklistItemInline(item, row, textSpan, (newText)=>{
+        setList(getList().map(it => it.id === item.id ? {...it, text: newText} : it));
+        rerender();
+      });
+    });
+    row.appendChild(textSpan);
+
+    const comments = item.comments || [];
+    const commentToggle = document.createElement('button');
+    commentToggle.type = 'button';
+    commentToggle.title = T().checklistCommentsTitle;
+    commentToggle.style.cssText = 'background:none; border:none; cursor:pointer; flex-shrink:0; font-size:12px; color:var(--ink-soft); padding:2px 4px; display:flex; align-items:center; gap:2px;';
+    commentToggle.innerHTML = `💬${comments.length ? ' '+comments.length : ''}`;
+    commentToggle.addEventListener('click', ()=>{
+      checklistExpandedCommentIds[item.id] = !checklistExpandedCommentIds[item.id];
+      rerender();
+    });
+    row.appendChild(commentToggle);
+
+    const delBtn = document.createElement('button');
+    delBtn.type = 'button';
+    delBtn.textContent = '✕';
+    delBtn.style.cssText = 'color:var(--danger); font-weight:600; font-size:12.5px; background:none; border:none; cursor:pointer; flex-shrink:0; padding:2px 4px;';
+    delBtn.addEventListener('click', ()=>{
+      setList(getList().filter(it => it.id !== item.id));
+      rerender();
+    });
+    row.appendChild(delBtn);
+
+    wrap.appendChild(row);
+
+    if(checklistExpandedCommentIds[item.id]){
+      const commentArea = document.createElement('div');
+      commentArea.style.cssText = 'margin-top:8px; padding-top:8px; border-top:1px solid var(--line); display:flex; flex-direction:column; gap:6px;';
+
+      const me = getMyIdentity();
+      comments.forEach(c => {
+        const cRow = document.createElement('div');
+        cRow.style.cssText = 'font-size:12.5px; line-height:1.4;';
+        cRow.innerHTML = `<span style="font-weight:700; color:var(--ink);">${escapeHtml(c.authorName)}</span><span style="color:var(--ink-soft);">: ${escapeHtml(c.text)}</span>`;
+        commentArea.appendChild(cRow);
+      });
+      if(comments.length === 0){
+        const emptyHint = document.createElement('div');
+        emptyHint.style.cssText = 'font-size:12px; color:var(--ink-soft); font-style:italic;';
+        emptyHint.textContent = T().checklistNoCommentsYet;
+        commentArea.appendChild(emptyHint);
+      }
+
+      if(me){
+        const myExisting = comments.find(c => c.authorEmail === me.email);
+        const inputRow = document.createElement('div');
+        inputRow.style.cssText = 'display:flex; gap:6px; margin-top:2px;';
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'field';
+        input.placeholder = T().checklistCommentPlaceholder;
+        input.value = myExisting ? myExisting.text : '';
+        input.style.cssText = 'flex:1; min-width:0; padding:5px 8px; font-size:12.5px;';
+        const saveComment = ()=>{
+          const text = input.value.trim();
+          const others = comments.filter(c => c.authorEmail !== me.email);
+          const newComments = text ? [...others, { authorEmail: me.email, authorName: me.name, text, timestamp: Date.now() }] : others;
+          setList(getList().map(it => it.id === item.id ? {...it, comments: newComments} : it));
+          rerender();
+        };
+        input.addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ input.blur(); } });
+        input.addEventListener('blur', saveComment);
+        inputRow.appendChild(input);
+        commentArea.appendChild(inputRow);
+      }
+
+      wrap.appendChild(commentArea);
+    }
+
+    return wrap;
+  }
+
+  function renderChecklistOverlayList(){
+    const items = getActiveChecklist();
+    const active = items.filter(it => !it.done);
+    const completed = items.filter(it => it.done);
+
+    const activeList = $('checklistActiveList');
+    activeList.innerHTML = '';
+    active.forEach(item => activeList.appendChild(buildChecklistItemRow(item, getActiveChecklist, persistActiveChecklist, renderChecklistOverlayList)));
+    $('checklistEmpty').style.display = items.length === 0 ? 'block' : 'none';
+
+    $('checklistCompletedToggleBtn').style.display = completed.length > 0 ? 'block' : 'none';
+    $('checklistCompletedToggleBtn').textContent = (checklistShowCompleted ? '▾ ' : '▸ ') + T().checklistCompletedCount(completed.length);
+    $('checklistCompletedList').style.display = checklistShowCompleted ? 'flex' : 'none';
+    const completedList = $('checklistCompletedList');
+    completedList.innerHTML = '';
+    if(checklistShowCompleted){
+      completed.forEach(item => completedList.appendChild(buildChecklistItemRow(item, getActiveChecklist, persistActiveChecklist, renderChecklistOverlayList)));
+    }
+
+    const hasAnyComments = items.some(it => it.comments && it.comments.length > 0);
+    $('checklistGridToggleBtn').style.display = hasAnyComments ? 'block' : 'none';
+  }
+
+  function renderChecklistGridView(){
+    const items = getActiveChecklist();
+    const authorsMap = {};
+    items.forEach(item => (item.comments||[]).forEach(c => { authorsMap[c.authorEmail] = c.authorName; }));
+    const authors = Object.keys(authorsMap);
+
+    const wrap = $('checklistGridModeWrap');
+    wrap.innerHTML = '';
+    if(authors.length === 0){
+      wrap.innerHTML = `<div class="empty-note">${T().checklistNoCommentsYet}</div>`;
+      return;
+    }
+
+    const scrollWrap = document.createElement('div');
+    scrollWrap.style.cssText = 'overflow-x:auto; -webkit-overflow-scrolling:touch; border-radius:12px;';
+
+    const colWidth = 110;
+    const nameColWidth = 130;
+    const grid = document.createElement('div');
+    grid.style.cssText = `display:grid; grid-template-columns:${nameColWidth}px repeat(${authors.length}, ${colWidth}px); gap:1px; background:var(--line); min-width:${nameColWidth + authors.length*colWidth}px;`;
+
+    const corner = document.createElement('div');
+    corner.style.cssText = 'background:var(--paper-raised); padding:8px; position:sticky; left:0; z-index:2;';
+    grid.appendChild(corner);
+    authors.forEach(email => {
+      const h = document.createElement('div');
+      h.style.cssText = 'background:var(--paper-raised); padding:8px; font-size:11px; font-weight:700; text-align:center; color:var(--ink); overflow-wrap:break-word;';
+      h.textContent = authorsMap[email];
+      grid.appendChild(h);
+    });
+
+    items.forEach(item => {
+      const nameCell = document.createElement('div');
+      nameCell.style.cssText = 'background:var(--paper-raised); padding:8px; font-size:12px; font-weight:600; color:var(--ink); position:sticky; left:0; z-index:1; overflow-wrap:break-word;';
+      nameCell.textContent = item.text;
+      grid.appendChild(nameCell);
+
+      authors.forEach(email => {
+        const cell = document.createElement('div');
+        cell.style.cssText = 'background:var(--paper-raised); padding:8px; font-size:11.5px; text-align:center; color:var(--ink-soft); display:flex; align-items:center; justify-content:center; overflow-wrap:break-word;';
+        const c = (item.comments||[]).find(cm => cm.authorEmail === email);
+        cell.textContent = c ? c.text : '—';
+        grid.appendChild(cell);
+      });
+    });
+
+    scrollWrap.appendChild(grid);
+    wrap.appendChild(scrollWrap);
+  }
+
+  let checklistGridMode = false;
+  $('checklistGridToggleBtn').addEventListener('click', ()=>{
+    checklistGridMode = !checklistGridMode;
+    $('checklistGridToggleBtn').textContent = checklistGridMode ? T().checklistListViewAction : T().checklistGridViewAction;
+    $('checklistListModeWrap').style.display = checklistGridMode ? 'none' : 'block';
+    $('checklistGridModeWrap').style.display = checklistGridMode ? 'block' : 'none';
+    if(checklistGridMode){ renderChecklistGridView(); }
+  });
+
+  function openChecklistOverlay(){
+    $('checklistNewItemInput').value = '';
+    checklistGridMode = false;
+    $('checklistGridToggleBtn').textContent = T().checklistGridViewAction;
+    $('checklistListModeWrap').style.display = 'block';
+    $('checklistGridModeWrap').style.display = 'none';
+    renderChecklistOverlayList();
+    $('checklistOverlay').classList.add('open');
+  }
+
+  $('checklistToolbarBtn').addEventListener('click', ()=>{
+    checklistContext = { mode: 'pending' };
+    checklistShowCompleted = false;
+    openChecklistOverlay();
+  });
+  $('checklistViewAllBtn').addEventListener('click', ()=>{
+    checklistContext = { mode: 'pending' };
+    checklistShowCompleted = false;
+    openChecklistOverlay();
+  });
+  $('closeChecklistBtn').addEventListener('click', ()=> $('checklistOverlay').classList.remove('open'));
+  $('checklistOverlay').addEventListener('click', (e)=>{ if(e.target.id==='checklistOverlay') $('checklistOverlay').classList.remove('open'); });
+  $('checklistCompletedToggleBtn').addEventListener('click', ()=>{
+    checklistShowCompleted = !checklistShowCompleted;
+    renderChecklistOverlayList();
+  });
+  function addChecklistItemFromInput(){
+    const input = $('checklistNewItemInput');
+    const text = input.value.trim();
+    if(!text) return;
+    const list = [...getActiveChecklist(), { id: cryptoId(), text, done: false, comments: [] }];
+    persistActiveChecklist(list);
+    input.value = '';
+    renderChecklistOverlayList();
+    input.focus();
+  }
+  $('checklistAddItemBtn').addEventListener('click', addChecklistItemFromInput);
+  $('checklistNewItemInput').addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ addChecklistItemFromInput(); } });
+
+  function renderDetailChecklist(entry){
+    const items = entry.checklist || [];
+    if(items.length === 0){
+      $('detailChecklistWrap').style.display = 'none';
+      return;
+    }
+    const getList = () => entry.checklist || [];
+    const setList = (newList) => { entry.checklist = newList; persistIndex(); };
+    const rerender = () => renderDetailChecklist(entry);
+
+    const active = items.filter(it => !it.done);
+    const completed = items.filter(it => it.done);
+
+    const activeWrap = $('detailChecklistActive');
+    activeWrap.innerHTML = '';
+    active.forEach(item => activeWrap.appendChild(buildChecklistItemRow(item, getList, setList, rerender)));
+
+    $('detailChecklistCompletedToggleBtn').style.display = completed.length > 0 ? 'block' : 'none';
+    $('detailChecklistCompletedToggleBtn').textContent = (checklistShowCompleted ? '▾ ' : '▸ ') + T().checklistCompletedCount(completed.length);
+    $('detailChecklistCompletedList').style.display = checklistShowCompleted ? 'flex' : 'none';
+    const completedWrap = $('detailChecklistCompletedList');
+    completedWrap.innerHTML = '';
+    if(checklistShowCompleted){
+      completed.forEach(item => completedWrap.appendChild(buildChecklistItemRow(item, getList, setList, rerender)));
+    }
+
+    $('detailChecklistWrap').style.display = 'block';
+  }
+
+  $('detailChecklistCompletedToggleBtn').addEventListener('click', ()=>{
+    checklistShowCompleted = !checklistShowCompleted;
+    const entry = entries.find(e => e.id === currentDetailId);
+    if(entry) renderDetailChecklist(entry);
+  });
+  function addDetailChecklistItemFromInput(){
+    const entry = entries.find(e => e.id === currentDetailId);
+    if(!entry) return;
+    const input = $('detailChecklistQuickAddInput');
+    const text = input.value.trim();
+    if(!text) return;
+    entry.checklist = [...(entry.checklist || []), { id: cryptoId(), text, done: false, comments: [] }];
+    persistIndex();
+    input.value = '';
+    renderDetailChecklist(entry);
+    input.focus();
+  }
+  $('detailChecklistQuickAddBtn').addEventListener('click', addDetailChecklistItemFromInput);
+  $('detailChecklistQuickAddInput').addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ addDetailChecklistItemFromInput(); } });
+
+  function habitDateKey(d){
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+  function getHabitWeekDates(offset){
+    const now = new Date();
+    const day = now.getDay();
+    const diffToMonday = day === 0 ? -6 : 1 - day;
+    const monday = new Date(now);
+    monday.setHours(0,0,0,0);
+    monday.setDate(now.getDate() + diffToMonday + offset*7);
+    const dates = [];
+    for(let i=0;i<7;i++){
+      const d = new Date(monday);
+      d.setDate(monday.getDate()+i);
+      dates.push(d);
+    }
+    return dates;
+  }
+  function formatHabitWeekRangeLabel(start, end){
+    const fmt = (d) => `${d.getMonth()+1}/${d.getDate()}`;
+    return `${fmt(start)} – ${fmt(end)}`;
+  }
+
+  function getActiveHabitTracker(){
+    if(!habitContext) return { habits: [], checks: {} };
+    if(habitContext.mode === 'pending') return pendingHabitTracker || { habits: [], checks: {} };
+    const entry = entries.find(e => e.id === habitContext.entryId);
+    return (entry && entry.habitTracker) ? entry.habitTracker : { habits: [], checks: {} };
+  }
+
+  function persistActiveHabitTracker(newTracker){
+    if(!habitContext) return;
+    if(habitContext.mode === 'pending'){
+      pendingHabitTracker = newTracker;
+      renderHabitPreview();
+    } else {
+      const entry = entries.find(e => e.id === habitContext.entryId);
+      if(!entry) return;
+      entry.habitTracker = newTracker;
+      persistIndex();
+      renderDetailHabitSummary(entry);
+    }
+  }
+
+  function renderHabitPreview(){
+    const wrap = $('habitPreviewWrap');
+    const tracker = pendingHabitTracker;
+    if(!tracker || tracker.habits.length === 0){
+      wrap.style.display = 'none';
+      return;
+    }
+    wrap.style.display = 'flex';
+    $('habitPreviewList').textContent = tracker.habits.map(h => h.name).join(' · ');
+  }
+
+  function requestDeleteHabit(habitId){
+    pendingDeleteHabitId = habitId;
+    $('deleteHabitOverlay').classList.add('open');
+  }
+  $('deleteHabitKeepHistoryBtn').addEventListener('click', ()=>{
+    const tracker = getActiveHabitTracker();
+    persistActiveHabitTracker({
+      habits: tracker.habits.filter(h => h.id !== pendingDeleteHabitId),
+      checks: tracker.checks || {} // history for the removed habit stays, just no longer shown as an active row
+    });
+    pendingDeleteHabitId = null;
+    $('deleteHabitOverlay').classList.remove('open');
+    renderHabitOverlayFull();
+  });
+  $('deleteHabitEraseHistoryBtn').addEventListener('click', ()=>{
+    const tracker = getActiveHabitTracker();
+    const newChecks = {};
+    Object.keys(tracker.checks || {}).forEach(k => {
+      if(!k.startsWith(pendingDeleteHabitId + '_')){ newChecks[k] = tracker.checks[k]; }
+    });
+    persistActiveHabitTracker({
+      habits: tracker.habits.filter(h => h.id !== pendingDeleteHabitId),
+      checks: newChecks
+    });
+    pendingDeleteHabitId = null;
+    $('deleteHabitOverlay').classList.remove('open');
+    renderHabitOverlayFull();
+  });
+  $('cancelDeleteHabitBtn').addEventListener('click', ()=>{
+    pendingDeleteHabitId = null;
+    $('deleteHabitOverlay').classList.remove('open');
+  });
+
+  function buildHabitGridNameCell(habit){
+    const nameCell = document.createElement('div');
+    nameCell.style.cssText = 'background:var(--paper-raised); padding:6px 8px; font-size:12px; font-weight:600; color:var(--ink); position:sticky; left:0; z-index:1; display:flex; align-items:center; gap:4px;';
+    const label = document.createElement('span');
+    label.style.cssText = 'flex:1; min-width:0; overflow-wrap:break-word;';
+    label.textContent = habit.name;
+    nameCell.appendChild(label);
+    const delBtn = document.createElement('button');
+    delBtn.type = 'button';
+    delBtn.textContent = '✕';
+    delBtn.style.cssText = 'background:none; border:none; color:var(--danger); font-size:10px; cursor:pointer; flex-shrink:0; padding:0;';
+    delBtn.addEventListener('click', (e)=>{ e.stopPropagation(); requestDeleteHabit(habit.id); });
+    nameCell.appendChild(delBtn);
+    return nameCell;
+  }
+
+  function renderHabitWeeklyGrid(){
+    const tracker = getActiveHabitTracker();
+    const weeklyHabits = tracker.habits.filter(h => h.cadence === 'weekly');
+    const section = $('habitWeeklySection');
+    if(weeklyHabits.length === 0){ section.style.display = 'none'; return; }
+    section.style.display = 'block';
+
+    const dates = getHabitWeekDates(habitWeekOffset);
+    const dayLabels = T().habitDayLabels();
+    $('habitWeekRangeLabel').textContent = formatHabitWeekRangeLabel(dates[0], dates[6]);
+
+    const nameColWidth = 96, dayColWidth = 34, countColWidth = 32;
+    const grid = document.createElement('div');
+    grid.style.cssText = `display:grid; grid-template-columns:${nameColWidth}px repeat(7, ${dayColWidth}px) ${countColWidth}px; gap:1px; background:var(--line); min-width:${nameColWidth + 7*dayColWidth + countColWidth}px; border-radius:10px; overflow:hidden;`;
+
+    const corner = document.createElement('div');
+    corner.style.cssText = 'background:var(--paper-raised); position:sticky; left:0; z-index:2;';
+    grid.appendChild(corner);
+    const todayKey = habitDateKey(new Date());
+    dates.forEach((d, i) => {
+      const h = document.createElement('div');
+      const isToday = habitDateKey(d) === todayKey;
+      h.style.cssText = `background:var(--paper-raised); padding:5px 2px; font-size:10px; text-align:center; color:${isToday ? 'var(--plum-deep)' : 'var(--ink-soft)'};`;
+      h.innerHTML = `<div style="font-weight:${isToday?'700':'400'};">${dayLabels[i]}</div><div style="font-size:9px;">${d.getDate()}</div>`;
+      grid.appendChild(h);
+    });
+    const countHeader = document.createElement('div');
+    countHeader.style.cssText = 'background:var(--paper-raised); padding:5px; font-size:9px; text-align:center; color:var(--ink-soft); display:flex; align-items:center; justify-content:center;';
+    countHeader.textContent = '#';
+    grid.appendChild(countHeader);
+
+    weeklyHabits.forEach(habit => {
+      grid.appendChild(buildHabitGridNameCell(habit));
+      let weekCount = 0;
+      dates.forEach(d => {
+        const key = habit.id + '_' + habitDateKey(d);
+        const checked = !!(tracker.checks || {})[key];
+        if(checked) weekCount++;
+        const cell = document.createElement('button');
+        cell.type = 'button';
+        cell.style.cssText = `background:${checked ? 'var(--green)' : 'var(--paper-raised)'}; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#fff; font-size:12px; padding:8px 0;`;
+        cell.innerHTML = checked ? '✓' : '';
+        cell.addEventListener('click', ()=>{
+          const newChecks = { ...(tracker.checks||{}) };
+          if(checked){ delete newChecks[key]; } else { newChecks[key] = true; }
+          persistActiveHabitTracker({ ...tracker, checks: newChecks });
+          renderHabitWeeklyGrid();
+        });
+        grid.appendChild(cell);
+      });
+      const countCell = document.createElement('div');
+      countCell.style.cssText = 'background:var(--paper-raised); padding:5px; font-size:11px; font-weight:700; text-align:center; color:var(--ink-soft); display:flex; align-items:center; justify-content:center;';
+      countCell.textContent = weekCount;
+      grid.appendChild(countCell);
+    });
+
+    const container = $('habitWeeklyGrid');
+    container.innerHTML = '';
+    container.appendChild(grid);
+  }
+
+  function renderHabitMonthlyGrid(){
+    const tracker = getActiveHabitTracker();
+    const monthlyHabits = tracker.habits.filter(h => h.cadence === 'monthly');
+    const section = $('habitMonthlySection');
+    if(monthlyHabits.length === 0){ section.style.display = 'none'; return; }
+    section.style.display = 'block';
+
+    const year = new Date().getFullYear() + habitYearOffset;
+    $('habitYearLabel').textContent = String(year);
+    const monthLabels = T().habitMonthLabels();
+    const nowYear = new Date().getFullYear(), nowMonth = new Date().getMonth();
+
+    const nameColWidth = 96, monthColWidth = 30, countColWidth = 32;
+    const grid = document.createElement('div');
+    grid.style.cssText = `display:grid; grid-template-columns:${nameColWidth}px repeat(12, ${monthColWidth}px) ${countColWidth}px; gap:1px; background:var(--line); min-width:${nameColWidth + 12*monthColWidth + countColWidth}px; border-radius:10px; overflow:hidden;`;
+
+    const corner = document.createElement('div');
+    corner.style.cssText = 'background:var(--paper-raised); position:sticky; left:0; z-index:2;';
+    grid.appendChild(corner);
+    monthLabels.forEach((label, i) => {
+      const isThisMonth = year === nowYear && i === nowMonth;
+      const h = document.createElement('div');
+      h.style.cssText = `background:var(--paper-raised); padding:5px 1px; font-size:9.5px; text-align:center; color:${isThisMonth ? 'var(--plum-deep)' : 'var(--ink-soft)'}; font-weight:${isThisMonth?'700':'400'};`;
+      h.textContent = label;
+      grid.appendChild(h);
+    });
+    const countHeader = document.createElement('div');
+    countHeader.style.cssText = 'background:var(--paper-raised); padding:5px; font-size:9px; text-align:center; color:var(--ink-soft); display:flex; align-items:center; justify-content:center;';
+    countHeader.textContent = '#';
+    grid.appendChild(countHeader);
+
+    monthlyHabits.forEach(habit => {
+      grid.appendChild(buildHabitGridNameCell(habit));
+      let yearCount = 0;
+      for(let m=0;m<12;m++){
+        const monthKey = year + '-' + String(m+1).padStart(2,'0');
+        const key = habit.id + '_' + monthKey;
+        const checked = !!(tracker.checks || {})[key];
+        if(checked) yearCount++;
+        const cell = document.createElement('button');
+        cell.type = 'button';
+        cell.style.cssText = `background:${checked ? 'var(--green)' : 'var(--paper-raised)'}; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#fff; font-size:12px; padding:8px 0;`;
+        cell.innerHTML = checked ? '✓' : '';
+        cell.addEventListener('click', ()=>{
+          const newChecks = { ...(tracker.checks||{}) };
+          if(checked){ delete newChecks[key]; } else { newChecks[key] = true; }
+          persistActiveHabitTracker({ ...tracker, checks: newChecks });
+          renderHabitMonthlyGrid();
+        });
+        grid.appendChild(cell);
+      }
+      const countCell = document.createElement('div');
+      countCell.style.cssText = 'background:var(--paper-raised); padding:5px; font-size:11px; font-weight:700; text-align:center; color:var(--ink-soft); display:flex; align-items:center; justify-content:center;';
+      countCell.textContent = yearCount;
+      grid.appendChild(countCell);
+    });
+
+    const container = $('habitMonthlyGrid');
+    container.innerHTML = '';
+    container.appendChild(grid);
+  }
+
+  function renderHabitOverlayFull(){
+    const tracker = getActiveHabitTracker();
+    $('habitEmpty').style.display = tracker.habits.length === 0 ? 'block' : 'none';
+    renderHabitWeeklyGrid();
+    renderHabitMonthlyGrid();
+  }
+
+  function openHabitOverlay(){
+    habitWeekOffset = 0;
+    habitYearOffset = 0;
+    $('habitNewNameInput').value = '';
+    renderHabitOverlayFull();
+    $('habitOverlay').classList.add('open');
+  }
+
+  $('habitToolbarBtn').addEventListener('click', ()=>{
+    habitContext = { mode: 'pending' };
+    if(!pendingHabitTracker) pendingHabitTracker = { habits: [], checks: {} };
+    openHabitOverlay();
+  });
+  $('habitViewAllBtn').addEventListener('click', ()=>{
+    habitContext = { mode: 'pending' };
+    openHabitOverlay();
+  });
+  $('detailHabitManageBtn').addEventListener('click', ()=>{
+    const entry = entries.find(e => e.id === currentDetailId);
+    if(!entry) return;
+    habitContext = { mode: 'entry', entryId: entry.id };
+    if(!entry.habitTracker) entry.habitTracker = { habits: [], checks: {} };
+    openHabitOverlay();
+  });
+  $('closeHabitBtn').addEventListener('click', ()=> $('habitOverlay').classList.remove('open'));
+  $('habitOverlay').addEventListener('click', (e)=>{ if(e.target.id==='habitOverlay') $('habitOverlay').classList.remove('open'); });
+
+  function addHabitFromInput(){
+    const nameInput = $('habitNewNameInput');
+    const name = nameInput.value.trim();
+    if(!name) return;
+    const cadence = $('habitNewCadenceSelect').value;
+    const tracker = getActiveHabitTracker();
+    persistActiveHabitTracker({
+      habits: [...tracker.habits, { id: cryptoId(), name, cadence }],
+      checks: tracker.checks || {}
+    });
+    nameInput.value = '';
+    renderHabitOverlayFull();
+    nameInput.focus();
+  }
+  $('habitAddBtn').addEventListener('click', addHabitFromInput);
+  $('habitNewNameInput').addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ addHabitFromInput(); } });
+
+  $('habitWeekPrevBtn').addEventListener('click', ()=>{ habitWeekOffset--; renderHabitWeeklyGrid(); });
+  $('habitWeekNextBtn').addEventListener('click', ()=>{ habitWeekOffset++; renderHabitWeeklyGrid(); });
+  $('habitYearPrevBtn').addEventListener('click', ()=>{ habitYearOffset--; renderHabitMonthlyGrid(); });
+  $('habitYearNextBtn').addEventListener('click', ()=>{ habitYearOffset++; renderHabitMonthlyGrid(); });
+
+  function renderDetailHabitSummary(entry){
+    const tracker = entry.habitTracker;
+    if(!tracker || !tracker.habits || tracker.habits.length === 0){
+      $('detailHabitWrap').style.display = 'none';
+      return;
+    }
+    const summaryWrap = $('detailHabitSummary');
+    summaryWrap.innerHTML = '';
+    const weekDates = getHabitWeekDates(0);
+    const nowYear = new Date().getFullYear();
+    tracker.habits.forEach(habit => {
+      let count = 0, total;
+      if(habit.cadence === 'weekly'){
+        total = 7;
+        weekDates.forEach(d => { if((tracker.checks||{})[habit.id+'_'+habitDateKey(d)]) count++; });
+      } else {
+        total = 12;
+        for(let m=0;m<12;m++){
+          const monthKey = nowYear + '-' + String(m+1).padStart(2,'0');
+          if((tracker.checks||{})[habit.id+'_'+monthKey]) count++;
+        }
+      }
+      const cadenceLabel = habit.cadence === 'weekly' ? T().habitThisWeekLabel : T().habitThisYearLabel;
+      const row = document.createElement('div');
+      row.style.cssText = 'font-size:12.5px; display:flex; justify-content:space-between; gap:8px;';
+      row.innerHTML = `<span style="color:var(--ink); font-weight:600;">${escapeHtml(habit.name)}</span><span style="color:var(--ink-soft); flex-shrink:0;">${cadenceLabel} ${count}/${total}</span>`;
+      summaryWrap.appendChild(row);
+    });
+    $('detailHabitWrap').style.display = 'block';
+  }
+
   document.querySelectorAll('.detail-datelog-range-btn').forEach(btn => {
     btn.addEventListener('click', ()=>{
       detailDateLogRange = btn.dataset.range;
@@ -6111,6 +7131,56 @@
     $('notifDefaultState').style.display = 'block';
   }
 
+  function setupLongPressHints(){
+    let pressTimer = null;
+    let longPressFired = false;
+    document.addEventListener('touchstart', (e)=>{
+      const target = e.target.closest('[title]');
+      if(!target || !target.title) return;
+      longPressFired = false;
+      pressTimer = setTimeout(()=>{
+        longPressFired = true;
+        showToast(target.title);
+        if(navigator.vibrate){ navigator.vibrate(10); }
+      }, 500);
+    }, { passive: true });
+    document.addEventListener('touchend', (e)=>{
+      clearTimeout(pressTimer);
+      if(longPressFired){
+        e.preventDefault(); // long-press already showed the hint — don't also fire the normal tap action
+        longPressFired = false;
+      }
+    });
+    document.addEventListener('touchmove', ()=>{ clearTimeout(pressTimer); }, { passive: true });
+  }
+  setupLongPressHints();
+
+  function renderInspirationList(){
+    const sections = T().inspirationSections();
+    const list = $('inspirationList');
+    list.innerHTML = '';
+    sections.forEach((section, sIdx) => {
+      const heading = document.createElement('div');
+      heading.style.cssText = `font-size:12px; font-weight:600; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.06em; margin:${sIdx === 0 ? '0' : '10px'} 0 2px;`;
+      heading.textContent = section.sectionTitle;
+      list.appendChild(heading);
+      section.items.forEach(item => {
+        const card = document.createElement('div');
+        card.style.cssText = 'background:var(--paper-raised); border-radius:14px; padding:12px 14px; display:flex; gap:10px; align-items:flex-start;';
+        card.innerHTML = `<span style="font-size:20px; flex-shrink:0; line-height:1.3;">${item.icon}</span><div><div style="font-weight:700; font-size:13.5px; color:var(--ink); margin-bottom:3px;">${escapeHtml(item.title)}</div><div style="font-size:12.5px; color:var(--ink-soft); line-height:1.5;">${escapeHtml(item.body)}</div></div>`;
+        list.appendChild(card);
+      });
+    });
+  }
+
+  $('openInspirationBtn').addEventListener('click', ()=>{
+    $('settingsMenu').classList.remove('open');
+    renderInspirationList();
+    $('inspirationOverlay').classList.add('open');
+  });
+  $('closeInspirationBtn').addEventListener('click', ()=> $('inspirationOverlay').classList.remove('open'));
+  $('inspirationOverlay').addEventListener('click', (e)=>{ if(e.target.id==='inspirationOverlay') $('inspirationOverlay').classList.remove('open'); });
+
   $('openNotificationSettingsBtn').addEventListener('click', async ()=>{
     $('settingsMenu').classList.remove('open');
     if(!isSignedIn){
@@ -6303,9 +7373,11 @@
         $('voiceBtn').classList.remove('recording');
         $('recordingStatusLine').style.display = 'none';
       };
+      const isReplacing = !!pendingAudioData;
       mediaRecorder.start();
       isRecording = true;
       $('voiceBtn').classList.add('recording');
+      $('voiceBtn').title = isReplacing ? T().stopAndReplace : T().stopAndSave;
       $('recordingStatusLine').textContent = T().recording;
       $('recordingStatusLine').style.display = 'block';
     }catch(err){
@@ -6349,6 +7421,8 @@
       entry.tags = [...pendingTags];
       entry.location = pendingLocation ? { ...pendingLocation } : null;
       entry.dateLog = pendingDateLog.length ? pendingDateLog.map(e => ({...e})) : [];
+      entry.checklist = pendingChecklist.length ? pendingChecklist.map(it => ({...it})) : [];
+      entry.habitTracker = (pendingHabitTracker && pendingHabitTracker.habits.length) ? JSON.parse(JSON.stringify(pendingHabitTracker)) : null;
       entry.reminderDate = pendingReminderDate || null;
       entry.locked = pendingLocked;
 
@@ -6442,7 +7516,8 @@
       if(isShared){
         updateSharedEntry(entry.sharedId, {
           title: entry.title, content: entry.content,
-          images: entry.images, audio: entry.audio, files: entry.files, video: entry.video, location: entry.location
+          images: entry.images, audio: entry.audio, files: entry.files, video: entry.video, location: entry.location,
+          dateLog: entry.dateLog, checklist: entry.checklist, habitTracker: entry.habitTracker
         });
       }
 
@@ -6542,6 +7617,9 @@
         entry.files = shared.files || [];
         entry.video = shared.video || null;
         entry.location = shared.location || null;
+        entry.dateLog = shared.dateLog || [];
+        entry.checklist = shared.checklist || [];
+        entry.habitTracker = shared.habitTracker || null;
         entry.imageCount = entry.images.length;
         entry.hasAudio = !!entry.audio;
       }
@@ -6633,7 +7711,10 @@
     $('toggleLockEntryBtn').classList.toggle('active', !!entry.locked);
     $('toggleLockEntryBtn').title = entry.locked ? T().unlockThisNoteAction : T().lockThisNoteAction;
     detailDateLogRange = 'all';
+    checklistShowCompleted = false;
     renderDetailDateLog(entry);
+    renderDetailChecklist(entry);
+    renderDetailHabitSummary(entry);
     if(entry.reminderDate){
       $('detailReminderLabel').textContent = formatReminderDate(entry.reminderDate);
       $('detailReminderDateInput').value = entry.reminderDate;
@@ -6793,6 +7874,7 @@
     await fb.setDoc(fb.doc(fb.db, 'sharedEntries', sharedId), {
       title: entry.title, content: entry.content,
       images: entry.images || [], audio: entry.audio || null, files: entry.files || [], video: entry.video || null,
+      location: entry.location || null, dateLog: entry.dateLog || [], checklist: entry.checklist || [], habitTracker: entry.habitTracker || null,
       createdByEmail: me.email,
       updatedAt: Date.now(), updatedBy: me.email
     });
