@@ -6651,7 +6651,8 @@
         const isMine = me && c.authorEmail === me.email;
         const cRow = document.createElement('div');
         cRow.style.cssText = `font-size:12.5px; line-height:1.4; ${isMine ? 'cursor:text;' : ''}`;
-        const label = isShared ? `<span style="font-weight:700; color:var(--ink);">${escapeHtml(c.authorName)}</span>: ` : '';
+        const displayName = getCachedNickname(c.authorEmail) || c.authorName;
+        const label = isShared ? `<span style="font-weight:700; color:var(--ink);">${escapeHtml(displayName)}</span>: ` : '';
         cRow.innerHTML = `${label}<span style="color:var(--ink-soft);">${escapeHtml(c.text)}</span>`;
         if(isMine){
           cRow.title = T().checklistTapToEdit;
@@ -6723,6 +6724,31 @@
     }
 
     $('checklistGridToggleBtn').style.display = 'block';
+
+    warmChecklistNicknameCache(collectChecklistCommentAuthorEmails(items), renderChecklistOverlayList);
+  }
+
+  let checklistNicknameCache = {}; // email -> nickname string, or null if confirmed to have none
+
+  function getCachedNickname(email){
+    return checklistNicknameCache[email] || null;
+  }
+
+  async function warmChecklistNicknameCache(emails, onUpdated){
+    let anyNew = false;
+    for(const email of emails){
+      if(checklistNicknameCache[email] !== undefined) continue;
+      const nickname = await getContactNickname(email);
+      checklistNicknameCache[email] = nickname || null;
+      if(nickname) anyNew = true;
+    }
+    if(anyNew && onUpdated) onUpdated();
+  }
+
+  function collectChecklistCommentAuthorEmails(items){
+    const emails = new Set();
+    (items || []).forEach(item => (item.comments || []).forEach(c => { if(c.authorEmail){ emails.add(c.authorEmail); } }));
+    return [...emails];
   }
 
   async function fetchChecklistGridAuthors(entry){
@@ -6737,7 +6763,11 @@
         if(p.uid === myUid) continue; // already added as "me"
         if(!p.email) continue;
         if(result.some(r => r.email === p.email)) continue;
-        const nickname = await getContactNickname(p.email);
+        let nickname = getCachedNickname(p.email);
+        if(nickname === null && !(p.email in checklistNicknameCache)){
+          nickname = await getContactNickname(p.email);
+          checklistNicknameCache[p.email] = nickname || null;
+        }
         result.push({ email: p.email, name: nickname || p.email.split('@')[0] });
       }
     }
@@ -6747,7 +6777,7 @@
   function renderChecklistGridView(getList, setList, wrapEl, rerenderParent, checklistMode, knownAuthors){
     const items = getList();
     const authorsMap = {};
-    items.forEach(item => (item.comments||[]).forEach(c => { authorsMap[c.authorEmail] = c.authorName; }));
+    items.forEach(item => (item.comments||[]).forEach(c => { authorsMap[c.authorEmail] = getCachedNickname(c.authorEmail) || c.authorName; }));
     (knownAuthors || []).forEach(a => { if(!authorsMap[a.email]){ authorsMap[a.email] = a.name; } });
     const authors = Object.keys(authorsMap);
     const me = getMyIdentity();
@@ -6971,6 +7001,8 @@
     if(detailChecklistGridMode){ renderChecklistGridView(getList, setList, $('detailChecklistGridModeWrap'), null, checklistMode, detailChecklistKnownAuthors); }
 
     $('detailChecklistWrap').style.display = 'block';
+
+    warmChecklistNicknameCache(collectChecklistCommentAuthorEmails(items), rerender);
   }
 
   let detailChecklistGridMode = false;
