@@ -238,6 +238,7 @@
     box-shadow: 0 20px 50px -12px var(--sheet-shadow);
   }
   @keyframes popIn{ from{ opacity:0; transform:scale(0.96);} to{opacity:1; transform:scale(1);} }
+  @keyframes habitHeartBurst{ 0%{ opacity:0; transform:scale(0.3);} 30%{ opacity:1; transform:scale(1.15);} 60%{ opacity:1; transform:scale(1);} 100%{ opacity:0; transform:scale(1) translateY(-16px);} }
   .sheet h2{ font-family:'Fraunces', serif; font-weight:500; font-size:20px; margin:0 0 18px; }
   label.field-label{ font-size:12px; font-weight:600; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.06em; display:block; margin:16px 0 6px; }
   input.field, textarea.field{
@@ -1014,7 +1015,9 @@
   <div class="sheet" style="max-width:460px;">
     <h2 data-i18n="habitTrackerLabel">Habit Tracker</h2>
 
-    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+    <div id="habitPeopleTabs" style="display:none; gap:6px; overflow-x:auto; -webkit-overflow-scrolling:touch; margin-bottom:14px; padding-bottom:2px;"></div>
+
+    <div id="habitAddFormWrap" style="display:flex; gap:8px; flex-wrap:wrap;">
       <input class="field" id="habitNewNameInput" type="text" data-i18n-placeholder="habitNamePlaceholder" placeholder="e.g. Yoga" style="flex:1; min-width:120px;">
       <select id="habitNewCadenceSelect" class="field" style="width:auto; flex-shrink:0;">
         <option value="weekly" data-i18n="habitCadenceWeekly">Weekly</option>
@@ -1023,6 +1026,7 @@
       <input class="field" id="habitNewGoalInput" type="number" min="1" data-i18n-placeholder="habitGoalPlaceholderShort" placeholder="Goal" style="width:50px; flex-shrink:0; text-align:center; font-size:11px; padding:12px 4px;">
       <button class="primary-btn" id="habitAddBtn" style="margin-top:0; width:auto; padding:0 16px; flex-shrink:0;" data-i18n="addAction">Add</button>
     </div>
+
 
     <div id="habitEmpty" class="empty-note" style="display:none; margin-top:14px;" data-i18n="noHabitsYet">No habits yet — add one above.</div>
 
@@ -1079,6 +1083,24 @@
     <p id="checklistModeConfirmExplain" style="font-size:13px; color:var(--ink-soft); margin:-8px 0 16px; line-height:1.5;"></p>
     <button class="primary-btn" id="checklistModeConfirmBtn" style="margin-top:0;" data-i18n="confirmAction">Confirm</button>
     <button class="text-btn" id="checklistModeBackBtn" style="margin-top:10px;" data-i18n="backAction">Back</button>
+  </div>
+</div>
+
+<div class="sheet-overlay" id="habitModeOverlay" style="z-index:497;">
+  <div class="sheet" style="max-width:380px;">
+    <h2 data-i18n="habitModeTitle">How should check-ins work?</h2>
+    <p style="font-size:13px; color:var(--ink-soft); margin:-8px 0 16px; line-height:1.5;" data-i18n="habitModeExplain">This habit tracker is about to be shared. Choose how check-ins should work between you and the people you share it with.</p>
+    <button class="primary-btn" id="habitModeSharedBtn" style="margin-top:0;" data-i18n="habitModeSharedAction">Shared — anyone checking in counts for everyone</button>
+    <button class="text-btn" id="habitModePersonalBtn" style="margin-top:10px;" data-i18n="habitModePersonalAction">Personal — everyone tracks their own check-ins</button>
+  </div>
+</div>
+
+<div class="sheet-overlay" id="habitModeConfirmOverlay" style="z-index:498;">
+  <div class="sheet" style="max-width:380px;">
+    <h2 id="habitModeConfirmTitle"></h2>
+    <p id="habitModeConfirmExplain" style="font-size:13px; color:var(--ink-soft); margin:-8px 0 16px; line-height:1.5;"></p>
+    <button class="primary-btn" id="habitModeConfirmBtn" style="margin-top:0;" data-i18n="confirmAction">Confirm</button>
+    <button class="text-btn" id="habitModeBackBtn" style="margin-top:10px;" data-i18n="backAction">Back</button>
   </div>
 </div>
 
@@ -1969,6 +1991,13 @@
       habitGoalTapToEdit: "点一下设置或修改目标",
       habitGoalPromptText: "这个习惯的目标次数是多少？留空表示不设目标。",
       habitGoalMetLabel: "✓ 达标",
+      habitModeTitle: "打卡要怎么算？",
+      habitModeExplain: "这个习惯打卡要分享出去了。选一下打卡在你和对方之间要怎么算。",
+      habitModeSharedAction: "共享——谁打卡都算，大家一起完成",
+      habitModePersonalAction: "各自独立——每个人各打各的卡",
+      habitModeSharedConfirmExplain: "确认后：任何一个人打卡，所有人看到的都是「完成了」。适合家庭一起做的事，比如轮流收信。",
+      habitModePersonalConfirmExplain: "确认后：每个人打卡只影响自己的记录，互不干扰。适合互相监督、各自养习惯的场景。",
+      habitMeTabLabel: "我",
       deleteHabitTitle: "删除这个习惯吗？",
       deleteHabitExplain: "可以只删掉这个习惯、保留它的打卡记录，也可以两个都清掉。",
       deleteHabitKeepHistoryAction: "删除，保留记录",
@@ -2496,6 +2525,13 @@
       toastLocationFailed: "取得位置失敗，檢查一下是不是拒絕了定位權限",
       toastCoordinatesCopied: "地址已複製",
       noTagsYet: "還沒有標籤",
+      habitModeTitle: "打卡要怎麼算？",
+      habitModeExplain: "這個習慣打卡要分享出去了。選一下打卡在你和對方之間要怎麼算。",
+      habitModeSharedAction: "共享——誰打卡都算，大家一起完成",
+      habitModePersonalAction: "各自獨立——每個人各打各的卡",
+      habitModeSharedConfirmExplain: "確認後：任何一個人打卡，所有人看到的都是「完成了」。適合家庭一起做的事，比如輪流收信。",
+      habitModePersonalConfirmExplain: "確認後：每個人打卡只影響自己的記錄，互不干擾。適合互相監督、各自養習慣的場景。",
+      habitMeTabLabel: "我",
       toastRawCoordinatesCopied: "座標已複製（沒搜到具體地址文字）",
       addNewTagChip: "+ 新增標籤",
       newTagPrompt: "新標籤叫什麼？",
@@ -3023,6 +3059,13 @@
       orEnterEmail: "or enter an email",
       sendAction: "Send",
       shareTagSubtitle: (tag, n) => `Bundle ${n} notes under "${tag}" and share them`,
+      habitModeTitle: "How should check-ins work?",
+      habitModeExplain: "This habit tracker is about to be shared. Choose how check-ins should work between you and the people you share it with.",
+      habitModeSharedAction: "Shared \u2014 anyone checking in counts for everyone",
+      habitModePersonalAction: "Personal \u2014 everyone tracks their own check-ins",
+      habitModeSharedConfirmExplain: "Once confirmed: anyone checking in marks it done for everyone. Good for things a family does together, like taking turns getting the mail.",
+      habitModePersonalConfirmExplain: "Once confirmed: everyone's check-ins only affect their own record, independently. Good for keeping each other accountable on separate habits.",
+      habitMeTabLabel: "Me",
       toastTagBundleTooLarge: "This tag has too many/too large notes to bundle — try sharing in smaller batches",
       toastRecipientNotRegistered: "This person doesn't have a Mind Search account yet, so this can't be shared directly",
       shareTagSent: (n) => `Shared ${n} notes`,
@@ -3680,6 +3723,8 @@
   const ICON_LOCK = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg>';
   const ICON_COEDIT = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>';
   const ICON_BUNDLE = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 5.5H16l5 5v6.5a1.5 1.5 0 01-1.5 1.5H9.5A1.5 1.5 0 018 17V7a1.5 1.5 0 011.5-1.5z" opacity="0.55"/><circle cx="12" cy="10.5" r="1" opacity="0.55"/><path d="M5.5 2.5H12l5 5v6.5A1.5 1.5 0 0115.5 15.5h-10A1.5 1.5 0 014 14V4a1.5 1.5 0 011.5-1.5z"/><circle cx="8" cy="7.5" r="1"/></svg>';
+  const ICON_HEART_OUTLINE = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 00-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 00-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 000-7.8z"/></svg>';
+  const ICON_HEART_FILLED = '<svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M20.8 4.6a5.5 5.5 0 00-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 00-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 000-7.8z"/></svg>';
   const ICON_LOCATION_LG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0119 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.3"/></svg>';
   const ICON_ALL = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>';
   const ICON_UNTAGGED = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.6 2H4a2 2 0 00-2 2v8.6a2 2 0 00.59 1.41l9.4 9.4a2 2 0 002.82 0l8.6-8.6a2 2 0 000-2.82l-9.4-9.4A2 2 0 0012.6 2z" stroke-dasharray="3 3"/></svg>';
@@ -7059,6 +7104,82 @@
     return `${fmt(start)} – ${fmt(end)}`;
   }
 
+  function getHabitChecksForPerson(tracker, email){
+    if(tracker.mode === 'personal'){
+      return (tracker.checksByPerson && tracker.checksByPerson[email]) || {};
+    }
+    return tracker.checks || {};
+  }
+
+  function getHabitLikeKey(tracker, email, key){
+    return tracker.mode === 'personal' ? (email + '::' + key) : key;
+  }
+
+  function toggleHabitCheckForPerson(tracker, email, key, actorIdentity){
+    const actor = actorIdentity || getMyIdentity();
+    const likeKey = getHabitLikeKey(tracker, email, key);
+    const checkedBy = { ...(tracker.checkedBy||{}) };
+    const likes = { ...(tracker.likes||{}) };
+
+    if(tracker.mode === 'personal'){
+      const checksByPerson = { ...(tracker.checksByPerson||{}) };
+      const personChecks = { ...(checksByPerson[email]||{}) };
+      if(personChecks[key]){
+        delete personChecks[key];
+        delete checkedBy[likeKey];
+        delete likes[likeKey];
+      } else {
+        personChecks[key] = true;
+        if(actor){ checkedBy[likeKey] = { email: actor.email, name: actor.name }; }
+      }
+      checksByPerson[email] = personChecks;
+      return { ...tracker, checksByPerson, checkedBy, likes };
+    }
+    const checks = { ...(tracker.checks||{}) };
+    if(checks[key]){
+      delete checks[key];
+      delete checkedBy[likeKey];
+      delete likes[likeKey];
+    } else {
+      checks[key] = true;
+      if(actor){ checkedBy[likeKey] = { email: actor.email, name: actor.name }; }
+    }
+    return { ...tracker, checks, checkedBy, likes };
+  }
+
+  function likeHabitCheckIn(tracker, likeKey){
+    const me = getMyIdentity();
+    if(!me) return tracker;
+    const likes = { ...(tracker.likes||{}) };
+    const existing = likes[likeKey] || [];
+    if(existing.some(l => l.email === me.email)) return tracker; // already liked, no-op
+    likes[likeKey] = [...existing, { email: me.email, name: me.name }];
+    return { ...tracker, likes };
+  }
+
+  async function fetchHabitPeople(entry){
+    const result = [];
+    const me = getMyIdentity();
+    if(me) result.push(me);
+    if(entry && entry.sharedId){
+      const participants = await listSharedParticipants(entry.sharedId);
+      const fb = window.__firebase;
+      const myUid = fb.auth.currentUser ? fb.auth.currentUser.uid : null;
+      for(const p of participants){
+        if(p.uid === myUid) continue;
+        if(!p.email) continue;
+        if(result.some(r => r.email === p.email)) continue;
+        let nickname = getCachedNickname(p.email);
+        if(nickname === null && !(p.email in checklistNicknameCache)){
+          nickname = await getContactNickname(p.email);
+          checklistNicknameCache[p.email] = nickname || null;
+        }
+        result.push({ email: p.email, name: nickname || p.email.split('@')[0] });
+      }
+    }
+    return result;
+  }
+
   function getActiveHabitTracker(){
     if(!habitContext) return { habits: [], checks: {} };
     if(habitContext.mode === 'pending') return pendingHabitTracker || { habits: [], checks: {} };
@@ -7234,6 +7355,11 @@
     if(weeklyHabits.length === 0){ section.style.display = 'none'; return; }
     section.style.display = 'block';
 
+    const me = getMyIdentity();
+    const viewingEmail = habitViewingEmail || (me && me.email);
+    const isViewingSelf = !habitViewingEmail;
+    const personChecks = getHabitChecksForPerson(tracker, viewingEmail);
+
     const dates = getHabitWeekDates(habitWeekOffset);
     const dayLabels = T().habitDayLabels();
     $('habitWeekRangeLabel').textContent = formatHabitWeekRangeLabel(dates[0], dates[6]);
@@ -7241,7 +7367,7 @@
 
     const reorderColWidth = 20, nameColWidth = 76, dayColWidth = 34, countColWidth = 36;
     const grid = document.createElement('div');
-    grid.style.cssText = `display:grid; grid-template-columns:${reorderColWidth}px ${nameColWidth}px repeat(7, ${dayColWidth}px) ${countColWidth}px; gap:1px; background:var(--line); min-width:${reorderColWidth + nameColWidth + 7*dayColWidth + countColWidth}px;`;
+    grid.style.cssText = `display:grid; grid-template-columns:${reorderColWidth}px ${nameColWidth}px repeat(7, ${dayColWidth}px) ${countColWidth}px; gap:1px; background:var(--line); min-width:${reorderColWidth + nameColWidth + 7*dayColWidth + countColWidth}px; ${isViewingSelf ? '' : 'opacity:0.85;'}`;
 
     const cornerReorder = document.createElement('div');
     cornerReorder.style.cssText = 'background:var(--paper-raised); position:sticky; left:0; z-index:2;';
@@ -7263,28 +7389,46 @@
     grid.appendChild(countHeader);
 
     weeklyHabits.forEach((habit, idx) => {
-      grid.appendChild(buildHabitReorderCell(idx === 0, idx === weeklyHabits.length - 1,
-        ()=> moveHabit(habit.id, -1, renderHabitWeeklyGrid),
-        ()=> moveHabit(habit.id, 1, renderHabitWeeklyGrid)));
-      grid.appendChild(buildHabitGridNameCell(habit, renderHabitWeeklyGrid));
+      if(isViewingSelf){
+        grid.appendChild(buildHabitReorderCell(idx === 0, idx === weeklyHabits.length - 1,
+          ()=> moveHabit(habit.id, -1, renderHabitWeeklyGrid),
+          ()=> moveHabit(habit.id, 1, renderHabitWeeklyGrid)));
+        grid.appendChild(buildHabitGridNameCell(habit, renderHabitWeeklyGrid));
+      } else {
+        const blankReorder = document.createElement('div');
+        blankReorder.style.cssText = 'background:var(--paper-raised); position:sticky; left:0; z-index:1;';
+        grid.appendChild(blankReorder);
+        const readonlyName = document.createElement('div');
+        readonlyName.style.cssText = `background:var(--paper-raised); padding:6px 6px; font-size:12px; font-weight:600; color:var(--ink); position:sticky; left:${reorderColWidth}px; z-index:1; overflow-wrap:break-word;`;
+        readonlyName.textContent = habit.name;
+        grid.appendChild(readonlyName);
+      }
       let weekCount = 0;
       dates.forEach(d => {
         const key = habit.id + '_' + habitDateKey(d);
-        const checked = !!(tracker.checks || {})[key];
+        const checked = !!personChecks[key];
         if(checked) weekCount++;
         const cell = document.createElement('button');
         cell.type = 'button';
-        cell.style.cssText = `background:${checked ? 'var(--green)' : 'var(--paper-raised)'}; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#fff; font-size:12px; padding:8px 0;`;
+        cell.disabled = !isViewingSelf;
+        cell.style.cssText = `background:${checked ? 'var(--green)' : 'var(--paper-raised)'}; border:none; cursor:${isViewingSelf ? 'pointer' : 'default'}; display:flex; align-items:center; justify-content:center; color:#fff; font-size:12px; padding:8px 0;`;
         cell.innerHTML = checked ? '✓' : '';
-        cell.addEventListener('click', ()=>{
-          const newChecks = { ...(tracker.checks||{}) };
-          if(checked){ delete newChecks[key]; } else { newChecks[key] = true; }
-          persistActiveHabitTracker({ ...tracker, checks: newChecks });
-          renderHabitWeeklyGrid();
-        });
+        if(isViewingSelf){
+          cell.addEventListener('click', ()=>{
+            persistActiveHabitTracker(toggleHabitCheckForPerson(tracker, viewingEmail, key));
+            renderHabitWeeklyGrid();
+          });
+        }
         grid.appendChild(cell);
       });
-      grid.appendChild(buildHabitCountCell(habit, weekCount, renderHabitWeeklyGrid));
+      if(isViewingSelf){
+        grid.appendChild(buildHabitCountCell(habit, weekCount, renderHabitWeeklyGrid));
+      } else {
+        const readonlyCount = document.createElement('div');
+        readonlyCount.style.cssText = 'background:var(--paper-raised); padding:5px; font-size:11px; font-weight:700; text-align:center; color:var(--ink-soft); display:flex; align-items:center; justify-content:center;';
+        readonlyCount.textContent = habit.goal ? `${weekCount}/${habit.goal}` : String(weekCount);
+        grid.appendChild(readonlyCount);
+      }
     });
 
     const container = $('habitWeeklyGrid');
@@ -7299,6 +7443,11 @@
     if(monthlyHabits.length === 0){ section.style.display = 'none'; return; }
     section.style.display = 'block';
 
+    const me = getMyIdentity();
+    const viewingEmail = habitViewingEmail || (me && me.email);
+    const isViewingSelf = !habitViewingEmail;
+    const personChecks = getHabitChecksForPerson(tracker, viewingEmail);
+
     const year = new Date().getFullYear() + habitYearOffset;
     $('habitYearLabel').textContent = String(year);
     $('habitMonthlySectionTitle').textContent = habitYearOffset === 0 ? T().habitThisYearLabel : T().habitYearlyGenericLabel;
@@ -7307,7 +7456,7 @@
 
     const reorderColWidth = 20, nameColWidth = 76, monthColWidth = 30, countColWidth = 36;
     const grid = document.createElement('div');
-    grid.style.cssText = `display:grid; grid-template-columns:${reorderColWidth}px ${nameColWidth}px repeat(12, ${monthColWidth}px) ${countColWidth}px; gap:1px; background:var(--line); min-width:${reorderColWidth + nameColWidth + 12*monthColWidth + countColWidth}px;`;
+    grid.style.cssText = `display:grid; grid-template-columns:${reorderColWidth}px ${nameColWidth}px repeat(12, ${monthColWidth}px) ${countColWidth}px; gap:1px; background:var(--line); min-width:${reorderColWidth + nameColWidth + 12*monthColWidth + countColWidth}px; ${isViewingSelf ? '' : 'opacity:0.85;'}`;
 
     const cornerReorder = document.createElement('div');
     cornerReorder.style.cssText = 'background:var(--paper-raised); position:sticky; left:0; z-index:2;';
@@ -7328,29 +7477,47 @@
     grid.appendChild(countHeader);
 
     monthlyHabits.forEach((habit, idx) => {
-      grid.appendChild(buildHabitReorderCell(idx === 0, idx === monthlyHabits.length - 1,
-        ()=> moveHabit(habit.id, -1, renderHabitMonthlyGrid),
-        ()=> moveHabit(habit.id, 1, renderHabitMonthlyGrid)));
-      grid.appendChild(buildHabitGridNameCell(habit, renderHabitMonthlyGrid));
+      if(isViewingSelf){
+        grid.appendChild(buildHabitReorderCell(idx === 0, idx === monthlyHabits.length - 1,
+          ()=> moveHabit(habit.id, -1, renderHabitMonthlyGrid),
+          ()=> moveHabit(habit.id, 1, renderHabitMonthlyGrid)));
+        grid.appendChild(buildHabitGridNameCell(habit, renderHabitMonthlyGrid));
+      } else {
+        const blankReorder = document.createElement('div');
+        blankReorder.style.cssText = 'background:var(--paper-raised); position:sticky; left:0; z-index:1;';
+        grid.appendChild(blankReorder);
+        const readonlyName = document.createElement('div');
+        readonlyName.style.cssText = `background:var(--paper-raised); padding:6px 6px; font-size:12px; font-weight:600; color:var(--ink); position:sticky; left:${reorderColWidth}px; z-index:1; overflow-wrap:break-word;`;
+        readonlyName.textContent = habit.name;
+        grid.appendChild(readonlyName);
+      }
       let yearCount = 0;
       for(let m=0;m<12;m++){
         const monthKey = year + '-' + String(m+1).padStart(2,'0');
         const key = habit.id + '_' + monthKey;
-        const checked = !!(tracker.checks || {})[key];
+        const checked = !!personChecks[key];
         if(checked) yearCount++;
         const cell = document.createElement('button');
         cell.type = 'button';
-        cell.style.cssText = `background:${checked ? 'var(--green)' : 'var(--paper-raised)'}; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#fff; font-size:12px; padding:8px 0;`;
+        cell.disabled = !isViewingSelf;
+        cell.style.cssText = `background:${checked ? 'var(--green)' : 'var(--paper-raised)'}; border:none; cursor:${isViewingSelf ? 'pointer' : 'default'}; display:flex; align-items:center; justify-content:center; color:#fff; font-size:12px; padding:8px 0;`;
         cell.innerHTML = checked ? '✓' : '';
-        cell.addEventListener('click', ()=>{
-          const newChecks = { ...(tracker.checks||{}) };
-          if(checked){ delete newChecks[key]; } else { newChecks[key] = true; }
-          persistActiveHabitTracker({ ...tracker, checks: newChecks });
-          renderHabitMonthlyGrid();
-        });
+        if(isViewingSelf){
+          cell.addEventListener('click', ()=>{
+            persistActiveHabitTracker(toggleHabitCheckForPerson(tracker, viewingEmail, key));
+            renderHabitMonthlyGrid();
+          });
+        }
         grid.appendChild(cell);
       }
-      grid.appendChild(buildHabitCountCell(habit, yearCount, renderHabitMonthlyGrid));
+      if(isViewingSelf){
+        grid.appendChild(buildHabitCountCell(habit, yearCount, renderHabitMonthlyGrid));
+      } else {
+        const readonlyCount = document.createElement('div');
+        readonlyCount.style.cssText = 'background:var(--paper-raised); padding:5px; font-size:11px; font-weight:700; text-align:center; color:var(--ink-soft); display:flex; align-items:center; justify-content:center;';
+        readonlyCount.textContent = habit.goal ? `${yearCount}/${habit.goal}` : String(yearCount);
+        grid.appendChild(readonlyCount);
+      }
     });
 
     const container = $('habitMonthlyGrid');
@@ -7361,25 +7528,58 @@
   function renderHabitOverlayFull(){
     const tracker = getActiveHabitTracker();
     $('habitEmpty').style.display = tracker.habits.length === 0 ? 'block' : 'none';
+    $('habitAddFormWrap').style.display = habitViewingEmail ? 'none' : 'flex';
     renderHabitWeeklyGrid();
     renderHabitMonthlyGrid();
   }
 
-  function openHabitOverlay(){
+  let habitViewingEmail = null; // null = viewing yourself
+  let habitPeopleList = [];
+
+  async function openHabitOverlay(){
     habitWeekOffset = 0;
     habitYearOffset = 0;
+    habitViewingEmail = null;
     $('habitNewNameInput').value = '';
-    renderHabitOverlayFull();
     $('habitOverlay').classList.add('open');
+
+    const entry = (habitContext && habitContext.mode === 'entry') ? entries.find(e => e.id === habitContext.entryId) : null;
+    habitPeopleList = await fetchHabitPeople(entry);
+    renderHabitPeopleTabs();
+    renderHabitOverlayFull();
+  }
+
+  function renderHabitPeopleTabs(){
+    const wrap = $('habitPeopleTabs');
+    wrap.innerHTML = '';
+    if(habitPeopleList.length <= 1){
+      wrap.style.display = 'none';
+      return;
+    }
+    wrap.style.display = 'flex';
+    const me = getMyIdentity();
+    habitPeopleList.forEach(person => {
+      const isViewing = (habitViewingEmail === null && me && person.email === me.email) || habitViewingEmail === person.email;
+      const tab = document.createElement('button');
+      tab.type = 'button';
+      tab.textContent = (me && person.email === me.email) ? T().habitMeTabLabel : person.name;
+      tab.style.cssText = `flex-shrink:0; padding:6px 14px; border-radius:999px; border:1px solid ${isViewing ? 'var(--plum)' : 'var(--line)'}; background:${isViewing ? 'var(--plum)' : 'var(--paper-raised)'}; color:${isViewing ? '#fff' : 'var(--ink-soft)'}; font-size:12.5px; font-weight:600; cursor:pointer; white-space:nowrap;`;
+      tab.addEventListener('click', ()=>{
+        habitViewingEmail = (me && person.email === me.email) ? null : person.email;
+        renderHabitPeopleTabs();
+        renderHabitOverlayFull();
+      });
+      wrap.appendChild(tab);
+    });
   }
 
   $('habitToolbarBtn').addEventListener('click', ()=>{
-    habitContext = { mode: 'pending' };
-    if(!pendingHabitTracker) pendingHabitTracker = { habits: [], checks: {} };
+    habitContext = editingId ? { mode: 'entry', entryId: editingId } : { mode: 'pending' };
+    if(habitContext.mode === 'pending' && !pendingHabitTracker) pendingHabitTracker = { habits: [], checks: {} };
     openHabitOverlay();
   });
   $('habitViewAllBtn').addEventListener('click', ()=>{
-    habitContext = { mode: 'pending' };
+    habitContext = editingId ? { mode: 'entry', entryId: editingId } : { mode: 'pending' };
     openHabitOverlay();
   });
   $('detailHabitManageBtn').addEventListener('click', ()=>{
@@ -7417,14 +7617,91 @@
   $('habitYearPrevBtn').addEventListener('click', ()=>{ habitYearOffset--; renderHabitMonthlyGrid(); });
   $('habitYearNextBtn').addEventListener('click', ()=>{ habitYearOffset++; renderHabitMonthlyGrid(); });
 
-  function renderDetailHabitSummary(entry){
-    const tracker = entry.habitTracker;
-    if(!tracker || !tracker.habits || tracker.habits.length === 0){
-      $('detailHabitWrap').style.display = 'none';
-      return;
+  function showHabitHeartBurst(container, x, y){
+    const rect = container.getBoundingClientRect();
+    container.style.position = 'relative';
+    const heart = document.createElement('div');
+    heart.innerHTML = ICON_HEART_FILLED.replace('width="10" height="10"', 'width="46" height="46"');
+    heart.style.cssText = `position:absolute; left:${x - rect.left - 23}px; top:${y - rect.top - 23}px; color:var(--danger); pointer-events:none; animation:habitHeartBurst .7s ease forwards; z-index:50;`;
+    container.appendChild(heart);
+    setTimeout(()=> heart.remove(), 700);
+  }
+
+  function attachHabitDoubleTapCheer(container){
+    let lastTap = 0;
+    container.addEventListener('click', (e)=>{
+      if(e.target.closest('button')) return; // taps on the actual check-in dots use their own gesture, not this
+      const now = Date.now();
+      if(now - lastTap < 350){
+        showHabitHeartBurst(container, e.clientX, e.clientY);
+        lastTap = 0;
+      } else {
+        lastTap = now;
+      }
+    });
+  }
+
+  function attachHabitDoubleTapToLike(dot, onDoubleTap){
+    let lastTap = 0;
+    dot.addEventListener('click', ()=>{
+      const now = Date.now();
+      if(now - lastTap < 350){
+        onDoubleTap();
+        lastTap = 0;
+      } else {
+        lastTap = now;
+      }
+    });
+  }
+
+  function buildHabitDot(entry, tracker, personEmail, isSelf, key, checked, borderStyle, size, dateLabel){
+    const likeKey = getHabitLikeKey(tracker, personEmail, key);
+    const likeCount = (tracker.likes && tracker.likes[likeKey]) ? tracker.likes[likeKey].length : 0;
+    const me = getMyIdentity();
+    const iAlreadyLiked = me && tracker.likes && tracker.likes[likeKey] && tracker.likes[likeKey].some(l => l.email === me.email);
+    const checkedByInfo = tracker.checkedBy && tracker.checkedBy[likeKey];
+    const checkedByMe = me && checkedByInfo && checkedByInfo.email === me.email;
+    const canLike = checked && checkedByInfo && !checkedByMe; // can't like your own check-in, and need to know who to attribute it to
+
+    const dotWrap = document.createElement('div');
+    dotWrap.style.cssText = 'position:relative; flex-shrink:0;';
+
+    const dot = document.createElement('button');
+    dot.type = 'button';
+    if(dateLabel){ dot.title = dateLabel; } // long press shows this via the app's existing global long-press-hint mechanism
+    dot.style.cssText = `width:${size}px; height:${size}px; border-radius:50%; border:${borderStyle}; background:${checked ? 'var(--amber-deep)' : 'transparent'}; padding:0; cursor:${isSelf ? 'pointer' : 'default'};`;
+    if(isSelf){
+      dot.addEventListener('click', ()=>{
+        entry.habitTracker = toggleHabitCheckForPerson(tracker, personEmail, key);
+        persistIndex();
+        if(entry.sharedId){ updateSharedEntry(entry.sharedId, { habitTracker: entry.habitTracker }); }
+        renderDetailHabitSummary(entry);
+      });
+    } else if(canLike){
+      attachHabitDoubleTapToLike(dot, ()=>{
+        if(iAlreadyLiked) return;
+        entry.habitTracker = likeHabitCheckIn(tracker, likeKey);
+        persistIndex();
+        if(entry.sharedId){ updateSharedEntry(entry.sharedId, { habitTracker: entry.habitTracker }); }
+        renderDetailHabitSummary(entry);
+      });
     }
-    const summaryWrap = $('detailHabitSummary');
-    summaryWrap.innerHTML = '';
+    dotWrap.appendChild(dot);
+
+    if(likeCount > 0){
+      const badge = document.createElement('div');
+      badge.style.cssText = `position:absolute; top:-4px; right:-4px; width:11px; height:11px; border-radius:50%; background:var(--paper-raised); display:flex; align-items:center; justify-content:center; color:var(--danger); box-shadow:0 1px 3px rgba(0,0,0,0.2);`;
+      badge.innerHTML = ICON_HEART_FILLED;
+      dotWrap.appendChild(badge);
+    }
+
+    return dotWrap;
+  }
+
+  function buildHabitSummaryContent(entry, tracker, personEmail, isSelf){
+    const wrap = document.createElement('div');
+    attachHabitDoubleTapCheer(wrap);
+    const personChecks = getHabitChecksForPerson(tracker, personEmail);
     const weekDates = getHabitWeekDates(0);
     const todayKey = habitDateKey(new Date());
     const nowYear = new Date().getFullYear();
@@ -7450,7 +7727,7 @@
         dayHeaderRow.appendChild(lbl);
       });
       headerRow.appendChild(dayHeaderRow);
-      summaryWrap.appendChild(headerRow);
+      wrap.appendChild(headerRow);
 
       weeklyHabits.forEach(habit => {
         const row = document.createElement('div');
@@ -7463,7 +7740,7 @@
         nameWrap.appendChild(nameEl);
 
         let weekCount = 0;
-        weekDates.forEach(d => { if((tracker.checks||{})[habit.id+'_'+habitDateKey(d)]) weekCount++; });
+        weekDates.forEach(d => { if(personChecks[habit.id+'_'+habitDateKey(d)]) weekCount++; });
         if(habit.goal){
           const met = weekCount >= habit.goal;
           const goalTag = document.createElement('span');
@@ -7477,24 +7754,13 @@
         dotsWrap.style.cssText = 'display:flex; gap:4px;';
         weekDates.forEach(d => {
           const key = habit.id + '_' + habitDateKey(d);
-          const checked = !!(tracker.checks||{})[key];
+          const checked = !!personChecks[key];
           const isToday = habitDateKey(d) === todayKey;
-          const dot = document.createElement('button');
-          dot.type = 'button';
-          dot.title = `${d.getMonth()+1}/${d.getDate()}`;
-          dot.style.cssText = `width:16px; height:16px; border-radius:50%; border:${isToday ? '2px solid var(--amber-deep)' : '1.5px solid var(--line)'}; background:${checked ? 'var(--amber-deep)' : 'transparent'}; padding:0; cursor:pointer; flex-shrink:0;`;
-          dot.addEventListener('click', ()=>{
-            const newChecks = { ...(tracker.checks||{}) };
-            if(checked){ delete newChecks[key]; } else { newChecks[key] = true; }
-            entry.habitTracker = { ...tracker, checks: newChecks };
-            persistIndex();
-            if(entry.sharedId){ updateSharedEntry(entry.sharedId, { habitTracker: entry.habitTracker }); }
-            renderDetailHabitSummary(entry);
-          });
-          dotsWrap.appendChild(dot);
+          const borderStyle = isToday ? '2px solid var(--amber-deep)' : '1.5px solid var(--line)';
+          dotsWrap.appendChild(buildHabitDot(entry, tracker, personEmail, isSelf, key, checked, borderStyle, 16, `${d.getMonth()+1}/${d.getDate()}`));
         });
         row.appendChild(dotsWrap);
-        summaryWrap.appendChild(row);
+        wrap.appendChild(row);
       });
     }
 
@@ -7515,13 +7781,13 @@
         monthHeaderRow.appendChild(lbl);
       }
       headerRow.appendChild(monthHeaderRow);
-      summaryWrap.appendChild(headerRow);
+      wrap.appendChild(headerRow);
 
       monthlyHabits.forEach(habit => {
         let count = 0;
         for(let m=0;m<12;m++){
           const monthKey = nowYear + '-' + String(m+1).padStart(2,'0');
-          if((tracker.checks||{})[habit.id+'_'+monthKey]) count++;
+          if(personChecks[habit.id+'_'+monthKey]) count++;
         }
         const row = document.createElement('div');
         row.style.cssText = 'display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:4px;';
@@ -7545,29 +7811,78 @@
         for(let m=0;m<12;m++){
           const monthKey = nowYear + '-' + String(m+1).padStart(2,'0');
           const key = habit.id + '_' + monthKey;
-          const checked = !!(tracker.checks||{})[key];
+          const checked = !!personChecks[key];
           const isThisMonth = m === new Date().getMonth();
-          const dot = document.createElement('button');
-          dot.type = 'button';
-          dot.title = T().habitMonthLabels()[m];
-          dot.style.cssText = `width:11px; height:11px; border-radius:50%; border:${isThisMonth ? '1.5px solid var(--amber-deep)' : '1px solid var(--line)'}; background:${checked ? 'var(--amber-deep)' : 'transparent'}; padding:0; cursor:pointer; flex-shrink:0;`;
-          dot.addEventListener('click', ()=>{
-            const newChecks = { ...(tracker.checks||{}) };
-            if(checked){ delete newChecks[key]; } else { newChecks[key] = true; }
-            entry.habitTracker = { ...tracker, checks: newChecks };
-            persistIndex();
-            if(entry.sharedId){ updateSharedEntry(entry.sharedId, { habitTracker: entry.habitTracker }); }
-            renderDetailHabitSummary(entry);
-          });
-          dotsWrap.appendChild(dot);
+          const borderStyle = isThisMonth ? '1.5px solid var(--amber-deep)' : '1px solid var(--line)';
+          dotsWrap.appendChild(buildHabitDot(entry, tracker, personEmail, isSelf, key, checked, borderStyle, 11, T().habitMonthLabels()[m]));
         }
         row.appendChild(dotsWrap);
-        summaryWrap.appendChild(row);
+        wrap.appendChild(row);
       });
     }
 
+    return wrap;
+  }
+
+  async function renderDetailHabitSummary(entry){
+    const tracker = entry.habitTracker;
+    if(!tracker || !tracker.habits || tracker.habits.length === 0){
+      $('detailHabitWrap').style.display = 'none';
+      return;
+    }
+    const summaryWrap = $('detailHabitSummary');
+    summaryWrap.innerHTML = '';
+
+    const me = getMyIdentity();
+    const isPersonalMode = tracker.mode === 'personal';
+    const people = isPersonalMode ? await fetchHabitPeople(entry) : [];
+
+    if(!isPersonalMode || people.length <= 1 || !me){
+      // Shared mode (or no one else involved): one unified view — everyone sees and can check the same data.
+      const myEmail = me ? me.email : null;
+      summaryWrap.appendChild(buildHabitSummaryContent(entry, tracker, myEmail, true));
+      $('detailHabitWrap').style.display = 'block';
+      return;
+    }
+
+    const scrollWrap = document.createElement('div');
+    scrollWrap.style.cssText = 'display:flex; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch;';
+
+    people.forEach(person => {
+      const isSelf = person.email === me.email;
+      const page = document.createElement('div');
+      page.style.cssText = 'flex:0 0 100%; min-width:100%; scroll-snap-align:start;';
+
+      const nameLabel = document.createElement('div');
+      nameLabel.style.cssText = 'font-size:11px; font-weight:700; color:var(--plum-deep); margin-bottom:6px;';
+      nameLabel.textContent = isSelf ? T().habitMeTabLabel : person.name;
+      page.appendChild(nameLabel);
+
+      page.appendChild(buildHabitSummaryContent(entry, tracker, person.email, isSelf));
+      scrollWrap.appendChild(page);
+    });
+    summaryWrap.appendChild(scrollWrap);
+
+    const dotsNav = document.createElement('div');
+    dotsNav.style.cssText = 'display:flex; justify-content:center; gap:5px; margin-top:8px;';
+    people.forEach((p, i) => {
+      const dot = document.createElement('span');
+      dot.style.cssText = `width:6px; height:6px; border-radius:50%; background:${i===0 ? 'var(--plum-deep)' : 'var(--line)'}; transition:background .15s ease;`;
+      dotsNav.appendChild(dot);
+    });
+    summaryWrap.appendChild(dotsNav);
+
+    scrollWrap.addEventListener('scroll', ()=>{
+      const idx = Math.round(scrollWrap.scrollLeft / scrollWrap.clientWidth);
+      Array.from(dotsNav.children).forEach((dot, i) => {
+        dot.style.background = i === idx ? 'var(--plum-deep)' : 'var(--line)';
+      });
+    });
+
     $('detailHabitWrap').style.display = 'block';
   }
+
+
 
   document.querySelectorAll('.detail-datelog-range-btn').forEach(btn => {
     btn.addEventListener('click', ()=>{
@@ -8686,9 +9001,46 @@
     });
   }
 
+  function promptHabitCompletionMode(){
+    return new Promise((resolve)=>{
+      $('habitModeOverlay').classList.add('open');
+
+      function showConfirm(mode){
+        $('habitModeOverlay').classList.remove('open');
+        $('habitModeConfirmTitle').textContent = mode === 'shared' ? T().habitModeSharedAction : T().habitModePersonalAction;
+        $('habitModeConfirmExplain').textContent = mode === 'shared' ? T().habitModeSharedConfirmExplain : T().habitModePersonalConfirmExplain;
+        $('habitModeConfirmOverlay').classList.add('open');
+
+        const onConfirm = ()=>{ cleanupConfirm(); resolve(mode); };
+        const onBack = ()=>{ cleanupConfirm(); $('habitModeOverlay').classList.add('open'); };
+        function cleanupConfirm(){
+          $('habitModeConfirmOverlay').classList.remove('open');
+          $('habitModeConfirmBtn').removeEventListener('click', onConfirm);
+          $('habitModeBackBtn').removeEventListener('click', onBack);
+        }
+        $('habitModeConfirmBtn').addEventListener('click', onConfirm);
+        $('habitModeBackBtn').addEventListener('click', onBack);
+      }
+
+      const onShared = ()=>{ cleanup(); showConfirm('shared'); };
+      const onPersonal = ()=>{ cleanup(); showConfirm('personal'); };
+      function cleanup(){
+        $('habitModeOverlay').classList.remove('open');
+        $('habitModeSharedBtn').removeEventListener('click', onShared);
+        $('habitModePersonalBtn').removeEventListener('click', onPersonal);
+      }
+      $('habitModeSharedBtn').addEventListener('click', onShared);
+      $('habitModePersonalBtn').addEventListener('click', onPersonal);
+    });
+  }
+
   async function shareEntryToEmail(entry, email, allowEdit){
     if(allowEdit && entry.checklist && entry.checklist.length > 0 && !entry.checklistMode){
       entry.checklistMode = await promptChecklistCompletionMode();
+      persistIndex();
+    }
+    if(allowEdit && entry.habitTracker && entry.habitTracker.habits && entry.habitTracker.habits.length > 0 && !entry.habitTracker.mode){
+      entry.habitTracker.mode = await promptHabitCompletionMode();
       persistIndex();
     }
     const fb = window.__firebase;
