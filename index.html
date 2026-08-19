@@ -1020,7 +1020,7 @@
         <option value="weekly" data-i18n="habitCadenceWeekly">Weekly</option>
         <option value="monthly" data-i18n="habitCadenceMonthly">Monthly</option>
       </select>
-      <input class="field" id="habitNewGoalInput" type="number" min="1" data-i18n-placeholder="habitGoalPlaceholderShort" placeholder="Goal" style="width:56px; flex-shrink:0; text-align:center;">
+      <input class="field" id="habitNewGoalInput" type="number" min="1" data-i18n-placeholder="habitGoalPlaceholderShort" placeholder="Goal" style="width:56px; flex-shrink:0; text-align:center; font-size:13px;">
       <button class="primary-btn" id="habitAddBtn" style="margin-top:0; width:auto; padding:0 16px; flex-shrink:0;" data-i18n="addAction">Add</button>
     </div>
 
@@ -6311,6 +6311,7 @@
       if(!entry) return;
       entry.checklist = newList;
       persistIndex();
+      if(entry.sharedId){ updateSharedEntry(entry.sharedId, { checklist: newList }); }
       renderDetailChecklist(entry);
     }
   }
@@ -6687,10 +6688,30 @@
     $('checklistGridToggleBtn').style.display = hasAnyComments ? 'block' : 'none';
   }
 
-  function renderChecklistGridView(getList, setList, wrapEl, rerenderParent, checklistMode){
+  async function fetchChecklistGridAuthors(entry){
+    const result = [];
+    const me = getMyIdentity();
+    if(me) result.push(me);
+    if(entry && entry.sharedId){
+      const participants = await listSharedParticipants(entry.sharedId);
+      const fb = window.__firebase;
+      const myUid = fb.auth.currentUser ? fb.auth.currentUser.uid : null;
+      for(const p of participants){
+        if(p.uid === myUid) continue; // already added as "me"
+        if(!p.email) continue;
+        if(result.some(r => r.email === p.email)) continue;
+        const nickname = await getContactNickname(p.email);
+        result.push({ email: p.email, name: nickname || p.email.split('@')[0] });
+      }
+    }
+    return result;
+  }
+
+  function renderChecklistGridView(getList, setList, wrapEl, rerenderParent, checklistMode, knownAuthors){
     const items = getList();
     const authorsMap = {};
     items.forEach(item => (item.comments||[]).forEach(c => { authorsMap[c.authorEmail] = c.authorName; }));
+    (knownAuthors || []).forEach(a => { if(!authorsMap[a.email]){ authorsMap[a.email] = a.name; } });
     const authors = Object.keys(authorsMap);
     const me = getMyIdentity();
     const isPersonal = checklistMode === 'personal';
@@ -6732,7 +6753,7 @@
           const reordered = [...list];
           [reordered[idx-1], reordered[idx]] = [reordered[idx], reordered[idx-1]];
           setList(reordered);
-          renderChecklistGridView(getList, setList, wrap, rerenderParent, checklistMode);
+          renderChecklistGridView(getList, setList, wrap, rerenderParent, checklistMode, knownAuthors);
         },
         ()=>{
           if(idx === items.length-1) return;
@@ -6740,7 +6761,7 @@
           const reordered = [...list];
           [reordered[idx], reordered[idx+1]] = [reordered[idx+1], reordered[idx]];
           setList(reordered);
-          renderChecklistGridView(getList, setList, wrap, rerenderParent, checklistMode);
+          renderChecklistGridView(getList, setList, wrap, rerenderParent, checklistMode, knownAuthors);
         }));
 
       const nameCell = document.createElement('div');
@@ -6765,7 +6786,7 @@
           committed = true;
           const newText = input.value.trim() || item.text;
           setList(getList().map(it => it.id === item.id ? {...it, text: newText} : it));
-          renderChecklistGridView(getList, setList, wrap, rerenderParent, checklistMode);
+          renderChecklistGridView(getList, setList, wrap, rerenderParent, checklistMode, knownAuthors);
         };
         input.addEventListener('blur', commit);
         input.addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ input.blur(); } });
@@ -6791,7 +6812,7 @@
               const doneBy = {...(item.doneBy||{})};
               if(doneBy[email]){ delete doneBy[email]; } else { doneBy[email] = true; }
               setList(getList().map(it => it.id === item.id ? {...it, doneBy} : it));
-              renderChecklistGridView(getList, setList, wrap, rerenderParent, checklistMode);
+              renderChecklistGridView(getList, setList, wrap, rerenderParent, checklistMode, knownAuthors);
               if(rerenderParent){ rerenderParent(); }
             });
           }
@@ -6819,7 +6840,7 @@
               const others = (item.comments||[]).filter(cm => cm.authorEmail !== me.email);
               const newComments = text ? [...others, { authorEmail: me.email, authorName: me.name, text, timestamp: Date.now() }] : others;
               setList(getList().map(it => it.id === item.id ? {...it, comments: newComments} : it));
-              renderChecklistGridView(getList, setList, wrap, rerenderParent, checklistMode);
+              renderChecklistGridView(getList, setList, wrap, rerenderParent, checklistMode, knownAuthors);
               if(rerenderParent){ rerenderParent(); }
             };
             input.addEventListener('blur', commit);
@@ -6836,12 +6857,16 @@
   }
 
   let checklistGridMode = false;
-  $('checklistGridToggleBtn').addEventListener('click', ()=>{
+  $('checklistGridToggleBtn').addEventListener('click', async ()=>{
     checklistGridMode = !checklistGridMode;
     $('checklistGridToggleBtn').textContent = checklistGridMode ? T().checklistListViewAction : T().checklistGridViewAction;
     $('checklistListModeWrap').style.display = checklistGridMode ? 'none' : 'block';
     $('checklistGridModeWrap').style.display = checklistGridMode ? 'block' : 'none';
-    if(checklistGridMode){ renderChecklistGridView(getActiveChecklist, persistActiveChecklist, $('checklistGridModeWrap'), null, getChecklistModeForContext()); }
+    if(checklistGridMode){
+      const entry = (checklistContext && checklistContext.mode === 'entry') ? entries.find(e => e.id === checklistContext.entryId) : null;
+      const knownAuthors = await fetchChecklistGridAuthors(entry);
+      renderChecklistGridView(getActiveChecklist, persistActiveChecklist, $('checklistGridModeWrap'), null, getChecklistModeForContext(), knownAuthors);
+    }
   });
 
   function openChecklistOverlay(){
@@ -6880,7 +6905,11 @@
       return;
     }
     const getList = () => entry.checklist || [];
-    const setList = (newList) => { entry.checklist = newList; persistIndex(); };
+    const setList = (newList) => {
+      entry.checklist = newList;
+      persistIndex();
+      if(entry.sharedId){ updateSharedEntry(entry.sharedId, { checklist: newList }); }
+    };
     const rerender = () => renderDetailChecklist(entry);
     const isShared = !!entry.sharedId;
     const checklistMode = entry.checklistMode || 'shared';
@@ -6903,18 +6932,22 @@
 
     const hasAnyComments = items.some(it => it.comments && it.comments.length > 0);
     $('detailChecklistGridToggleBtn').style.display = hasAnyComments ? 'block' : 'none';
-    if(detailChecklistGridMode){ renderChecklistGridView(getList, setList, $('detailChecklistGridModeWrap'), null, checklistMode); }
+    if(detailChecklistGridMode){ renderChecklistGridView(getList, setList, $('detailChecklistGridModeWrap'), null, checklistMode, detailChecklistKnownAuthors); }
 
     $('detailChecklistWrap').style.display = 'block';
   }
 
   let detailChecklistGridMode = false;
-  $('detailChecklistGridToggleBtn').addEventListener('click', ()=>{
+  let detailChecklistKnownAuthors = [];
+  $('detailChecklistGridToggleBtn').addEventListener('click', async ()=>{
     detailChecklistGridMode = !detailChecklistGridMode;
     $('detailChecklistGridToggleBtn').textContent = detailChecklistGridMode ? T().checklistListViewAction : T().checklistGridViewAction;
     $('detailChecklistListModeWrap').style.display = detailChecklistGridMode ? 'none' : 'block';
     $('detailChecklistGridModeWrap').style.display = detailChecklistGridMode ? 'block' : 'none';
     const entry = entries.find(e => e.id === currentDetailId);
+    if(detailChecklistGridMode && entry){
+      detailChecklistKnownAuthors = await fetchChecklistGridAuthors(entry);
+    }
     if(entry) renderDetailChecklist(entry);
   });
 
@@ -6927,7 +6960,11 @@
     const entry = entries.find(e => e.id === currentDetailId);
     if(!entry) return;
     const getList = () => entry.checklist || [];
-    const setList = (newList) => { entry.checklist = newList; persistIndex(); };
+    const setList = (newList) => {
+      entry.checklist = newList;
+      persistIndex();
+      if(entry.sharedId){ updateSharedEntry(entry.sharedId, { checklist: newList }); }
+    };
     startNewChecklistItem(getList, setList, ()=> renderDetailChecklist(entry));
   });
 
@@ -6971,6 +7008,7 @@
       if(!entry) return;
       entry.habitTracker = newTracker;
       persistIndex();
+      if(entry.sharedId){ updateSharedEntry(entry.sharedId, { habitTracker: newTracker }); }
       renderDetailHabitSummary(entry);
     }
   }
@@ -7327,13 +7365,15 @@
     const monthlyHabits = tracker.habits.filter(h => h.cadence === 'monthly');
 
     if(weeklyHabits.length){
-      const header = document.createElement('div');
-      header.style.cssText = 'font-size:10.5px; font-weight:700; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.05em; margin-bottom:2px;';
+      const headerRow = document.createElement('div');
+      headerRow.style.cssText = 'display:flex; align-items:center; justify-content:space-between; margin-bottom:3px;';
+      const header = document.createElement('span');
+      header.style.cssText = 'font-size:10.5px; font-weight:700; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.05em;';
       header.textContent = T().habitThisWeekLabel;
-      summaryWrap.appendChild(header);
+      headerRow.appendChild(header);
 
       const dayHeaderRow = document.createElement('div');
-      dayHeaderRow.style.cssText = 'display:flex; justify-content:flex-end; gap:4px; margin-bottom:3px;';
+      dayHeaderRow.style.cssText = 'display:flex; gap:4px;';
       const dayLabelsShort = T().habitDayLabels();
       weekDates.forEach((d, i) => {
         const lbl = document.createElement('span');
@@ -7341,7 +7381,8 @@
         lbl.textContent = dayLabelsShort[i].charAt(0);
         dayHeaderRow.appendChild(lbl);
       });
-      summaryWrap.appendChild(dayHeaderRow);
+      headerRow.appendChild(dayHeaderRow);
+      summaryWrap.appendChild(headerRow);
 
       weeklyHabits.forEach(habit => {
         const row = document.createElement('div');
@@ -7379,6 +7420,7 @@
             if(checked){ delete newChecks[key]; } else { newChecks[key] = true; }
             entry.habitTracker = { ...tracker, checks: newChecks };
             persistIndex();
+            if(entry.sharedId){ updateSharedEntry(entry.sharedId, { habitTracker: entry.habitTracker }); }
             renderDetailHabitSummary(entry);
           });
           dotsWrap.appendChild(dot);
