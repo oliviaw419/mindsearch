@@ -1035,7 +1035,7 @@
           <button type="button" id="habitWeekNextBtn" style="background:none; border:none; cursor:pointer; color:var(--ink-soft); padding:2px;">▶</button>
         </div>
       </div>
-      <div id="habitWeeklyGrid" style="overflow-x:auto; -webkit-overflow-scrolling:touch; border-radius:12px;"></div>
+      <div id="habitWeeklyGrid" style="overflow-x:auto; -webkit-overflow-scrolling:touch; border-radius:12px; padding-right:14px;"></div>
     </div>
 
     <div id="habitMonthlySection" style="display:none; margin-top:18px;">
@@ -1047,7 +1047,7 @@
           <button type="button" id="habitYearNextBtn" style="background:none; border:none; cursor:pointer; color:var(--ink-soft); padding:2px;">▶</button>
         </div>
       </div>
-      <div id="habitMonthlyGrid" style="overflow-x:auto; -webkit-overflow-scrolling:touch; border-radius:12px;"></div>
+      <div id="habitMonthlyGrid" style="overflow-x:auto; -webkit-overflow-scrolling:touch; border-radius:12px; padding-right:14px;"></div>
     </div>
 
     <button class="text-btn" id="closeHabitBtn" style="margin-top:18px;" data-i18n="close">Close</button>
@@ -1943,6 +1943,7 @@
       checklistTapToEdit: "点一下可以改",
       checklistAddCommentAction: "加一句评论",
       checklistDoneStatusLabel: "已完成",
+      confirmDeleteChecklistItemWithActivity: (text) => `「${text}」已经有人打勾/留过评论了，确定要删除吗？`,
       checklistModeTitle: "「完成」要怎么算？",
       checklistModeExplain: "这份清单要分享出去了。选一下「完成」在你和对方之间要怎么算。",
       checklistModeSharedAction: "共享——一个人打勾，大家都算完成",
@@ -2444,6 +2445,7 @@
       exportPdfAction: "匯出 PDF",
       checklistDoneStatusLabel: "已完成",
       checklistAddItemAction: "加一項",
+      confirmDeleteChecklistItemWithActivity: (text) => `「${text}」已經有人打勾/留過評論了，確定要刪除嗎？`,
       exportExcelAction: "匯出 Excel",
       noteColumnLabel: "備註",
       manageDateLogAction: "新增記錄、匯出、設定提醒 →",
@@ -2945,6 +2947,7 @@
       checklistDoneStatusLabel: "Done",
       checklistAddItemAction: "Add item",
       toastReminderSetFromPrediction: "Reminder set",
+      confirmDeleteChecklistItemWithActivity: (text) => `"${text}" already has a check-in or comment on it \u2014 delete anyway?`,
       toastTagRemovedEverywhere: "Removed from tag list and all notes",
       backAction: "← Back",
       helpFeedbackMenuLabel: "Help & Feedback",
@@ -6625,6 +6628,10 @@
     delBtn.textContent = '✕';
     delBtn.style.cssText = 'color:var(--ink-soft); opacity:0.5; font-weight:600; font-size:12.5px; background:none; border:none; cursor:pointer; flex-shrink:0; padding:2px 4px;';
     delBtn.addEventListener('click', ()=>{
+      const hasActivity = (item.comments && item.comments.length > 0) || !!item.done || (item.doneBy && Object.keys(item.doneBy).length > 0);
+      if(isShared && hasActivity){
+        if(!confirm(T().confirmDeleteChecklistItemWithActivity(item.text))) return;
+      }
       setList(getList().filter(it => it.id !== item.id));
       rerender();
     });
@@ -6754,7 +6761,7 @@
     }
 
     const scrollWrap = document.createElement('div');
-    scrollWrap.style.cssText = 'overflow-x:auto; -webkit-overflow-scrolling:touch; border-radius:12px;';
+    scrollWrap.style.cssText = 'overflow-x:auto; -webkit-overflow-scrolling:touch; border-radius:12px; padding-right:14px;';
 
     const reorderColWidth = 20;
     const colWidth = isPersonal ? 130 : 110;
@@ -7128,7 +7135,7 @@
 
   function buildHabitReorderCell(isFirstInGroup, isLastInGroup, onUp, onDown){
     const cell = document.createElement('div');
-    cell.style.cssText = 'background:var(--paper-raised); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:2px 0;';
+    cell.style.cssText = 'background:var(--paper-raised); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:2px 0; position:sticky; left:0; z-index:2;';
     const upBtn = document.createElement('button');
     upBtn.type = 'button';
     upBtn.textContent = '▲';
