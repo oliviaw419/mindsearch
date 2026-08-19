@@ -6332,6 +6332,10 @@
       persistIndex();
       if(entry.sharedId){ updateSharedEntry(entry.sharedId, { checklist: newList }); }
       renderDetailChecklist(entry);
+      if(editingId === entry.id){
+        pendingChecklist = newList.map(it => ({...it}));
+        renderChecklistPreview();
+      }
     }
   }
 
@@ -6677,9 +6681,17 @@
   }
 
   function getChecklistModeForContext(){
-    if(!checklistContext || checklistContext.mode !== 'entry') return 'shared'; // a brand-new, unsaved note can't be shared yet
-    const entry = entries.find(e => e.id === checklistContext.entryId);
-    return (entry && entry.checklistMode) || 'shared';
+    if(checklistContext && checklistContext.mode === 'entry'){
+      const entry = entries.find(e => e.id === checklistContext.entryId);
+      return (entry && entry.checklistMode) || 'shared';
+    }
+    if(editingId){
+      // 'pending' mode is used both for brand-new notes AND for existing notes being
+      // edited via the toolbar — editingId tells us which case we're actually in.
+      const entry = entries.find(e => e.id === editingId);
+      return (entry && entry.checklistMode) || 'shared';
+    }
+    return 'shared'; // genuinely a brand-new, unsaved note — can't be shared yet
   }
 
   function renderChecklistOverlayList(){
@@ -6897,12 +6909,12 @@
   }
 
   $('checklistToolbarBtn').addEventListener('click', ()=>{
-    checklistContext = { mode: 'pending' };
+    checklistContext = editingId ? { mode: 'entry', entryId: editingId } : { mode: 'pending' };
     checklistShowCompleted = false;
     openChecklistOverlay();
   });
   $('checklistViewAllBtn').addEventListener('click', ()=>{
-    checklistContext = { mode: 'pending' };
+    checklistContext = editingId ? { mode: 'entry', entryId: editingId } : { mode: 'pending' };
     checklistShowCompleted = false;
     openChecklistOverlay();
   });
@@ -7448,10 +7460,23 @@
     }
 
     if(monthlyHabits.length){
-      const header = document.createElement('div');
-      header.style.cssText = `font-size:10.5px; font-weight:700; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.05em; margin-bottom:2px; ${weeklyHabits.length ? 'margin-top:10px;' : ''}`;
+      const headerRow = document.createElement('div');
+      headerRow.style.cssText = `display:flex; align-items:center; justify-content:space-between; margin-bottom:3px; ${weeklyHabits.length ? 'margin-top:10px;' : ''}`;
+      const header = document.createElement('span');
+      header.style.cssText = 'font-size:10.5px; font-weight:700; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.05em;';
       header.textContent = T().habitThisYearLabel;
-      summaryWrap.appendChild(header);
+      headerRow.appendChild(header);
+
+      const monthHeaderRow = document.createElement('div');
+      monthHeaderRow.style.cssText = 'display:flex; gap:2px;';
+      for(let m=0;m<12;m++){
+        const lbl = document.createElement('span');
+        lbl.style.cssText = 'width:11px; text-align:center; font-size:7.5px; color:var(--ink-soft); opacity:0.65;';
+        lbl.textContent = String(m+1);
+        monthHeaderRow.appendChild(lbl);
+      }
+      headerRow.appendChild(monthHeaderRow);
+      summaryWrap.appendChild(headerRow);
 
       monthlyHabits.forEach(habit => {
         let count = 0;
@@ -7460,15 +7485,44 @@
           if((tracker.checks||{})[habit.id+'_'+monthKey]) count++;
         }
         const row = document.createElement('div');
-        row.style.cssText = 'font-size:12.5px; display:flex; align-items:center; justify-content:space-between; gap:8px;';
-        let progressHtml;
+        row.style.cssText = 'display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:4px;';
+        const nameWrap = document.createElement('div');
+        nameWrap.style.cssText = 'display:flex; align-items:center; gap:5px; flex-shrink:0;';
+        const nameEl = document.createElement('span');
+        nameEl.style.cssText = 'font-size:12.5px; font-weight:600; color:var(--ink);';
+        nameEl.textContent = habit.name;
+        nameWrap.appendChild(nameEl);
         if(habit.goal){
           const met = count >= habit.goal;
-          progressHtml = `<span style="font-size:10px; font-weight:700; padding:1px 6px; border-radius:8px; background:${met ? 'var(--amber-deep)' : 'var(--paper-raised)'}; color:${met ? '#fff' : 'var(--ink-soft)'};">${met ? T().habitGoalMetLabel : `${count}/${habit.goal}`}</span>`;
-        } else {
-          progressHtml = `<span style="color:var(--ink-soft);">${count}/12</span>`;
+          const goalTag = document.createElement('span');
+          goalTag.style.cssText = `font-size:10px; font-weight:700; padding:1px 6px; border-radius:8px; background:${met ? 'var(--amber-deep)' : 'var(--paper-raised)'}; color:${met ? '#fff' : 'var(--ink-soft)'};`;
+          goalTag.textContent = met ? T().habitGoalMetLabel : `${count}/${habit.goal}`;
+          nameWrap.appendChild(goalTag);
         }
-        row.innerHTML = `<span style="color:var(--ink); font-weight:600;">${escapeHtml(habit.name)}</span>${progressHtml}`;
+        row.appendChild(nameWrap);
+
+        const dotsWrap = document.createElement('div');
+        dotsWrap.style.cssText = 'display:flex; gap:2px;';
+        for(let m=0;m<12;m++){
+          const monthKey = nowYear + '-' + String(m+1).padStart(2,'0');
+          const key = habit.id + '_' + monthKey;
+          const checked = !!(tracker.checks||{})[key];
+          const isThisMonth = m === new Date().getMonth();
+          const dot = document.createElement('button');
+          dot.type = 'button';
+          dot.title = T().habitMonthLabels()[m];
+          dot.style.cssText = `width:11px; height:11px; border-radius:50%; border:${isThisMonth ? '1.5px solid var(--amber-deep)' : '1px solid var(--line)'}; background:${checked ? 'var(--amber-deep)' : 'transparent'}; padding:0; cursor:pointer; flex-shrink:0;`;
+          dot.addEventListener('click', ()=>{
+            const newChecks = { ...(tracker.checks||{}) };
+            if(checked){ delete newChecks[key]; } else { newChecks[key] = true; }
+            entry.habitTracker = { ...tracker, checks: newChecks };
+            persistIndex();
+            if(entry.sharedId){ updateSharedEntry(entry.sharedId, { habitTracker: entry.habitTracker }); }
+            renderDetailHabitSummary(entry);
+          });
+          dotsWrap.appendChild(dot);
+        }
+        row.appendChild(dotsWrap);
         summaryWrap.appendChild(row);
       });
     }
