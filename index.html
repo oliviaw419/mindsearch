@@ -1020,7 +1020,7 @@
         <option value="weekly" data-i18n="habitCadenceWeekly">Weekly</option>
         <option value="monthly" data-i18n="habitCadenceMonthly">Monthly</option>
       </select>
-      <input class="field" id="habitNewGoalInput" type="number" min="1" data-i18n-placeholder="habitGoalPlaceholder" placeholder="Goal (optional)" style="width:100px; flex-shrink:0;">
+      <input class="field" id="habitNewGoalInput" type="number" min="1" data-i18n-placeholder="habitGoalPlaceholderShort" placeholder="Goal" style="width:56px; flex-shrink:0; text-align:center;">
       <button class="primary-btn" id="habitAddBtn" style="margin-top:0; width:auto; padding:0 16px; flex-shrink:0;" data-i18n="addAction">Add</button>
     </div>
 
@@ -1070,6 +1070,15 @@
     <p style="font-size:13px; color:var(--ink-soft); margin:-8px 0 16px; line-height:1.5;" data-i18n="checklistModeExplain">This checklist is about to be shared. Choose how "done" should work between you and the people you share it with.</p>
     <button class="primary-btn" id="checklistModeSharedBtn" style="margin-top:0;" data-i18n="checklistModeSharedAction">Shared — one check marks it done for everyone</button>
     <button class="text-btn" id="checklistModePersonalBtn" style="margin-top:10px;" data-i18n="checklistModePersonalAction">Personal — everyone tracks their own progress</button>
+  </div>
+</div>
+
+<div class="sheet-overlay" id="checklistModeConfirmOverlay" style="z-index:498;">
+  <div class="sheet" style="max-width:380px;">
+    <h2 id="checklistModeConfirmTitle"></h2>
+    <p id="checklistModeConfirmExplain" style="font-size:13px; color:var(--ink-soft); margin:-8px 0 16px; line-height:1.5;"></p>
+    <button class="primary-btn" id="checklistModeConfirmBtn" style="margin-top:0;" data-i18n="confirmAction">Confirm</button>
+    <button class="text-btn" id="checklistModeBackBtn" style="margin-top:10px;" data-i18n="backAction">Back</button>
   </div>
 </div>
 
@@ -1939,6 +1948,9 @@
       checklistModeSharedAction: "共享——一个人打勾，大家都算完成",
       checklistModePersonalAction: "各自独立——每个人各算各的进度",
       checklistPersonalDoneCountTitle: (n) => `${n} 人已完成`,
+      checklistModeSharedConfirmExplain: "确认后：这份清单里，任何一个人打勾，所有人看到的都会是「完成了」。适合行程清单、购物清单这种一起做的事。",
+      checklistModePersonalConfirmExplain: "确认后：这份清单里，每个人打勾只影响自己看到的状态，互不干扰。适合追剧清单、阅读清单这种各人进度各算各的事。",
+      habitGoalPlaceholderShort: "目标",
       checklistAddItemAction: "加一项",
       checklistGridViewAction: "网格视图",
       checklistListViewAction: "列表视图",
@@ -2445,6 +2457,9 @@
       setReminderForPrediction: "為這個預測日期設個提醒",
       dateLogPredictionText: (avg, next) => `平均每 ${avg} 天一次 · 預計下一次：${next}`,
       dateLogSummary: (n, latest) => `共 ${n} 筆 · 最近一次 ${latest}`,
+      checklistModeSharedConfirmExplain: "確認後：這份清單裡，任何一個人打勾，所有人看到的都會是「完成了」。適合行程清單、購物清單這種一起做的事。",
+      checklistModePersonalConfirmExplain: "確認後：這份清單裡，每個人打勾只影響自己看到的狀態，互不干擾。適合追劇清單、閱讀清單這種各人進度各算各的事。",
+      habitGoalPlaceholderShort: "目標",
       toastDateLogAdded: "已新增",
       toastReminderSetFromPrediction: "已經設好提醒了",
       amountColumnLabel: "金額",
@@ -2951,6 +2966,9 @@
       dateLogTotalLabel: "Total",
       dateLogWinLoss: (w, l) => `${w} positive · ${l} negative`,
       dateLogNoAmountInRange: "No amounts logged in this range.",
+      checklistModeSharedConfirmExplain: "Once confirmed: on this checklist, anyone checking an item marks it done for everyone. Good for shared itineraries, shopping lists \u2014 things you're doing together.",
+      checklistModePersonalConfirmExplain: "Once confirmed: on this checklist, everyone's checkmarks only affect what they see, independently. Good for watchlists, reading lists \u2014 things where everyone's progress is their own.",
+      habitGoalPlaceholderShort: "Goal",
       manageAction: "Manage",
       addNewAction: "+ Add a friend",
       inboxTitle: "Shared with you",
@@ -6669,12 +6687,13 @@
     $('checklistGridToggleBtn').style.display = hasAnyComments ? 'block' : 'none';
   }
 
-  function renderChecklistGridView(getList, setList, wrapEl, rerenderParent){
+  function renderChecklistGridView(getList, setList, wrapEl, rerenderParent, checklistMode){
     const items = getList();
     const authorsMap = {};
     items.forEach(item => (item.comments||[]).forEach(c => { authorsMap[c.authorEmail] = c.authorName; }));
     const authors = Object.keys(authorsMap);
     const me = getMyIdentity();
+    const isPersonal = checklistMode === 'personal';
 
     const wrap = wrapEl;
     wrap.innerHTML = '';
@@ -6686,14 +6705,18 @@
     const scrollWrap = document.createElement('div');
     scrollWrap.style.cssText = 'overflow-x:auto; -webkit-overflow-scrolling:touch; border-radius:12px;';
 
-    const colWidth = 110;
-    const nameColWidth = 130;
+    const reorderColWidth = 20;
+    const colWidth = isPersonal ? 130 : 110;
+    const nameColWidth = 110;
     const grid = document.createElement('div');
-    grid.style.cssText = `display:grid; grid-template-columns:${nameColWidth}px repeat(${authors.length}, ${colWidth}px); gap:1px; background:var(--line); min-width:${nameColWidth + authors.length*colWidth}px;`;
+    grid.style.cssText = `display:grid; grid-template-columns:${reorderColWidth}px ${nameColWidth}px repeat(${authors.length}, minmax(${colWidth}px, 1fr)); gap:1px; background:var(--line); width:100%; min-width:${reorderColWidth + nameColWidth + authors.length*colWidth}px;`;
 
-    const corner = document.createElement('div');
-    corner.style.cssText = 'background:var(--paper-raised); padding:8px; position:sticky; left:0; z-index:2;';
-    grid.appendChild(corner);
+    const cornerReorder = document.createElement('div');
+    cornerReorder.style.cssText = 'background:var(--paper-raised); position:sticky; left:0; z-index:2;';
+    grid.appendChild(cornerReorder);
+    const cornerName = document.createElement('div');
+    cornerName.style.cssText = `background:var(--paper-raised); position:sticky; left:${reorderColWidth}px; z-index:2;`;
+    grid.appendChild(cornerName);
     authors.forEach(email => {
       const h = document.createElement('div');
       h.style.cssText = 'background:var(--paper-raised); padding:8px; font-size:11px; font-weight:700; text-align:center; color:var(--ink); overflow-wrap:break-word;';
@@ -6702,46 +6725,29 @@
     });
 
     items.forEach((item, idx) => {
-      const nameCell = document.createElement('div');
-      nameCell.style.cssText = 'background:var(--paper-raised); padding:6px 6px; font-size:12px; font-weight:600; color:var(--ink); position:sticky; left:0; z-index:1; display:flex; align-items:center; gap:2px; flex-wrap:wrap;';
+      grid.appendChild(buildHabitReorderCell(idx === 0, idx === items.length - 1,
+        ()=>{
+          if(idx === 0) return;
+          const list = getList();
+          const reordered = [...list];
+          [reordered[idx-1], reordered[idx]] = [reordered[idx], reordered[idx-1]];
+          setList(reordered);
+          renderChecklistGridView(getList, setList, wrap, rerenderParent, checklistMode);
+        },
+        ()=>{
+          if(idx === items.length-1) return;
+          const list = getList();
+          const reordered = [...list];
+          [reordered[idx], reordered[idx+1]] = [reordered[idx+1], reordered[idx]];
+          setList(reordered);
+          renderChecklistGridView(getList, setList, wrap, rerenderParent, checklistMode);
+        }));
 
-      const reorderWrap = document.createElement('div');
-      reorderWrap.style.cssText = 'display:flex; flex-direction:column; flex-shrink:0;';
-      const upBtn = document.createElement('button');
-      upBtn.type = 'button';
-      upBtn.textContent = '▲';
-      upBtn.style.cssText = `background:none; border:none; color:var(--ink-soft); font-size:7px; cursor:pointer; padding:0; line-height:1; opacity:${idx === 0 ? '0.25' : '1'};`;
-      upBtn.disabled = idx === 0;
-      upBtn.addEventListener('click', (e)=>{
-        e.stopPropagation();
-        if(idx === 0) return;
-        const list = getList();
-        const reordered = [...list];
-        [reordered[idx-1], reordered[idx]] = [reordered[idx], reordered[idx-1]];
-        setList(reordered);
-        renderChecklistGridView(getList, setList, wrap, rerenderParent);
-      });
-      const downBtn = document.createElement('button');
-      downBtn.type = 'button';
-      downBtn.textContent = '▼';
-      downBtn.style.cssText = `background:none; border:none; color:var(--ink-soft); font-size:7px; cursor:pointer; padding:0; line-height:1; opacity:${idx === items.length-1 ? '0.25' : '1'};`;
-      downBtn.disabled = idx === items.length-1;
-      downBtn.addEventListener('click', (e)=>{
-        e.stopPropagation();
-        if(idx === items.length-1) return;
-        const list = getList();
-        const reordered = [...list];
-        [reordered[idx], reordered[idx+1]] = [reordered[idx+1], reordered[idx]];
-        setList(reordered);
-        renderChecklistGridView(getList, setList, wrap, rerenderParent);
-      });
-      reorderWrap.appendChild(upBtn);
-      reorderWrap.appendChild(downBtn);
-      nameCell.appendChild(reorderWrap);
+      const nameCell = document.createElement('div');
+      nameCell.style.cssText = `background:var(--paper-raised); padding:6px 6px; font-size:12px; font-weight:600; color:var(--ink); position:sticky; left:${reorderColWidth}px; z-index:1; display:flex; align-items:center;`;
 
       const nameLabel = document.createElement('span');
-      const isDoneForLabel = item.doneBy ? isItemDoneForViewer(item, 'personal') : !!item.done;
-      nameLabel.style.cssText = `flex:1; min-width:0; overflow-wrap:break-word; cursor:text; ${isDoneForLabel ? 'text-decoration:line-through; color:var(--ink-soft);' : ''}`;
+      nameLabel.style.cssText = 'flex:1; min-width:0; overflow-wrap:break-word; cursor:text;';
       nameLabel.textContent = item.text;
       nameLabel.title = T().checklistTapToEdit;
       nameLabel.addEventListener('click', ()=>{
@@ -6759,38 +6765,50 @@
           committed = true;
           const newText = input.value.trim() || item.text;
           setList(getList().map(it => it.id === item.id ? {...it, text: newText} : it));
-          renderChecklistGridView(getList, setList, wrap, rerenderParent);
+          renderChecklistGridView(getList, setList, wrap, rerenderParent, checklistMode);
         };
         input.addEventListener('blur', commit);
         input.addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ input.blur(); } });
       });
       nameCell.appendChild(nameLabel);
-
-      const isDoneForGrid = item.doneBy ? isItemDoneForViewer(item, 'personal') : !!item.done;
-      if(isDoneForGrid){
-        const doneIcon = document.createElement('span');
-        doneIcon.title = T().checklistDoneStatusLabel;
-        doneIcon.style.cssText = 'flex-shrink:0; width:15px; height:15px; border-radius:50%; background:var(--amber-deep); color:#fff; display:flex; align-items:center; justify-content:center; font-size:9px;';
-        doneIcon.textContent = '✓';
-        nameCell.appendChild(doneIcon);
-      }
-
       grid.appendChild(nameCell);
 
       authors.forEach(email => {
         const isMine = me && email === me.email;
         const c = (item.comments||[]).find(cm => cm.authorEmail === email);
         const cell = document.createElement('div');
-        cell.style.cssText = `background:var(--paper-raised); padding:8px; font-size:11.5px; text-align:center; color:var(--ink-soft); display:flex; align-items:center; justify-content:center; overflow-wrap:break-word; ${isMine ? 'cursor:text;' : ''}`;
-        cell.textContent = c ? c.text : '—';
+        cell.style.cssText = 'background:var(--paper-raised); padding:6px; font-size:11px; color:var(--ink-soft); display:flex; align-items:center; gap:5px; overflow-wrap:break-word;';
+
+        if(isPersonal){
+          const personDone = !!(item.doneBy && item.doneBy[email]);
+          const dot = document.createElement('button');
+          dot.type = 'button';
+          dot.disabled = !isMine;
+          dot.style.cssText = `flex-shrink:0; width:16px; height:16px; border-radius:50%; border:1.5px solid ${personDone ? 'var(--amber-deep)' : 'var(--line)'}; background:${personDone ? 'var(--amber-deep)' : 'transparent'}; color:#fff; display:flex; align-items:center; justify-content:center; font-size:9px; padding:0; ${isMine ? 'cursor:pointer;' : 'cursor:default;'}`;
+          dot.innerHTML = personDone ? '✓' : '';
+          if(isMine){
+            dot.addEventListener('click', ()=>{
+              const doneBy = {...(item.doneBy||{})};
+              if(doneBy[email]){ delete doneBy[email]; } else { doneBy[email] = true; }
+              setList(getList().map(it => it.id === item.id ? {...it, doneBy} : it));
+              renderChecklistGridView(getList, setList, wrap, rerenderParent, checklistMode);
+              if(rerenderParent){ rerenderParent(); }
+            });
+          }
+          cell.appendChild(dot);
+        }
+
+        const textSpan = document.createElement('span');
+        textSpan.style.cssText = `flex:1; min-width:0; text-align:center; overflow-wrap:break-word; ${isMine ? 'cursor:text;' : ''}`;
+        textSpan.textContent = c ? c.text : '—';
         if(isMine){
-          cell.title = T().checklistTapToEdit;
-          cell.addEventListener('click', ()=>{
+          textSpan.title = T().checklistTapToEdit;
+          textSpan.addEventListener('click', ()=>{
             const input = document.createElement('input');
             input.type = 'text';
             input.value = c ? c.text : '';
-            input.style.cssText = 'width:100%; box-sizing:border-box; text-align:center; border:1px solid var(--plum); border-radius:6px; padding:4px; font-size:11.5px; background:var(--paper);';
-            cell.replaceWith(input);
+            input.style.cssText = 'width:100%; box-sizing:border-box; text-align:center; border:1px solid var(--plum); border-radius:6px; padding:4px; font-size:11px; background:var(--paper);';
+            textSpan.replaceWith(input);
             input.focus();
             input.select();
             let committed = false;
@@ -6801,13 +6819,14 @@
               const others = (item.comments||[]).filter(cm => cm.authorEmail !== me.email);
               const newComments = text ? [...others, { authorEmail: me.email, authorName: me.name, text, timestamp: Date.now() }] : others;
               setList(getList().map(it => it.id === item.id ? {...it, comments: newComments} : it));
-              renderChecklistGridView(getList, setList, wrap, rerenderParent);
+              renderChecklistGridView(getList, setList, wrap, rerenderParent, checklistMode);
               if(rerenderParent){ rerenderParent(); }
             };
             input.addEventListener('blur', commit);
             input.addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ input.blur(); } });
           });
         }
+        cell.appendChild(textSpan);
         grid.appendChild(cell);
       });
     });
@@ -6822,7 +6841,7 @@
     $('checklistGridToggleBtn').textContent = checklistGridMode ? T().checklistListViewAction : T().checklistGridViewAction;
     $('checklistListModeWrap').style.display = checklistGridMode ? 'none' : 'block';
     $('checklistGridModeWrap').style.display = checklistGridMode ? 'block' : 'none';
-    if(checklistGridMode){ renderChecklistGridView(getActiveChecklist, persistActiveChecklist, $('checklistGridModeWrap'), null); }
+    if(checklistGridMode){ renderChecklistGridView(getActiveChecklist, persistActiveChecklist, $('checklistGridModeWrap'), null, getChecklistModeForContext()); }
   });
 
   function openChecklistOverlay(){
@@ -6884,7 +6903,7 @@
 
     const hasAnyComments = items.some(it => it.comments && it.comments.length > 0);
     $('detailChecklistGridToggleBtn').style.display = hasAnyComments ? 'block' : 'none';
-    if(detailChecklistGridMode){ renderChecklistGridView(getList, setList, $('detailChecklistGridModeWrap'), null); }
+    if(detailChecklistGridMode){ renderChecklistGridView(getList, setList, $('detailChecklistGridModeWrap'), null, checklistMode); }
 
     $('detailChecklistWrap').style.display = 'block';
   }
@@ -7040,27 +7059,29 @@
     rerenderAll();
   }
 
-  function buildHabitGridNameCell(habit, rerenderAll, isFirstInGroup, isLastInGroup, currentCount){
-    const nameCell = document.createElement('div');
-    nameCell.style.cssText = 'background:var(--paper-raised); padding:6px 6px; font-size:12px; font-weight:600; color:var(--ink); position:sticky; left:0; z-index:1; display:flex; align-items:center; gap:2px; flex-wrap:wrap;';
-
-    const reorderWrap = document.createElement('div');
-    reorderWrap.style.cssText = 'display:flex; flex-direction:column; flex-shrink:0;';
+  function buildHabitReorderCell(isFirstInGroup, isLastInGroup, onUp, onDown){
+    const cell = document.createElement('div');
+    cell.style.cssText = 'background:var(--paper-raised); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:2px 0;';
     const upBtn = document.createElement('button');
     upBtn.type = 'button';
     upBtn.textContent = '▲';
-    upBtn.style.cssText = `background:none; border:none; color:var(--ink-soft); font-size:7px; cursor:pointer; padding:0; line-height:1; opacity:${isFirstInGroup ? '0.25' : '1'};`;
+    upBtn.style.cssText = `background:none; border:none; color:var(--ink-soft); font-size:8px; cursor:pointer; padding:1px; line-height:1; opacity:${isFirstInGroup ? '0.25' : '1'};`;
     upBtn.disabled = isFirstInGroup;
-    upBtn.addEventListener('click', (e)=>{ e.stopPropagation(); moveHabit(habit.id, -1, rerenderAll); });
+    upBtn.addEventListener('click', (e)=>{ e.stopPropagation(); onUp(); });
     const downBtn = document.createElement('button');
     downBtn.type = 'button';
     downBtn.textContent = '▼';
-    downBtn.style.cssText = `background:none; border:none; color:var(--ink-soft); font-size:7px; cursor:pointer; padding:0; line-height:1; opacity:${isLastInGroup ? '0.25' : '1'};`;
+    downBtn.style.cssText = `background:none; border:none; color:var(--ink-soft); font-size:8px; cursor:pointer; padding:1px; line-height:1; opacity:${isLastInGroup ? '0.25' : '1'};`;
     downBtn.disabled = isLastInGroup;
-    downBtn.addEventListener('click', (e)=>{ e.stopPropagation(); moveHabit(habit.id, 1, rerenderAll); });
-    reorderWrap.appendChild(upBtn);
-    reorderWrap.appendChild(downBtn);
-    nameCell.appendChild(reorderWrap);
+    downBtn.addEventListener('click', (e)=>{ e.stopPropagation(); onDown(); });
+    cell.appendChild(upBtn);
+    cell.appendChild(downBtn);
+    return cell;
+  }
+
+  function buildHabitGridNameCell(habit, rerenderAll){
+    const nameCell = document.createElement('div');
+    nameCell.style.cssText = 'background:var(--paper-raised); padding:6px 6px; font-size:12px; font-weight:600; color:var(--ink); position:sticky; left:20px; z-index:1; display:flex; align-items:center; gap:4px;';
 
     const label = document.createElement('span');
     label.style.cssText = 'flex:1; min-width:0; overflow-wrap:break-word; cursor:text;';
@@ -7068,12 +7089,23 @@
     label.addEventListener('click', ()=> beginEditHabitNameInline(habit, nameCell, label, rerenderAll));
     nameCell.appendChild(label);
 
-    const goalBadge = document.createElement('button');
-    goalBadge.type = 'button';
-    goalBadge.title = T().habitGoalTapToEdit;
-    goalBadge.style.cssText = `flex-shrink:0; font-size:9px; font-weight:700; padding:1px 4px; border-radius:6px; border:1px dashed var(--plum); background:none; color:var(--plum-deep); cursor:pointer;`;
-    goalBadge.textContent = habit.goal ? `🎯${habit.goal}` : '🎯';
-    goalBadge.addEventListener('click', (e)=>{
+    const delBtn = document.createElement('button');
+    delBtn.type = 'button';
+    delBtn.textContent = '✕';
+    delBtn.style.cssText = 'background:none; border:none; color:var(--danger); font-size:10px; cursor:pointer; flex-shrink:0; padding:0;';
+    delBtn.addEventListener('click', (e)=>{ e.stopPropagation(); requestDeleteHabit(habit.id); });
+    nameCell.appendChild(delBtn);
+    return nameCell;
+  }
+
+  function buildHabitCountCell(habit, currentCount, rerenderAll){
+    const cell = document.createElement('button');
+    cell.type = 'button';
+    cell.title = T().habitGoalTapToEdit;
+    const met = habit.goal && currentCount >= habit.goal;
+    cell.style.cssText = `background:${met ? 'var(--amber-deep)' : 'var(--paper-raised)'}; border:none; padding:5px 2px; font-size:11px; font-weight:700; text-align:center; color:${met ? '#fff' : 'var(--ink-soft)'}; display:flex; align-items:center; justify-content:center; cursor:pointer;`;
+    cell.textContent = met ? '✓' : (habit.goal ? `${currentCount}/${habit.goal}` : String(currentCount));
+    cell.addEventListener('click', (e)=>{
       e.stopPropagation();
       const input = prompt(T().habitGoalPromptText, habit.goal || '');
       if(input === null) return; // cancelled
@@ -7086,23 +7118,7 @@
       });
       rerenderAll();
     });
-    nameCell.appendChild(goalBadge);
-
-    if(habit.goal && typeof currentCount === 'number'){
-      const met = currentCount >= habit.goal;
-      const progressTag = document.createElement('span');
-      progressTag.style.cssText = `flex-shrink:0; font-size:9px; font-weight:700; padding:1px 5px; border-radius:6px; background:${met ? 'var(--amber-deep)' : 'var(--paper-raised)'}; color:${met ? '#fff' : 'var(--ink-soft)'};`;
-      progressTag.textContent = met ? '✓' : `${currentCount}/${habit.goal}`;
-      nameCell.appendChild(progressTag);
-    }
-
-    const delBtn = document.createElement('button');
-    delBtn.type = 'button';
-    delBtn.textContent = '✕';
-    delBtn.style.cssText = 'background:none; border:none; color:var(--danger); font-size:10px; cursor:pointer; flex-shrink:0; padding:0;';
-    delBtn.addEventListener('click', (e)=>{ e.stopPropagation(); requestDeleteHabit(habit.id); });
-    nameCell.appendChild(delBtn);
-    return nameCell;
+    return cell;
   }
 
   function renderHabitWeeklyGrid(){
@@ -7117,13 +7133,16 @@
     $('habitWeekRangeLabel').textContent = formatHabitWeekRangeLabel(dates[0], dates[6]);
     $('habitWeeklySectionTitle').textContent = habitWeekOffset === 0 ? T().habitThisWeekLabel : T().habitWeeklyGenericLabel;
 
-    const nameColWidth = 96, dayColWidth = 34, countColWidth = 32;
+    const reorderColWidth = 20, nameColWidth = 76, dayColWidth = 34, countColWidth = 36;
     const grid = document.createElement('div');
-    grid.style.cssText = `display:grid; grid-template-columns:${nameColWidth}px repeat(7, ${dayColWidth}px) ${countColWidth}px; gap:1px; background:var(--line); min-width:${nameColWidth + 7*dayColWidth + countColWidth}px; border-radius:10px; overflow:hidden;`;
+    grid.style.cssText = `display:grid; grid-template-columns:${reorderColWidth}px ${nameColWidth}px repeat(7, ${dayColWidth}px) ${countColWidth}px; gap:1px; background:var(--line); min-width:${reorderColWidth + nameColWidth + 7*dayColWidth + countColWidth}px; border-radius:10px; overflow:hidden;`;
 
-    const corner = document.createElement('div');
-    corner.style.cssText = 'background:var(--paper-raised); position:sticky; left:0; z-index:2;';
-    grid.appendChild(corner);
+    const cornerReorder = document.createElement('div');
+    cornerReorder.style.cssText = 'background:var(--paper-raised); position:sticky; left:0; z-index:2;';
+    grid.appendChild(cornerReorder);
+    const cornerName = document.createElement('div');
+    cornerName.style.cssText = `background:var(--paper-raised); position:sticky; left:${reorderColWidth}px; z-index:2;`;
+    grid.appendChild(cornerName);
     const todayKey = habitDateKey(new Date());
     dates.forEach((d, i) => {
       const h = document.createElement('div');
@@ -7138,8 +7157,10 @@
     grid.appendChild(countHeader);
 
     weeklyHabits.forEach((habit, idx) => {
-      const weekCountPre = dates.filter(d => !!(tracker.checks||{})[habit.id+'_'+habitDateKey(d)]).length;
-      grid.appendChild(buildHabitGridNameCell(habit, renderHabitWeeklyGrid, idx === 0, idx === weeklyHabits.length - 1, weekCountPre));
+      grid.appendChild(buildHabitReorderCell(idx === 0, idx === weeklyHabits.length - 1,
+        ()=> moveHabit(habit.id, -1, renderHabitWeeklyGrid),
+        ()=> moveHabit(habit.id, 1, renderHabitWeeklyGrid)));
+      grid.appendChild(buildHabitGridNameCell(habit, renderHabitWeeklyGrid));
       let weekCount = 0;
       dates.forEach(d => {
         const key = habit.id + '_' + habitDateKey(d);
@@ -7157,10 +7178,7 @@
         });
         grid.appendChild(cell);
       });
-      const countCell = document.createElement('div');
-      countCell.style.cssText = 'background:var(--paper-raised); padding:5px; font-size:11px; font-weight:700; text-align:center; color:var(--ink-soft); display:flex; align-items:center; justify-content:center;';
-      countCell.textContent = weekCount;
-      grid.appendChild(countCell);
+      grid.appendChild(buildHabitCountCell(habit, weekCount, renderHabitWeeklyGrid));
     });
 
     const container = $('habitWeeklyGrid');
@@ -7181,13 +7199,16 @@
     const monthLabels = T().habitMonthLabels();
     const nowYear = new Date().getFullYear(), nowMonth = new Date().getMonth();
 
-    const nameColWidth = 96, monthColWidth = 30, countColWidth = 32;
+    const reorderColWidth = 20, nameColWidth = 76, monthColWidth = 30, countColWidth = 36;
     const grid = document.createElement('div');
-    grid.style.cssText = `display:grid; grid-template-columns:${nameColWidth}px repeat(12, ${monthColWidth}px) ${countColWidth}px; gap:1px; background:var(--line); min-width:${nameColWidth + 12*monthColWidth + countColWidth}px; border-radius:10px; overflow:hidden;`;
+    grid.style.cssText = `display:grid; grid-template-columns:${reorderColWidth}px ${nameColWidth}px repeat(12, ${monthColWidth}px) ${countColWidth}px; gap:1px; background:var(--line); min-width:${reorderColWidth + nameColWidth + 12*monthColWidth + countColWidth}px; border-radius:10px; overflow:hidden;`;
 
-    const corner = document.createElement('div');
-    corner.style.cssText = 'background:var(--paper-raised); position:sticky; left:0; z-index:2;';
-    grid.appendChild(corner);
+    const cornerReorder = document.createElement('div');
+    cornerReorder.style.cssText = 'background:var(--paper-raised); position:sticky; left:0; z-index:2;';
+    grid.appendChild(cornerReorder);
+    const cornerName = document.createElement('div');
+    cornerName.style.cssText = `background:var(--paper-raised); position:sticky; left:${reorderColWidth}px; z-index:2;`;
+    grid.appendChild(cornerName);
     monthLabels.forEach((label, i) => {
       const isThisMonth = year === nowYear && i === nowMonth;
       const h = document.createElement('div');
@@ -7201,12 +7222,10 @@
     grid.appendChild(countHeader);
 
     monthlyHabits.forEach((habit, idx) => {
-      let yearCountPre = 0;
-      for(let m2=0;m2<12;m2++){
-        const mk = year + '-' + String(m2+1).padStart(2,'0');
-        if((tracker.checks||{})[habit.id+'_'+mk]) yearCountPre++;
-      }
-      grid.appendChild(buildHabitGridNameCell(habit, renderHabitMonthlyGrid, idx === 0, idx === monthlyHabits.length - 1, yearCountPre));
+      grid.appendChild(buildHabitReorderCell(idx === 0, idx === monthlyHabits.length - 1,
+        ()=> moveHabit(habit.id, -1, renderHabitMonthlyGrid),
+        ()=> moveHabit(habit.id, 1, renderHabitMonthlyGrid)));
+      grid.appendChild(buildHabitGridNameCell(habit, renderHabitMonthlyGrid));
       let yearCount = 0;
       for(let m=0;m<12;m++){
         const monthKey = year + '-' + String(m+1).padStart(2,'0');
@@ -7225,10 +7244,7 @@
         });
         grid.appendChild(cell);
       }
-      const countCell = document.createElement('div');
-      countCell.style.cssText = 'background:var(--paper-raised); padding:5px; font-size:11px; font-weight:700; text-align:center; color:var(--ink-soft); display:flex; align-items:center; justify-content:center;';
-      countCell.textContent = yearCount;
-      grid.appendChild(countCell);
+      grid.appendChild(buildHabitCountCell(habit, yearCount, renderHabitMonthlyGrid));
     });
 
     const container = $('habitMonthlyGrid');
@@ -7315,6 +7331,17 @@
       header.style.cssText = 'font-size:10.5px; font-weight:700; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.05em; margin-bottom:2px;';
       header.textContent = T().habitThisWeekLabel;
       summaryWrap.appendChild(header);
+
+      const dayHeaderRow = document.createElement('div');
+      dayHeaderRow.style.cssText = 'display:flex; justify-content:flex-end; gap:4px; margin-bottom:3px;';
+      const dayLabelsShort = T().habitDayLabels();
+      weekDates.forEach((d, i) => {
+        const lbl = document.createElement('span');
+        lbl.style.cssText = 'width:16px; text-align:center; font-size:9px; color:var(--ink-soft); opacity:0.65;';
+        lbl.textContent = dayLabelsShort[i].charAt(0);
+        dayHeaderRow.appendChild(lbl);
+      });
+      summaryWrap.appendChild(dayHeaderRow);
 
       weeklyHabits.forEach(habit => {
         const row = document.createElement('div');
@@ -8477,14 +8504,26 @@
   function promptChecklistCompletionMode(){
     return new Promise((resolve)=>{
       $('checklistModeOverlay').classList.add('open');
-      const onShared = ()=>{
-        cleanup();
-        resolve('shared');
-      };
-      const onPersonal = ()=>{
-        cleanup();
-        resolve('personal');
-      };
+
+      function showConfirm(mode){
+        $('checklistModeOverlay').classList.remove('open');
+        $('checklistModeConfirmTitle').textContent = mode === 'shared' ? T().checklistModeSharedAction : T().checklistModePersonalAction;
+        $('checklistModeConfirmExplain').textContent = mode === 'shared' ? T().checklistModeSharedConfirmExplain : T().checklistModePersonalConfirmExplain;
+        $('checklistModeConfirmOverlay').classList.add('open');
+
+        const onConfirm = ()=>{ cleanupConfirm(); resolve(mode); };
+        const onBack = ()=>{ cleanupConfirm(); $('checklistModeOverlay').classList.add('open'); };
+        function cleanupConfirm(){
+          $('checklistModeConfirmOverlay').classList.remove('open');
+          $('checklistModeConfirmBtn').removeEventListener('click', onConfirm);
+          $('checklistModeBackBtn').removeEventListener('click', onBack);
+        }
+        $('checklistModeConfirmBtn').addEventListener('click', onConfirm);
+        $('checklistModeBackBtn').addEventListener('click', onBack);
+      }
+
+      const onShared = ()=>{ cleanup(); showConfirm('shared'); };
+      const onPersonal = ()=>{ cleanup(); showConfirm('personal'); };
       function cleanup(){
         $('checklistModeOverlay').classList.remove('open');
         $('checklistModeSharedBtn').removeEventListener('click', onShared);
