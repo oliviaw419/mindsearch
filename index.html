@@ -1035,7 +1035,7 @@
           <button type="button" id="habitWeekNextBtn" style="background:none; border:none; cursor:pointer; color:var(--ink-soft); padding:2px;">▶</button>
         </div>
       </div>
-      <div id="habitWeeklyGrid" style="overflow-x:auto; -webkit-overflow-scrolling:touch; border-radius:12px; padding-right:14px;"></div>
+      <div id="habitWeeklyGrid" style="overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; border-radius:12px; padding-right:14px;"></div>
     </div>
 
     <div id="habitMonthlySection" style="display:none; margin-top:18px;">
@@ -1047,7 +1047,7 @@
           <button type="button" id="habitYearNextBtn" style="background:none; border:none; cursor:pointer; color:var(--ink-soft); padding:2px;">▶</button>
         </div>
       </div>
-      <div id="habitMonthlyGrid" style="overflow-x:auto; -webkit-overflow-scrolling:touch; border-radius:12px; padding-right:14px;"></div>
+      <div id="habitMonthlyGrid" style="overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; border-radius:12px; padding-right:14px;"></div>
     </div>
 
     <button class="text-btn" id="closeHabitBtn" style="margin-top:18px;" data-i18n="close">Close</button>
@@ -7209,7 +7209,7 @@
 
     const reorderColWidth = 20, nameColWidth = 76, dayColWidth = 34, countColWidth = 36;
     const grid = document.createElement('div');
-    grid.style.cssText = `display:grid; grid-template-columns:${reorderColWidth}px ${nameColWidth}px repeat(7, ${dayColWidth}px) ${countColWidth}px; gap:1px; background:var(--line); min-width:${reorderColWidth + nameColWidth + 7*dayColWidth + countColWidth}px; border-radius:10px; overflow:hidden;`;
+    grid.style.cssText = `display:grid; grid-template-columns:${reorderColWidth}px ${nameColWidth}px repeat(7, ${dayColWidth}px) ${countColWidth}px; gap:1px; background:var(--line); min-width:${reorderColWidth + nameColWidth + 7*dayColWidth + countColWidth}px;`;
 
     const cornerReorder = document.createElement('div');
     cornerReorder.style.cssText = 'background:var(--paper-raised); position:sticky; left:0; z-index:2;';
@@ -7275,7 +7275,7 @@
 
     const reorderColWidth = 20, nameColWidth = 76, monthColWidth = 30, countColWidth = 36;
     const grid = document.createElement('div');
-    grid.style.cssText = `display:grid; grid-template-columns:${reorderColWidth}px ${nameColWidth}px repeat(12, ${monthColWidth}px) ${countColWidth}px; gap:1px; background:var(--line); min-width:${reorderColWidth + nameColWidth + 12*monthColWidth + countColWidth}px; border-radius:10px; overflow:hidden;`;
+    grid.style.cssText = `display:grid; grid-template-columns:${reorderColWidth}px ${nameColWidth}px repeat(12, ${monthColWidth}px) ${countColWidth}px; gap:1px; background:var(--line); min-width:${reorderColWidth + nameColWidth + 12*monthColWidth + countColWidth}px;`;
 
     const cornerReorder = document.createElement('div');
     cornerReorder.style.cssText = 'background:var(--paper-raised); position:sticky; left:0; z-index:2;';
