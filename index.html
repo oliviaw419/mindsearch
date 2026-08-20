@@ -1104,6 +1104,15 @@
   </div>
 </div>
 
+<div class="sheet-overlay" id="collabDataOverlay" style="z-index:498;">
+  <div class="sheet" style="max-width:380px;">
+    <h2 data-i18n="collabDataTitle">Keep their data?</h2>
+    <p style="font-size:13px; color:var(--ink-soft); margin:-8px 0 16px; line-height:1.5;" data-i18n="collabDataExplain">This note has comments, check-ins, or likes from the people you shared it with. Keep that data, or clear it and keep only your own?</p>
+    <button class="primary-btn" id="collabDataKeepBtn" style="margin-top:0;" data-i18n="collabDataKeepAction">Keep everyone's data</button>
+    <button class="text-btn" id="collabDataCleanBtn" style="margin-top:10px; color:var(--danger);" data-i18n="collabDataCleanAction">Keep only mine</button>
+  </div>
+</div>
+
 <!-- Location picker -->
 <div class="sheet-overlay" id="locationPickerOverlay" style="z-index:490;">
   <div class="sheet" style="max-width:400px;">
@@ -1999,6 +2008,12 @@
       habitModePersonalConfirmExplain: "确认后：每个人打卡只影响自己的记录，互不干扰。适合互相监督、各自养习惯的场景。",
       habitMeTabLabel: "我",
       deleteHabitTitle: "删除这个习惯吗？",
+      habitCheckedByLabel: (name) => `由 ${name} 打卡`,
+      habitLikedThisLabel: "点了赞",
+      collabDataTitle: "要保留他们的数据吗？",
+      collabDataExplain: "这条笔记里有对方留下的评论、打卡记录或者点赞。要保留这些数据，还是清掉、只留你自己的？",
+      collabDataKeepAction: "保留所有人的数据",
+      collabDataCleanAction: "只留我自己的",
       deleteHabitExplain: "可以只删掉这个习惯、保留它的打卡记录，也可以两个都清掉。",
       deleteHabitKeepHistoryAction: "删除，保留记录",
       deleteHabitEraseHistoryAction: "全部清除",
@@ -2540,6 +2555,12 @@
       deleteTagLibraryOnlyMain: "僅從標籤列表移除",
       deleteTagLibraryOnlySub: "（筆記上保留標籤）",
       deleteTagEverywhere: "從標籤列表和所有筆記裡一起刪除",
+      habitCheckedByLabel: (name) => `由 ${name} 打卡`,
+      habitLikedThisLabel: "點了讚",
+      collabDataTitle: "要保留他們的資料嗎？",
+      collabDataExplain: "這則筆記裡有對方留下的評論、打卡記錄或者按讚。要保留這些資料，還是清掉、只留你自己的？",
+      collabDataKeepAction: "保留所有人的資料",
+      collabDataCleanAction: "只留我自己的",
       toastTagRemovedLibraryOnly: "已從標籤列表刪除，筆記上的標籤保留了",
       toastTagRemovedEverywhere: "已從標籤列表和所有筆記裡刪除",
       helpFeedbackMenuLabel: "幫助與反饋",
@@ -3082,6 +3103,12 @@
       toastMediaFail: "Attachment failed to save, please try again",
       toastPinned: "Added to Frequently Forgotten",
       toastUnpinned: "Removed from Frequently Forgotten",
+      habitCheckedByLabel: (name) => `Checked by ${name}`,
+      habitLikedThisLabel: "liked this",
+      collabDataTitle: "Keep their data?",
+      collabDataExplain: "This note has comments, check-ins, or likes from the people you shared it with. Keep that data, or clear it and keep only your own?",
+      collabDataKeepAction: "Keep everyone's data",
+      collabDataCleanAction: "Keep only mine",
       toastAudioDeleted: "Recording deleted",
       toastDeleted: "Deleted",
       toastSaved: "Saved",
@@ -7348,6 +7375,57 @@
     return cell;
   }
 
+  function showHabitLikersList(tracker, likeKey){
+    const likers = (tracker.likes && tracker.likes[likeKey]) || [];
+    if(likers.length === 0) return;
+    showToast(likers.map(l => l.name).join('、') + ' ' + T().habitLikedThisLabel);
+  }
+
+  function buildHabitManageCell(tracker, personEmail, key, checked, isViewingSelf, rerenderFn){
+    const me = getMyIdentity();
+    const likeKey = getHabitLikeKey(tracker, personEmail, key);
+    const checkedByInfo = tracker.checkedBy && tracker.checkedBy[likeKey];
+    const checkedByMe = me && checkedByInfo && checkedByInfo.email === me.email;
+
+    const canToggle = tracker.mode === 'personal' ? isViewingSelf : (!checked || checkedByMe);
+    const canLike = checked && checkedByInfo && !checkedByMe;
+
+    const cell = document.createElement('button');
+    cell.type = 'button';
+    cell.style.cssText = `background:${checked ? 'var(--green)' : 'var(--paper-raised)'}; border:none; cursor:${canToggle ? 'pointer' : 'default'}; display:flex; align-items:center; justify-content:center; color:#fff; font-size:12px; padding:8px 0; position:relative;`;
+    cell.innerHTML = checked ? '✓' : '';
+    if(checkedByInfo && checkedByInfo.name){ cell.title = T().habitCheckedByLabel(checkedByInfo.name); }
+
+    if(canToggle){
+      cell.addEventListener('click', ()=>{
+        persistActiveHabitTracker(toggleHabitCheckForPerson(tracker, personEmail, key));
+        rerenderFn();
+      });
+    } else if(canLike){
+      attachHabitDoubleTapToLike(cell, ()=>{
+        const already = me && tracker.likes && tracker.likes[likeKey] && tracker.likes[likeKey].some(l => l.email === me.email);
+        if(already) return;
+        persistActiveHabitTracker(likeHabitCheckIn(tracker, likeKey));
+        showHabitHeartBurst(cell);
+        rerenderFn();
+      });
+    }
+
+    const likeCount = (tracker.likes && tracker.likes[likeKey]) ? tracker.likes[likeKey].length : 0;
+    if(likeCount > 0){
+      const badge = document.createElement('div');
+      badge.style.cssText = `position:absolute; top:-3px; right:-3px; width:10px; height:10px; border-radius:50%; background:var(--paper-raised); display:flex; align-items:center; justify-content:center; color:var(--danger); box-shadow:0 1px 2px rgba(0,0,0,0.25); cursor:pointer;`;
+      badge.innerHTML = ICON_HEART_FILLED;
+      badge.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        showHabitLikersList(tracker, likeKey);
+      });
+      cell.appendChild(badge);
+    }
+
+    return cell;
+  }
+
   function renderHabitWeeklyGrid(){
     const tracker = getActiveHabitTracker();
     const weeklyHabits = tracker.habits.filter(h => h.cadence === 'weekly');
@@ -7356,8 +7434,9 @@
     section.style.display = 'block';
 
     const me = getMyIdentity();
-    const viewingEmail = habitViewingEmail || (me && me.email);
-    const isViewingSelf = !habitViewingEmail;
+    const isSharedMode = tracker.mode !== 'personal';
+    const viewingEmail = isSharedMode ? (me && me.email) : (habitViewingEmail || (me && me.email));
+    const isViewingSelf = isSharedMode ? true : !habitViewingEmail; // shared mode: structural controls (reorder/rename/goal) are always available to everyone
     const personChecks = getHabitChecksForPerson(tracker, viewingEmail);
 
     const dates = getHabitWeekDates(habitWeekOffset);
@@ -7408,18 +7487,7 @@
         const key = habit.id + '_' + habitDateKey(d);
         const checked = !!personChecks[key];
         if(checked) weekCount++;
-        const cell = document.createElement('button');
-        cell.type = 'button';
-        cell.disabled = !isViewingSelf;
-        cell.style.cssText = `background:${checked ? 'var(--green)' : 'var(--paper-raised)'}; border:none; cursor:${isViewingSelf ? 'pointer' : 'default'}; display:flex; align-items:center; justify-content:center; color:#fff; font-size:12px; padding:8px 0;`;
-        cell.innerHTML = checked ? '✓' : '';
-        if(isViewingSelf){
-          cell.addEventListener('click', ()=>{
-            persistActiveHabitTracker(toggleHabitCheckForPerson(tracker, viewingEmail, key));
-            renderHabitWeeklyGrid();
-          });
-        }
-        grid.appendChild(cell);
+        grid.appendChild(buildHabitManageCell(tracker, viewingEmail, key, checked, isViewingSelf, renderHabitWeeklyGrid));
       });
       if(isViewingSelf){
         grid.appendChild(buildHabitCountCell(habit, weekCount, renderHabitWeeklyGrid));
@@ -7444,8 +7512,9 @@
     section.style.display = 'block';
 
     const me = getMyIdentity();
-    const viewingEmail = habitViewingEmail || (me && me.email);
-    const isViewingSelf = !habitViewingEmail;
+    const isSharedMode = tracker.mode !== 'personal';
+    const viewingEmail = isSharedMode ? (me && me.email) : (habitViewingEmail || (me && me.email));
+    const isViewingSelf = isSharedMode ? true : !habitViewingEmail;
     const personChecks = getHabitChecksForPerson(tracker, viewingEmail);
 
     const year = new Date().getFullYear() + habitYearOffset;
@@ -7497,18 +7566,7 @@
         const key = habit.id + '_' + monthKey;
         const checked = !!personChecks[key];
         if(checked) yearCount++;
-        const cell = document.createElement('button');
-        cell.type = 'button';
-        cell.disabled = !isViewingSelf;
-        cell.style.cssText = `background:${checked ? 'var(--green)' : 'var(--paper-raised)'}; border:none; cursor:${isViewingSelf ? 'pointer' : 'default'}; display:flex; align-items:center; justify-content:center; color:#fff; font-size:12px; padding:8px 0;`;
-        cell.innerHTML = checked ? '✓' : '';
-        if(isViewingSelf){
-          cell.addEventListener('click', ()=>{
-            persistActiveHabitTracker(toggleHabitCheckForPerson(tracker, viewingEmail, key));
-            renderHabitMonthlyGrid();
-          });
-        }
-        grid.appendChild(cell);
+        grid.appendChild(buildHabitManageCell(tracker, viewingEmail, key, checked, isViewingSelf, renderHabitMonthlyGrid));
       }
       if(isViewingSelf){
         grid.appendChild(buildHabitCountCell(habit, yearCount, renderHabitMonthlyGrid));
@@ -7552,7 +7610,8 @@
   function renderHabitPeopleTabs(){
     const wrap = $('habitPeopleTabs');
     wrap.innerHTML = '';
-    if(habitPeopleList.length <= 1){
+    const tracker = getActiveHabitTracker();
+    if(tracker.mode !== 'personal' || habitPeopleList.length <= 1){
       wrap.style.display = 'none';
       return;
     }
@@ -7617,28 +7676,13 @@
   $('habitYearPrevBtn').addEventListener('click', ()=>{ habitYearOffset--; renderHabitMonthlyGrid(); });
   $('habitYearNextBtn').addEventListener('click', ()=>{ habitYearOffset++; renderHabitMonthlyGrid(); });
 
-  function showHabitHeartBurst(container, x, y){
-    const rect = container.getBoundingClientRect();
-    container.style.position = 'relative';
+  function showHabitHeartBurst(anchorEl){
+    const rect = anchorEl.getBoundingClientRect();
     const heart = document.createElement('div');
-    heart.innerHTML = ICON_HEART_FILLED.replace('width="10" height="10"', 'width="46" height="46"');
-    heart.style.cssText = `position:absolute; left:${x - rect.left - 23}px; top:${y - rect.top - 23}px; color:var(--danger); pointer-events:none; animation:habitHeartBurst .7s ease forwards; z-index:50;`;
-    container.appendChild(heart);
+    heart.innerHTML = ICON_HEART_FILLED.replace('width="10" height="10"', 'width="22" height="22"');
+    heart.style.cssText = `position:fixed; left:${rect.left + rect.width/2 - 11}px; top:${rect.top - 6}px; color:var(--danger); pointer-events:none; animation:habitHeartBurst .7s ease forwards; z-index:999;`;
+    document.body.appendChild(heart);
     setTimeout(()=> heart.remove(), 700);
-  }
-
-  function attachHabitDoubleTapCheer(container){
-    let lastTap = 0;
-    container.addEventListener('click', (e)=>{
-      if(e.target.closest('button')) return; // taps on the actual check-in dots use their own gesture, not this
-      const now = Date.now();
-      if(now - lastTap < 350){
-        showHabitHeartBurst(container, e.clientX, e.clientY);
-        lastTap = 0;
-      } else {
-        lastTap = now;
-      }
-    });
   }
 
   function attachHabitDoubleTapToLike(dot, onDoubleTap){
@@ -7661,6 +7705,7 @@
     const iAlreadyLiked = me && tracker.likes && tracker.likes[likeKey] && tracker.likes[likeKey].some(l => l.email === me.email);
     const checkedByInfo = tracker.checkedBy && tracker.checkedBy[likeKey];
     const checkedByMe = me && checkedByInfo && checkedByInfo.email === me.email;
+    const canToggle = tracker.mode === 'personal' ? isSelf : (!checked || checkedByMe);
     const canLike = checked && checkedByInfo && !checkedByMe; // can't like your own check-in, and need to know who to attribute it to
 
     const dotWrap = document.createElement('div');
@@ -7668,9 +7713,13 @@
 
     const dot = document.createElement('button');
     dot.type = 'button';
-    if(dateLabel){ dot.title = dateLabel; } // long press shows this via the app's existing global long-press-hint mechanism
-    dot.style.cssText = `width:${size}px; height:${size}px; border-radius:50%; border:${borderStyle}; background:${checked ? 'var(--amber-deep)' : 'transparent'}; padding:0; cursor:${isSelf ? 'pointer' : 'default'};`;
-    if(isSelf){
+    if(checkedByInfo && checkedByInfo.name){
+      dot.title = dateLabel ? `${dateLabel} · ${T().habitCheckedByLabel(checkedByInfo.name)}` : T().habitCheckedByLabel(checkedByInfo.name);
+    } else if(dateLabel){
+      dot.title = dateLabel; // long press shows this via the app's existing global long-press-hint mechanism
+    }
+    dot.style.cssText = `width:${size}px; height:${size}px; border-radius:50%; border:${borderStyle}; background:${checked ? 'var(--amber-deep)' : 'transparent'}; padding:0; cursor:${canToggle ? 'pointer' : 'default'};`;
+    if(canToggle){
       dot.addEventListener('click', ()=>{
         entry.habitTracker = toggleHabitCheckForPerson(tracker, personEmail, key);
         persistIndex();
@@ -7683,6 +7732,7 @@
         entry.habitTracker = likeHabitCheckIn(tracker, likeKey);
         persistIndex();
         if(entry.sharedId){ updateSharedEntry(entry.sharedId, { habitTracker: entry.habitTracker }); }
+        showHabitHeartBurst(dot);
         renderDetailHabitSummary(entry);
       });
     }
@@ -7690,8 +7740,12 @@
 
     if(likeCount > 0){
       const badge = document.createElement('div');
-      badge.style.cssText = `position:absolute; top:-4px; right:-4px; width:11px; height:11px; border-radius:50%; background:var(--paper-raised); display:flex; align-items:center; justify-content:center; color:var(--danger); box-shadow:0 1px 3px rgba(0,0,0,0.2);`;
+      badge.style.cssText = `position:absolute; top:-4px; right:-4px; width:11px; height:11px; border-radius:50%; background:var(--paper-raised); display:flex; align-items:center; justify-content:center; color:var(--danger); box-shadow:0 1px 3px rgba(0,0,0,0.2); cursor:pointer;`;
       badge.innerHTML = ICON_HEART_FILLED;
+      badge.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        showHabitLikersList(tracker, likeKey);
+      });
       dotWrap.appendChild(badge);
     }
 
@@ -7700,7 +7754,6 @@
 
   function buildHabitSummaryContent(entry, tracker, personEmail, isSelf){
     const wrap = document.createElement('div');
-    attachHabitDoubleTapCheer(wrap);
     const personChecks = getHabitChecksForPerson(tracker, personEmail);
     const weekDates = getHabitWeekDates(0);
     const todayKey = habitDateKey(new Date());
@@ -10331,11 +10384,81 @@
     }
   });
 
+  function checklistHasOtherPeopleData(entry, myEmail){
+    if(!entry.checklist) return false;
+    return entry.checklist.some(item =>
+      (item.comments || []).some(c => c.authorEmail !== myEmail) ||
+      (item.doneBy && Object.keys(item.doneBy).some(email => email !== myEmail))
+    );
+  }
+
+  function habitTrackerHasOtherPeopleData(entry, myEmail){
+    const tracker = entry.habitTracker;
+    if(!tracker) return false;
+    if(tracker.checksByPerson && Object.keys(tracker.checksByPerson).some(email => email !== myEmail)) return true;
+    if(tracker.checkedBy && Object.values(tracker.checkedBy).some(info => info.email !== myEmail)) return true;
+    if(tracker.likes && Object.values(tracker.likes).some(likers => likers.some(l => l.email !== myEmail))) return true;
+    return false;
+  }
+
+  function cleanChecklistToMyDataOnly(checklist, myEmail){
+    return checklist.map(item => ({
+      ...item,
+      comments: (item.comments || []).filter(c => c.authorEmail === myEmail),
+      doneBy: item.doneBy ? Object.fromEntries(Object.entries(item.doneBy).filter(([email]) => email === myEmail)) : item.doneBy
+    }));
+  }
+
+  function cleanHabitTrackerToMyDataOnly(tracker, myEmail){
+    const cleaned = { ...tracker };
+    if(cleaned.checksByPerson){
+      cleaned.checksByPerson = Object.fromEntries(Object.entries(cleaned.checksByPerson).filter(([email]) => email === myEmail));
+    }
+    if(cleaned.checkedBy){
+      cleaned.checkedBy = Object.fromEntries(Object.entries(cleaned.checkedBy).filter(([, info]) => info.email === myEmail));
+    }
+    if(cleaned.likes){
+      cleaned.likes = Object.fromEntries(
+        Object.entries(cleaned.likes)
+          .map(([k, likers]) => [k, likers.filter(l => l.email === myEmail)])
+          .filter(([, likers]) => likers.length > 0)
+      );
+    }
+    return cleaned;
+  }
+
+  function promptKeepOrCleanCollaboratorData(){
+    return new Promise((resolve)=>{
+      $('collabDataOverlay').classList.add('open');
+      const onKeep = ()=>{ cleanup(); resolve('keep'); };
+      const onClean = ()=>{ cleanup(); resolve('clean'); };
+      function cleanup(){
+        $('collabDataOverlay').classList.remove('open');
+        $('collabDataKeepBtn').removeEventListener('click', onKeep);
+        $('collabDataCleanBtn').removeEventListener('click', onClean);
+      }
+      $('collabDataKeepBtn').addEventListener('click', onKeep);
+      $('collabDataCleanBtn').addEventListener('click', onClean);
+    });
+  }
+
   $('stopCoEditingBtn').addEventListener('click', async ()=>{
     $('moreMenu').classList.remove('open');
     const entry = entries.find(e=>e.id === currentDetailId);
     if(!entry || !entry.sharedId) return;
     if(!confirm(T().confirmStopCoEditing)) return;
+
+    const me = getMyIdentity();
+    const myEmail = me ? me.email : null;
+    const hasOtherData = myEmail && (checklistHasOtherPeopleData(entry, myEmail) || habitTrackerHasOtherPeopleData(entry, myEmail));
+    if(hasOtherData){
+      const choice = await promptKeepOrCleanCollaboratorData();
+      if(choice === 'clean'){
+        if(entry.checklist){ entry.checklist = cleanChecklistToMyDataOnly(entry.checklist, myEmail); }
+        if(entry.habitTracker){ entry.habitTracker = cleanHabitTrackerToMyDataOnly(entry.habitTracker, myEmail); }
+      }
+    }
+
     const sharedId = entry.sharedId;
     entry.sharedId = null;
     entry.isSharedOwner = false;
