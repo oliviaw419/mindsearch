@@ -1113,6 +1113,15 @@
   </div>
 </div>
 
+<div class="sheet-overlay" id="isolateShareOverlay" style="z-index:498;">
+  <div class="sheet" style="max-width:380px;">
+    <h2 data-i18n="isolateShareTitle">Can they see each other?</h2>
+    <p style="font-size:13px; color:var(--ink-soft); margin:-8px 0 16px; line-height:1.5;" data-i18n="isolateShareExplain">This note is already shared with someone else. Should the new person see the existing collaboration, or get their own separate copy?</p>
+    <button class="primary-btn" id="isolateShareTogetherBtn" style="margin-top:0;" data-i18n="isolateShareTogetherAction">Together — everyone sees the same note</button>
+    <button class="text-btn" id="isolateShareSeparateBtn" style="margin-top:10px;" data-i18n="isolateShareSeparateAction">Separate — give them their own copy</button>
+  </div>
+</div>
+
 <!-- Location picker -->
 <div class="sheet-overlay" id="locationPickerOverlay" style="z-index:490;">
   <div class="sheet" style="max-width:400px;">
@@ -2014,6 +2023,12 @@
       collabDataExplain: "这条笔记里有对方留下的评论、打卡记录或者点赞。要保留这些数据，还是清掉、只留你自己的？",
       collabDataKeepAction: "保留所有人的数据",
       collabDataCleanAction: "只留我自己的",
+      isolateShareTitle: "新加入的这位，能不能看到之前那位协作者？",
+      isolateShareExplain: "这是「谁能看到谁」的设置，跟清单/习惯打卡里「共享完成」还是「各自记录」是两回事，互不影响。",
+      isolateShareTogetherAction: "互相看得到——能看到彼此的评论、打卡",
+      isolateShareSeparateAction: "互相看不到——只能看到你自己的内容",
+      isolatedCopyTitleSuffix: "（独立分享）",
+      isolatedCopyCreatedToast: "已经生成一份独立的副本",
       deleteHabitExplain: "可以只删掉这个习惯、保留它的打卡记录，也可以两个都清掉。",
       deleteHabitKeepHistoryAction: "删除，保留记录",
       deleteHabitEraseHistoryAction: "全部清除",
@@ -2567,6 +2582,12 @@
       helpFeedbackTitle: "幫助與反饋",
       feedbackNoThreads: "還沒有人發過反饋",
       feedbackPlaceholder: "輸入訊息…",
+      isolateShareTitle: "新加入的這位，能不能看到之前那位協作者？",
+      isolateShareExplain: "這是「誰能看到誰」的設定，跟清單/習慣打卡裡「共享完成」還是「各自記錄」是兩回事，互不影響。",
+      isolateShareTogetherAction: "互相看得到——能看到彼此的評論、打卡",
+      isolateShareSeparateAction: "互相看不到——只能看到你自己的內容",
+      isolatedCopyTitleSuffix: "（獨立分享）",
+      isolatedCopyCreatedToast: "已經生成一份獨立的副本",
       backAction: "← 返回",
       nicknameOptional: "備註名稱（選填）",
       addFriend: "新增",
@@ -3121,6 +3142,12 @@
       toastMicFail: "Couldn't access the microphone (may not work in preview)",
       toastMaxPhotos: "You can add up to 10 photos",
       confirmDeleteEntry: "Delete this entry?",
+      isolateShareTitle: "Should the new person see the existing collaborator?",
+      isolateShareExplain: "This is about who can SEE whom \u2014 separate from the \"shared vs personal completion\" setting on checklists/habits, which is a different thing entirely.",
+      isolateShareTogetherAction: "Visible to each other \u2014 can see each other\u2019s comments and check-ins",
+      isolateShareSeparateAction: "Not visible to each other \u2014 only sees your own content",
+      isolatedCopyTitleSuffix: " (Separate share)",
+      isolatedCopyCreatedToast: "Created a separate copy",
       confirmDeleteEntryFull: "Delete this memory? This can't be undone.",
       confirmDeleteAudio: "Delete this recording?",
       emptyRecent: "Nothing saved yet. Tap + to record your first thought.",
@@ -3752,7 +3779,7 @@
   const ICON_BUNDLE = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 5.5H16l5 5v6.5a1.5 1.5 0 01-1.5 1.5H9.5A1.5 1.5 0 018 17V7a1.5 1.5 0 011.5-1.5z" opacity="0.55"/><circle cx="12" cy="10.5" r="1" opacity="0.55"/><path d="M5.5 2.5H12l5 5v6.5A1.5 1.5 0 0115.5 15.5h-10A1.5 1.5 0 014 14V4a1.5 1.5 0 011.5-1.5z"/><circle cx="8" cy="7.5" r="1"/></svg>';
   const ICON_HEART_OUTLINE = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 00-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 00-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 000-7.8z"/></svg>';
   const ICON_HEART_FILLED = '<svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M20.8 4.6a5.5 5.5 0 00-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 00-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 000-7.8z"/></svg>';
-  const HABIT_PERSON_COLORS = ['var(--amber-deep)', 'var(--plum-deep)', 'var(--green-deep)', 'var(--danger)'];
+  const HABIT_PERSON_COLORS = ['var(--amber-deep)', '#4A90D9', '#9B59B6', '#27AE60', '#E67E22'];
   function getHabitPersonColor(personEmail, peopleList){
     if(!peopleList || peopleList.length === 0 || !personEmail) return 'var(--amber-deep)';
     const idx = peopleList.findIndex(p => p.email === personEmail);
@@ -6593,7 +6620,7 @@
   // getList()/setList() abstract over "editing pendingChecklist" vs "editing a saved entry's checklist" so
   // the overlay (new note) and the note-detail view (existing note) can share one row-building implementation.
   // isShared controls whether comment author names are shown (no point labeling "yourself" on a private note).
-  function buildChecklistItemRow(item, getList, setList, rerender, containerEl, isShared, checklistMode){
+  function buildChecklistItemRow(item, getList, setList, rerender, containerEl, isShared, checklistMode, visibilityChecker){
     const wrap = document.createElement('div');
     wrap.dataset.itemId = item.id;
     wrap.style.cssText = 'background:var(--paper-raised); border-radius:12px; padding:8px 10px; transition:opacity .9s ease;';
@@ -6690,7 +6717,8 @@
       }
     }
 
-    const comments = item.comments || [];
+    const allComments = item.comments || [];
+    const comments = visibilityChecker ? allComments.filter(c => visibilityChecker.canSee(c.authorEmail)) : allComments;
     const commentToggle = document.createElement('button');
     commentToggle.type = 'button';
     commentToggle.title = T().checklistCommentsTitle;
@@ -6725,13 +6753,14 @@
 
       const me = getMyIdentity();
       const myComment = me ? comments.find(c => c.authorEmail === me.email) : null;
+      const hasMultipleAuthors = new Set(comments.map(c => c.authorEmail)).size > 1;
 
       comments.forEach(c => {
         const isMine = me && c.authorEmail === me.email;
         const cRow = document.createElement('div');
         cRow.style.cssText = `font-size:12.5px; line-height:1.4; ${isMine ? 'cursor:text;' : ''}`;
         const displayName = getCachedNickname(c.authorEmail) || c.authorName;
-        const label = isShared ? `<span style="font-weight:700; color:var(--ink);">${escapeHtml(displayName)}</span>: ` : '';
+        const label = hasMultipleAuthors ? `<span style="font-weight:700; color:var(--ink);">${escapeHtml(displayName)}</span>: ` : '';
         cRow.innerHTML = `${label}<span style="color:var(--ink-soft);">${escapeHtml(c.text)}</span>`;
         if(isMine){
           cRow.title = T().checklistTapToEdit;
@@ -6781,16 +6810,18 @@
     return 'shared'; // genuinely a brand-new, unsaved note — can't be shared yet
   }
 
-  function renderChecklistOverlayList(){
+  async function renderChecklistOverlayList(){
     const items = getActiveChecklist();
     const checklistMode = getChecklistModeForContext();
     const active = items.filter(it => !isItemDoneForViewer(it, checklistMode));
     const completed = items.filter(it => isItemDoneForViewer(it, checklistMode));
     const isShared = isChecklistContextShared();
+    const contextEntry = (checklistContext && checklistContext.mode === 'entry') ? entries.find(e => e.id === checklistContext.entryId) : null;
+    const visibilityChecker = await getVisibilityCheckerForEntry(contextEntry);
 
     const activeList = $('checklistActiveList');
     activeList.innerHTML = '';
-    active.forEach(item => activeList.appendChild(buildChecklistItemRow(item, getActiveChecklist, persistActiveChecklist, renderChecklistOverlayList, activeList, isShared, checklistMode)));
+    active.forEach(item => activeList.appendChild(buildChecklistItemRow(item, getActiveChecklist, persistActiveChecklist, renderChecklistOverlayList, activeList, isShared, checklistMode, visibilityChecker)));
     $('checklistEmpty').style.display = items.length === 0 ? 'block' : 'none';
 
     $('checklistCompletedToggleBtn').style.display = completed.length > 0 ? 'block' : 'none';
@@ -6799,7 +6830,7 @@
     const completedList = $('checklistCompletedList');
     completedList.innerHTML = '';
     if(checklistShowCompleted){
-      completed.forEach(item => completedList.appendChild(buildChecklistItemRow(item, getActiveChecklist, persistActiveChecklist, renderChecklistOverlayList, completedList, isShared, checklistMode)));
+      completed.forEach(item => completedList.appendChild(buildChecklistItemRow(item, getActiveChecklist, persistActiveChecklist, renderChecklistOverlayList, completedList, isShared, checklistMode, visibilityChecker)));
     }
 
     $('checklistGridToggleBtn').style.display = 'block';
@@ -6830,11 +6861,63 @@
     return [...emails];
   }
 
+  const HABIT_TOGETHER_GROUP = 'together';
+
+  async function buildVisibilityChecker(entry){
+    const me = getMyIdentity();
+    const myEmail = me ? me.email : null;
+    if(!entry || !entry.sharedId){
+      return { canSee: () => true, ownerEmail: myEmail, myGroupId: null, isOwner: true, groupMap: {} };
+    }
+    const sharedDoc = await fetchSharedEntry(entry.sharedId);
+    const ownerEmail = (sharedDoc && sharedDoc.createdByEmail) || null;
+    const isOwner = !!(myEmail && ownerEmail && myEmail === ownerEmail);
+    const participants = await listSharedParticipants(entry.sharedId);
+    const groupMap = {};
+    participants.forEach(p => { if(p.email && p.groupId){ groupMap[p.email] = p.groupId; } });
+    const myGroupId = myEmail ? groupMap[myEmail] : null;
+
+    function canSee(authorEmail){
+      if(isOwner) return true; // the owner is the hub — sees everyone
+      if(!authorEmail) return true; // no attribution on this data — conservatively show it (avoids hiding legacy data)
+      if(authorEmail === myEmail) return true; // always see your own
+      if(authorEmail === ownerEmail) return true; // everyone sees the owner's contributions
+      const authorGroupId = groupMap[authorEmail];
+      if(!authorGroupId) return true; // unknown grouping — conservatively show it
+      return !!(myGroupId && authorGroupId === myGroupId); // only same-group collaborators see each other
+    }
+
+    return { canSee, ownerEmail, myGroupId, isOwner, groupMap, participants };
+  }
+
+  let cachedVisibilityChecker = null;
+  let cachedVisibilityCheckerKey = null;
+
+  function invalidateVisibilityCache(){
+    cachedVisibilityChecker = null;
+    cachedVisibilityCheckerKey = null;
+  }
+
+  async function getVisibilityCheckerForEntry(entry){
+    if(!entry || !entry.sharedId){
+      return { canSee: () => true, ownerEmail: null, myGroupId: null, isOwner: true, groupMap: {} };
+    }
+    const key = entry.id + '::' + entry.sharedId;
+    if(cachedVisibilityCheckerKey === key && cachedVisibilityChecker){
+      return cachedVisibilityChecker;
+    }
+    const checker = await buildVisibilityChecker(entry);
+    cachedVisibilityChecker = checker;
+    cachedVisibilityCheckerKey = key;
+    return checker;
+  }
+
   async function fetchChecklistGridAuthors(entry){
     const result = [];
     const me = getMyIdentity();
     if(me) result.push(me);
     if(entry && entry.sharedId){
+      const visibility = await getVisibilityCheckerForEntry(entry);
       const participants = await listSharedParticipants(entry.sharedId);
       const fb = window.__firebase;
       const myUid = fb.auth.currentUser ? fb.auth.currentUser.uid : null;
@@ -6842,6 +6925,7 @@
         if(p.uid === myUid) continue; // already added as "me"
         if(!p.email) continue;
         if(result.some(r => r.email === p.email)) continue;
+        if(!visibility.canSee(p.email)) continue;
         let nickname = getCachedNickname(p.email);
         if(nickname === null && !(p.email in checklistNicknameCache)){
           nickname = await getContactNickname(p.email);
@@ -7044,7 +7128,7 @@
     startNewChecklistItem(getActiveChecklist, persistActiveChecklist, renderChecklistOverlayList);
   });
 
-  function renderDetailChecklist(entry){
+  async function renderDetailChecklist(entry){
     const items = entry.checklist || [];
     if(items.length === 0){
       $('detailChecklistWrap').style.display = 'none';
@@ -7059,13 +7143,14 @@
     const rerender = () => renderDetailChecklist(entry);
     const isShared = !!entry.sharedId;
     const checklistMode = entry.checklistMode || 'shared';
+    const visibilityChecker = await getVisibilityCheckerForEntry(entry);
 
     const active = items.filter(it => !isItemDoneForViewer(it, checklistMode));
     const completed = items.filter(it => isItemDoneForViewer(it, checklistMode));
 
     const activeWrap = $('detailChecklistActive');
     activeWrap.innerHTML = '';
-    active.forEach(item => activeWrap.appendChild(buildChecklistItemRow(item, getList, setList, rerender, activeWrap, isShared, checklistMode)));
+    active.forEach(item => activeWrap.appendChild(buildChecklistItemRow(item, getList, setList, rerender, activeWrap, isShared, checklistMode, visibilityChecker)));
 
     $('detailChecklistCompletedToggleBtn').style.display = completed.length > 0 ? 'block' : 'none';
     $('detailChecklistCompletedToggleBtn').textContent = (checklistShowCompleted ? '▾ ' : '▸ ') + T().checklistCompletedCount(completed.length);
@@ -7073,7 +7158,7 @@
     const completedWrap = $('detailChecklistCompletedList');
     completedWrap.innerHTML = '';
     if(checklistShowCompleted){
-      completed.forEach(item => completedWrap.appendChild(buildChecklistItemRow(item, getList, setList, rerender, completedWrap, isShared, checklistMode)));
+      completed.forEach(item => completedWrap.appendChild(buildChecklistItemRow(item, getList, setList, rerender, completedWrap, isShared, checklistMode, visibilityChecker)));
     }
 
     $('detailChecklistGridToggleBtn').style.display = 'block';
@@ -7199,6 +7284,7 @@
     const me = getMyIdentity();
     if(me) result.push(me);
     if(entry && entry.sharedId){
+      const visibility = await getVisibilityCheckerForEntry(entry);
       const participants = await listSharedParticipants(entry.sharedId);
       const fb = window.__firebase;
       const myUid = fb.auth.currentUser ? fb.auth.currentUser.uid : null;
@@ -7206,6 +7292,7 @@
         if(p.uid === myUid) continue;
         if(!p.email) continue;
         if(result.some(r => r.email === p.email)) continue;
+        if(!visibility.canSee(p.email)) continue;
         let nickname = getCachedNickname(p.email);
         if(nickname === null && !(p.email in checklistNicknameCache)){
           nickname = await getContactNickname(p.email);
@@ -7399,14 +7486,19 @@
     const checkedByDisplayName = checkedByInfo ? (getCachedNickname(checkedByInfo.email) || checkedByInfo.name) : null;
     const checkColor = checkedByInfo ? getHabitPersonColor(checkedByInfo.email, habitPeopleList) : 'var(--amber-deep)';
 
-    const canToggle = tracker.mode === 'personal' ? isViewingSelf : (!checked || checkedByMe);
-    const canLike = checked && checkedByInfo && !checkedByMe;
+    // Shared mode only: if this was checked by someone in a different visibility group, hide it from me entirely
+    // and don't let me touch it — toggling would otherwise silently erase their check-in.
+    const hiddenFromMe = tracker.mode !== 'personal' && checkedByInfo && habitVisibilityChecker && !habitVisibilityChecker.canSee(checkedByInfo.email);
+    const visuallyChecked = checked && !hiddenFromMe;
+
+    const canToggle = !hiddenFromMe && (tracker.mode === 'personal' ? isViewingSelf : (!checked || checkedByMe));
+    const canLike = !hiddenFromMe && checked && checkedByInfo && !checkedByMe;
 
     const cell = document.createElement('button');
     cell.type = 'button';
-    cell.style.cssText = `background:${checked ? checkColor : 'var(--paper-raised)'}; border:none; cursor:${(canToggle || canLike) ? 'pointer' : 'default'}; display:flex; align-items:center; justify-content:center; color:#fff; font-size:12px; padding:8px 0; position:relative;`;
-    cell.innerHTML = checked ? '✓' : '';
-    if(checkedByDisplayName){ cell.title = T().habitCheckedByLabel(checkedByDisplayName); }
+    cell.style.cssText = `background:${visuallyChecked ? checkColor : 'var(--paper-raised)'}; border:none; cursor:${(canToggle || canLike) ? 'pointer' : 'default'}; display:flex; align-items:center; justify-content:center; color:#fff; font-size:12px; padding:8px 0; position:relative;`;
+    cell.innerHTML = visuallyChecked ? '✓' : '';
+    if(visuallyChecked && checkedByDisplayName){ cell.title = T().habitCheckedByLabel(checkedByDisplayName); }
 
     if(canToggle){
       cell.addEventListener('click', ()=>{
@@ -7421,7 +7513,7 @@
       });
     }
 
-    const likeCount = (tracker.likes && tracker.likes[likeKey]) ? tracker.likes[likeKey].length : 0;
+    const likeCount = (!hiddenFromMe && tracker.likes && tracker.likes[likeKey]) ? tracker.likes[likeKey].length : 0;
     if(likeCount > 0){
       const badge = document.createElement('div');
       badge.style.cssText = `position:absolute; top:-3px; right:-3px; width:10px; height:10px; border-radius:50%; background:var(--paper-raised); display:flex; align-items:center; justify-content:center; color:var(--danger); box-shadow:0 1px 2px rgba(0,0,0,0.25); cursor:pointer;`;
@@ -7603,6 +7695,7 @@
 
   let habitViewingEmail = null; // null = viewing yourself
   let habitPeopleList = [];
+  let habitVisibilityChecker = null;
 
   async function openHabitOverlay(){
     habitWeekOffset = 0;
@@ -7613,6 +7706,7 @@
 
     const entry = (habitContext && habitContext.mode === 'entry') ? entries.find(e => e.id === habitContext.entryId) : null;
     habitPeopleList = await fetchHabitPeople(entry);
+    habitVisibilityChecker = await getVisibilityCheckerForEntry(entry);
     renderHabitPeopleTabs();
     renderHabitOverlayFull();
   }
@@ -7708,28 +7802,33 @@
     });
   }
 
-  function buildHabitDot(entry, tracker, personEmail, isSelf, key, checked, borderStyle, size, dateLabel, peopleList){
+  function buildHabitDot(entry, tracker, personEmail, isSelf, key, checked, borderStyle, size, dateLabel, peopleList, visibilityChecker){
     const likeKey = getHabitLikeKey(tracker, personEmail, key);
-    const likeCount = (tracker.likes && tracker.likes[likeKey]) ? tracker.likes[likeKey].length : 0;
     const me = getMyIdentity();
     const checkedByInfo = tracker.checkedBy && tracker.checkedBy[likeKey];
     const checkedByMe = me && checkedByInfo && checkedByInfo.email === me.email;
     const checkedByDisplayName = checkedByInfo ? (getCachedNickname(checkedByInfo.email) || checkedByInfo.name) : null;
     const checkColor = checkedByInfo ? getHabitPersonColor(checkedByInfo.email, peopleList) : 'var(--amber-deep)';
-    const canToggle = tracker.mode === 'personal' ? isSelf : (!checked || checkedByMe);
-    const canLike = checked && checkedByInfo && !checkedByMe; // can't like your own check-in, and need to know who to attribute it to
+
+    // Shared mode only: hide check-ins made by someone in a different visibility group.
+    const hiddenFromMe = tracker.mode !== 'personal' && checkedByInfo && visibilityChecker && !visibilityChecker.canSee(checkedByInfo.email);
+    const visuallyChecked = checked && !hiddenFromMe;
+    const likeCount = (!hiddenFromMe && tracker.likes && tracker.likes[likeKey]) ? tracker.likes[likeKey].length : 0;
+
+    const canToggle = !hiddenFromMe && (tracker.mode === 'personal' ? isSelf : (!checked || checkedByMe));
+    const canLike = !hiddenFromMe && checked && checkedByInfo && !checkedByMe; // can't like your own check-in, and need to know who to attribute it to
 
     const dotWrap = document.createElement('div');
     dotWrap.style.cssText = 'position:relative; flex-shrink:0;';
 
     const dot = document.createElement('button');
     dot.type = 'button';
-    if(checkedByDisplayName){
+    if(visuallyChecked && checkedByDisplayName){
       dot.title = dateLabel ? `${dateLabel} · ${T().habitCheckedByLabel(checkedByDisplayName)}` : T().habitCheckedByLabel(checkedByDisplayName);
     } else if(dateLabel){
       dot.title = dateLabel; // long press shows this via the app's existing global long-press-hint mechanism
     }
-    dot.style.cssText = `width:${size}px; height:${size}px; border-radius:50%; border:${borderStyle}; background:${checked ? checkColor : 'transparent'}; padding:0; cursor:${(canToggle || canLike) ? 'pointer' : 'default'};`;
+    dot.style.cssText = `width:${size}px; height:${size}px; border-radius:50%; border:${borderStyle}; background:${visuallyChecked ? checkColor : 'transparent'}; padding:0; cursor:${(canToggle || canLike) ? 'pointer' : 'default'};`;
     if(canToggle){
       dot.addEventListener('click', ()=>{
         entry.habitTracker = toggleHabitCheckForPerson(tracker, personEmail, key);
@@ -7762,7 +7861,7 @@
     return dotWrap;
   }
 
-  function buildHabitSummaryContent(entry, tracker, personEmail, isSelf, peopleList){
+  function buildHabitSummaryContent(entry, tracker, personEmail, isSelf, peopleList, visibilityChecker){
     const wrap = document.createElement('div');
     const personChecks = getHabitChecksForPerson(tracker, personEmail);
     const weekDates = getHabitWeekDates(0);
@@ -7820,7 +7919,7 @@
           const checked = !!personChecks[key];
           const isToday = habitDateKey(d) === todayKey;
           const borderStyle = isToday ? '2px solid var(--amber-deep)' : '1.5px solid var(--line)';
-          dotsWrap.appendChild(buildHabitDot(entry, tracker, personEmail, isSelf, key, checked, borderStyle, 16, `${d.getMonth()+1}/${d.getDate()}`, peopleList));
+          dotsWrap.appendChild(buildHabitDot(entry, tracker, personEmail, isSelf, key, checked, borderStyle, 16, `${d.getMonth()+1}/${d.getDate()}`, peopleList, visibilityChecker));
         });
         row.appendChild(dotsWrap);
         wrap.appendChild(row);
@@ -7877,7 +7976,7 @@
           const checked = !!personChecks[key];
           const isThisMonth = m === new Date().getMonth();
           const borderStyle = isThisMonth ? '1.5px solid var(--amber-deep)' : '1px solid var(--line)';
-          dotsWrap.appendChild(buildHabitDot(entry, tracker, personEmail, isSelf, key, checked, borderStyle, 11, T().habitMonthLabels()[m], peopleList));
+          dotsWrap.appendChild(buildHabitDot(entry, tracker, personEmail, isSelf, key, checked, borderStyle, 11, T().habitMonthLabels()[m], peopleList, visibilityChecker));
         }
         row.appendChild(dotsWrap);
         wrap.appendChild(row);
@@ -7894,21 +7993,31 @@
       return;
     }
     const summaryWrap = $('detailHabitSummary');
+
+    // Remember which page we were on before rebuilding, so a like/unlike toggle doesn't snap back to page 1
+    const existingScrollWrap = summaryWrap.querySelector('[data-habit-scroll-wrap]');
+    let savedPageIndex = 0;
+    if(existingScrollWrap && existingScrollWrap.clientWidth > 0){
+      savedPageIndex = Math.round(existingScrollWrap.scrollLeft / existingScrollWrap.clientWidth);
+    }
+
     summaryWrap.innerHTML = '';
 
     const me = getMyIdentity();
     const isPersonalMode = tracker.mode === 'personal';
     const people = await fetchHabitPeople(entry);
+    const visibilityChecker = await getVisibilityCheckerForEntry(entry);
 
     if(!isPersonalMode || people.length <= 1 || !me){
       // Shared mode (or no one else involved): one unified view — everyone sees and can check the same data.
       const myEmail = me ? me.email : null;
-      summaryWrap.appendChild(buildHabitSummaryContent(entry, tracker, myEmail, true, people));
+      summaryWrap.appendChild(buildHabitSummaryContent(entry, tracker, myEmail, true, people, visibilityChecker));
       $('detailHabitWrap').style.display = 'block';
       return;
     }
 
     const scrollWrap = document.createElement('div');
+    scrollWrap.dataset.habitScrollWrap = 'true';
     scrollWrap.style.cssText = 'display:flex; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch;';
 
     people.forEach(person => {
@@ -7921,10 +8030,12 @@
       nameLabel.textContent = isSelf ? T().habitMeTabLabel : person.name;
       page.appendChild(nameLabel);
 
-      page.appendChild(buildHabitSummaryContent(entry, tracker, person.email, isSelf, people));
+      page.appendChild(buildHabitSummaryContent(entry, tracker, person.email, isSelf, people, visibilityChecker));
       scrollWrap.appendChild(page);
     });
     summaryWrap.appendChild(scrollWrap);
+
+    const clampedIndex = Math.min(savedPageIndex, people.length - 1);
 
     const dotsNav = document.createElement('div');
     dotsNav.style.cssText = 'display:flex; justify-content:center; gap:8px; margin-top:8px;';
@@ -7933,7 +8044,7 @@
       dotBtn.type = 'button';
       dotBtn.style.cssText = `width:14px; height:14px; padding:0; background:none; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center;`;
       const dot = document.createElement('span');
-      dot.style.cssText = `width:6px; height:6px; border-radius:50%; background:${i===0 ? 'var(--plum-deep)' : 'var(--line)'}; transition:background .15s ease; pointer-events:none;`;
+      dot.style.cssText = `width:6px; height:6px; border-radius:50%; background:${i===clampedIndex ? 'var(--plum-deep)' : 'var(--line)'}; transition:background .15s ease; pointer-events:none;`;
       dotBtn.appendChild(dot);
       dotBtn.addEventListener('click', ()=>{
         scrollWrap.scrollTo({ left: i * scrollWrap.clientWidth, behavior: 'smooth' });
@@ -7941,6 +8052,10 @@
       dotsNav.appendChild(dotBtn);
     });
     summaryWrap.appendChild(dotsNav);
+
+    if(clampedIndex > 0){
+      scrollWrap.scrollLeft = clampedIndex * scrollWrap.clientWidth;
+    }
 
     scrollWrap.addEventListener('scroll', ()=>{
       const idx = Math.round(scrollWrap.scrollLeft / scrollWrap.clientWidth);
@@ -8973,6 +9088,7 @@
       images: entry.images || [], audio: entry.audio || null, files: entry.files || [], video: entry.video || null,
       location: entry.location || null, dateLog: entry.dateLog || [], checklist: entry.checklist || [], checklistMode: entry.checklistMode || null, habitTracker: entry.habitTracker || null,
       createdByEmail: me.email,
+      pendingGroupAssignments: {},
       updatedAt: Date.now(), updatedBy: me.email
     });
     await fb.setDoc(fb.doc(fb.db, 'sharedEntries', sharedId, 'participants', me.uid), { joinedAt: Date.now(), email: me.email || '' });
@@ -9001,7 +9117,17 @@
   async function joinSharedEntry(sharedId){
     const fb = window.__firebase;
     const me = fb.auth.currentUser;
-    try{ await fb.setDoc(fb.doc(fb.db, 'sharedEntries', sharedId, 'participants', me.uid), { joinedAt: Date.now(), email: me.email || '' }); }
+    try{
+      let groupId = null;
+      const sharedDoc = await fetchSharedEntry(sharedId);
+      if(sharedDoc && sharedDoc.createdByEmail !== me.email){
+        const pending = (sharedDoc.pendingGroupAssignments || {})[me.email];
+        groupId = pending || cryptoId(); // default: isolated in your own fresh group if the owner never assigned one
+      }
+      const data = { joinedAt: Date.now(), email: me.email || '' };
+      if(groupId){ data.groupId = groupId; }
+      await fb.setDoc(fb.doc(fb.db, 'sharedEntries', sharedId, 'participants', me.uid), data);
+    }
     catch(e){ console.error('join shared entry failed', e); }
   }
 
@@ -9105,6 +9231,15 @@
   }
 
   async function shareEntryToEmail(entry, email, allowEdit){
+    let groupIdForNewPerson = null;
+    if(allowEdit){
+      if(!entry.sharedId){
+        groupIdForNewPerson = HABIT_TOGETHER_GROUP; // first invite — nothing to isolate from yet
+      } else {
+        const choice = await promptIsolateShare();
+        groupIdForNewPerson = choice === 'separate' ? cryptoId() : HABIT_TOGETHER_GROUP;
+      }
+    }
     if(allowEdit && entry.checklist && entry.checklist.length > 0 && !entry.checklistMode){
       entry.checklistMode = await promptChecklistCompletionMode();
       persistIndex();
@@ -9137,6 +9272,11 @@
       if(allowEdit){
         entry.sharedWithEmail = email;
         persistIndex();
+      }
+      if(allowEdit && groupIdForNewPerson){
+        const sharedDoc = await fetchSharedEntry(sharedId);
+        const pending = { ...((sharedDoc && sharedDoc.pendingGroupAssignments) || {}), [email]: groupIdForNewPerson };
+        await updateSharedEntry(sharedId, { pendingGroupAssignments: pending });
       }
       await fb.setDoc(fb.doc(fb.db, 'users', recipientUid, 'inbox', itemId), {
         fromEmail: me.email,
@@ -10456,6 +10596,21 @@
       }
       $('collabDataKeepBtn').addEventListener('click', onKeep);
       $('collabDataCleanBtn').addEventListener('click', onClean);
+    });
+  }
+
+  function promptIsolateShare(){
+    return new Promise((resolve)=>{
+      $('isolateShareOverlay').classList.add('open');
+      const onTogether = ()=>{ cleanup(); resolve('together'); };
+      const onSeparate = ()=>{ cleanup(); resolve('separate'); };
+      function cleanup(){
+        $('isolateShareOverlay').classList.remove('open');
+        $('isolateShareTogetherBtn').removeEventListener('click', onTogether);
+        $('isolateShareSeparateBtn').removeEventListener('click', onSeparate);
+      }
+      $('isolateShareTogetherBtn').addEventListener('click', onTogether);
+      $('isolateShareSeparateBtn').addEventListener('click', onSeparate);
     });
   }
 
