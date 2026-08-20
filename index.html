@@ -3752,6 +3752,13 @@
   const ICON_BUNDLE = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 5.5H16l5 5v6.5a1.5 1.5 0 01-1.5 1.5H9.5A1.5 1.5 0 018 17V7a1.5 1.5 0 011.5-1.5z" opacity="0.55"/><circle cx="12" cy="10.5" r="1" opacity="0.55"/><path d="M5.5 2.5H12l5 5v6.5A1.5 1.5 0 0115.5 15.5h-10A1.5 1.5 0 014 14V4a1.5 1.5 0 011.5-1.5z"/><circle cx="8" cy="7.5" r="1"/></svg>';
   const ICON_HEART_OUTLINE = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 00-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 00-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 000-7.8z"/></svg>';
   const ICON_HEART_FILLED = '<svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M20.8 4.6a5.5 5.5 0 00-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 00-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 000-7.8z"/></svg>';
+  const HABIT_PERSON_COLORS = ['var(--amber-deep)', 'var(--plum-deep)', 'var(--green-deep)', 'var(--danger)'];
+  function getHabitPersonColor(personEmail, peopleList){
+    if(!peopleList || peopleList.length === 0 || !personEmail) return 'var(--amber-deep)';
+    const idx = peopleList.findIndex(p => p.email === personEmail);
+    if(idx === -1) return 'var(--amber-deep)';
+    return HABIT_PERSON_COLORS[idx % HABIT_PERSON_COLORS.length];
+  }
   const ICON_LOCATION_LG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0119 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.3"/></svg>';
   const ICON_ALL = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>';
   const ICON_UNTAGGED = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.6 2H4a2 2 0 00-2 2v8.6a2 2 0 00.59 1.41l9.4 9.4a2 2 0 002.82 0l8.6-8.6a2 2 0 000-2.82l-9.4-9.4A2 2 0 0012.6 2z" stroke-dasharray="3 3"/></svg>';
@@ -7174,13 +7181,16 @@
     return { ...tracker, checks, checkedBy, likes };
   }
 
-  function likeHabitCheckIn(tracker, likeKey){
+  function toggleHabitLike(tracker, likeKey){
     const me = getMyIdentity();
     if(!me) return tracker;
     const likes = { ...(tracker.likes||{}) };
     const existing = likes[likeKey] || [];
-    if(existing.some(l => l.email === me.email)) return tracker; // already liked, no-op
-    likes[likeKey] = [...existing, { email: me.email, name: me.name }];
+    if(existing.some(l => l.email === me.email)){
+      likes[likeKey] = existing.filter(l => l.email !== me.email);
+    } else {
+      likes[likeKey] = [...existing, { email: me.email, name: me.name }];
+    }
     return { ...tracker, likes };
   }
 
@@ -7378,7 +7388,7 @@
   function showHabitLikersList(tracker, likeKey){
     const likers = (tracker.likes && tracker.likes[likeKey]) || [];
     if(likers.length === 0) return;
-    showToast(likers.map(l => l.name).join('、') + ' ' + T().habitLikedThisLabel);
+    showToast(likers.map(l => getCachedNickname(l.email) || l.name).join('、') + ' ' + T().habitLikedThisLabel);
   }
 
   function buildHabitManageCell(tracker, personEmail, key, checked, isViewingSelf, rerenderFn){
@@ -7386,15 +7396,17 @@
     const likeKey = getHabitLikeKey(tracker, personEmail, key);
     const checkedByInfo = tracker.checkedBy && tracker.checkedBy[likeKey];
     const checkedByMe = me && checkedByInfo && checkedByInfo.email === me.email;
+    const checkedByDisplayName = checkedByInfo ? (getCachedNickname(checkedByInfo.email) || checkedByInfo.name) : null;
+    const checkColor = checkedByInfo ? getHabitPersonColor(checkedByInfo.email, habitPeopleList) : 'var(--amber-deep)';
 
     const canToggle = tracker.mode === 'personal' ? isViewingSelf : (!checked || checkedByMe);
     const canLike = checked && checkedByInfo && !checkedByMe;
 
     const cell = document.createElement('button');
     cell.type = 'button';
-    cell.style.cssText = `background:${checked ? 'var(--green)' : 'var(--paper-raised)'}; border:none; cursor:${canToggle ? 'pointer' : 'default'}; display:flex; align-items:center; justify-content:center; color:#fff; font-size:12px; padding:8px 0; position:relative;`;
+    cell.style.cssText = `background:${checked ? checkColor : 'var(--paper-raised)'}; border:none; cursor:${(canToggle || canLike) ? 'pointer' : 'default'}; display:flex; align-items:center; justify-content:center; color:#fff; font-size:12px; padding:8px 0; position:relative;`;
     cell.innerHTML = checked ? '✓' : '';
-    if(checkedByInfo && checkedByInfo.name){ cell.title = T().habitCheckedByLabel(checkedByInfo.name); }
+    if(checkedByDisplayName){ cell.title = T().habitCheckedByLabel(checkedByDisplayName); }
 
     if(canToggle){
       cell.addEventListener('click', ()=>{
@@ -7403,9 +7415,7 @@
       });
     } else if(canLike){
       attachHabitDoubleTapToLike(cell, ()=>{
-        const already = me && tracker.likes && tracker.likes[likeKey] && tracker.likes[likeKey].some(l => l.email === me.email);
-        if(already) return;
-        persistActiveHabitTracker(likeHabitCheckIn(tracker, likeKey));
+        persistActiveHabitTracker(toggleHabitLike(tracker, likeKey));
         showHabitHeartBurst(cell);
         rerenderFn();
       });
@@ -7698,13 +7708,14 @@
     });
   }
 
-  function buildHabitDot(entry, tracker, personEmail, isSelf, key, checked, borderStyle, size, dateLabel){
+  function buildHabitDot(entry, tracker, personEmail, isSelf, key, checked, borderStyle, size, dateLabel, peopleList){
     const likeKey = getHabitLikeKey(tracker, personEmail, key);
     const likeCount = (tracker.likes && tracker.likes[likeKey]) ? tracker.likes[likeKey].length : 0;
     const me = getMyIdentity();
-    const iAlreadyLiked = me && tracker.likes && tracker.likes[likeKey] && tracker.likes[likeKey].some(l => l.email === me.email);
     const checkedByInfo = tracker.checkedBy && tracker.checkedBy[likeKey];
     const checkedByMe = me && checkedByInfo && checkedByInfo.email === me.email;
+    const checkedByDisplayName = checkedByInfo ? (getCachedNickname(checkedByInfo.email) || checkedByInfo.name) : null;
+    const checkColor = checkedByInfo ? getHabitPersonColor(checkedByInfo.email, peopleList) : 'var(--amber-deep)';
     const canToggle = tracker.mode === 'personal' ? isSelf : (!checked || checkedByMe);
     const canLike = checked && checkedByInfo && !checkedByMe; // can't like your own check-in, and need to know who to attribute it to
 
@@ -7713,12 +7724,12 @@
 
     const dot = document.createElement('button');
     dot.type = 'button';
-    if(checkedByInfo && checkedByInfo.name){
-      dot.title = dateLabel ? `${dateLabel} · ${T().habitCheckedByLabel(checkedByInfo.name)}` : T().habitCheckedByLabel(checkedByInfo.name);
+    if(checkedByDisplayName){
+      dot.title = dateLabel ? `${dateLabel} · ${T().habitCheckedByLabel(checkedByDisplayName)}` : T().habitCheckedByLabel(checkedByDisplayName);
     } else if(dateLabel){
       dot.title = dateLabel; // long press shows this via the app's existing global long-press-hint mechanism
     }
-    dot.style.cssText = `width:${size}px; height:${size}px; border-radius:50%; border:${borderStyle}; background:${checked ? 'var(--amber-deep)' : 'transparent'}; padding:0; cursor:${canToggle ? 'pointer' : 'default'};`;
+    dot.style.cssText = `width:${size}px; height:${size}px; border-radius:50%; border:${borderStyle}; background:${checked ? checkColor : 'transparent'}; padding:0; cursor:${(canToggle || canLike) ? 'pointer' : 'default'};`;
     if(canToggle){
       dot.addEventListener('click', ()=>{
         entry.habitTracker = toggleHabitCheckForPerson(tracker, personEmail, key);
@@ -7728,8 +7739,7 @@
       });
     } else if(canLike){
       attachHabitDoubleTapToLike(dot, ()=>{
-        if(iAlreadyLiked) return;
-        entry.habitTracker = likeHabitCheckIn(tracker, likeKey);
+        entry.habitTracker = toggleHabitLike(tracker, likeKey);
         persistIndex();
         if(entry.sharedId){ updateSharedEntry(entry.sharedId, { habitTracker: entry.habitTracker }); }
         showHabitHeartBurst(dot);
@@ -7752,7 +7762,7 @@
     return dotWrap;
   }
 
-  function buildHabitSummaryContent(entry, tracker, personEmail, isSelf){
+  function buildHabitSummaryContent(entry, tracker, personEmail, isSelf, peopleList){
     const wrap = document.createElement('div');
     const personChecks = getHabitChecksForPerson(tracker, personEmail);
     const weekDates = getHabitWeekDates(0);
@@ -7810,7 +7820,7 @@
           const checked = !!personChecks[key];
           const isToday = habitDateKey(d) === todayKey;
           const borderStyle = isToday ? '2px solid var(--amber-deep)' : '1.5px solid var(--line)';
-          dotsWrap.appendChild(buildHabitDot(entry, tracker, personEmail, isSelf, key, checked, borderStyle, 16, `${d.getMonth()+1}/${d.getDate()}`));
+          dotsWrap.appendChild(buildHabitDot(entry, tracker, personEmail, isSelf, key, checked, borderStyle, 16, `${d.getMonth()+1}/${d.getDate()}`, peopleList));
         });
         row.appendChild(dotsWrap);
         wrap.appendChild(row);
@@ -7867,7 +7877,7 @@
           const checked = !!personChecks[key];
           const isThisMonth = m === new Date().getMonth();
           const borderStyle = isThisMonth ? '1.5px solid var(--amber-deep)' : '1px solid var(--line)';
-          dotsWrap.appendChild(buildHabitDot(entry, tracker, personEmail, isSelf, key, checked, borderStyle, 11, T().habitMonthLabels()[m]));
+          dotsWrap.appendChild(buildHabitDot(entry, tracker, personEmail, isSelf, key, checked, borderStyle, 11, T().habitMonthLabels()[m], peopleList));
         }
         row.appendChild(dotsWrap);
         wrap.appendChild(row);
@@ -7888,12 +7898,12 @@
 
     const me = getMyIdentity();
     const isPersonalMode = tracker.mode === 'personal';
-    const people = isPersonalMode ? await fetchHabitPeople(entry) : [];
+    const people = await fetchHabitPeople(entry);
 
     if(!isPersonalMode || people.length <= 1 || !me){
       // Shared mode (or no one else involved): one unified view — everyone sees and can check the same data.
       const myEmail = me ? me.email : null;
-      summaryWrap.appendChild(buildHabitSummaryContent(entry, tracker, myEmail, true));
+      summaryWrap.appendChild(buildHabitSummaryContent(entry, tracker, myEmail, true, people));
       $('detailHabitWrap').style.display = 'block';
       return;
     }
@@ -7911,24 +7921,31 @@
       nameLabel.textContent = isSelf ? T().habitMeTabLabel : person.name;
       page.appendChild(nameLabel);
 
-      page.appendChild(buildHabitSummaryContent(entry, tracker, person.email, isSelf));
+      page.appendChild(buildHabitSummaryContent(entry, tracker, person.email, isSelf, people));
       scrollWrap.appendChild(page);
     });
     summaryWrap.appendChild(scrollWrap);
 
     const dotsNav = document.createElement('div');
-    dotsNav.style.cssText = 'display:flex; justify-content:center; gap:5px; margin-top:8px;';
+    dotsNav.style.cssText = 'display:flex; justify-content:center; gap:8px; margin-top:8px;';
     people.forEach((p, i) => {
+      const dotBtn = document.createElement('button');
+      dotBtn.type = 'button';
+      dotBtn.style.cssText = `width:14px; height:14px; padding:0; background:none; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center;`;
       const dot = document.createElement('span');
-      dot.style.cssText = `width:6px; height:6px; border-radius:50%; background:${i===0 ? 'var(--plum-deep)' : 'var(--line)'}; transition:background .15s ease;`;
-      dotsNav.appendChild(dot);
+      dot.style.cssText = `width:6px; height:6px; border-radius:50%; background:${i===0 ? 'var(--plum-deep)' : 'var(--line)'}; transition:background .15s ease; pointer-events:none;`;
+      dotBtn.appendChild(dot);
+      dotBtn.addEventListener('click', ()=>{
+        scrollWrap.scrollTo({ left: i * scrollWrap.clientWidth, behavior: 'smooth' });
+      });
+      dotsNav.appendChild(dotBtn);
     });
     summaryWrap.appendChild(dotsNav);
 
     scrollWrap.addEventListener('scroll', ()=>{
       const idx = Math.round(scrollWrap.scrollLeft / scrollWrap.clientWidth);
-      Array.from(dotsNav.children).forEach((dot, i) => {
-        dot.style.background = i === idx ? 'var(--plum-deep)' : 'var(--line)';
+      Array.from(dotsNav.children).forEach((dotBtn, i) => {
+        dotBtn.firstChild.style.background = i === idx ? 'var(--plum-deep)' : 'var(--line)';
       });
     });
 
