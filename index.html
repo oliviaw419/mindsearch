@@ -2030,6 +2030,8 @@
       habitMeTabLabel: "我",
       deleteHabitTitle: "删除这个习惯吗？",
       habitCheckedByLabel: (name) => `由 ${name} 打卡`,
+      youLabel: "你",
+      byYouLabel: "你",
       habitLikedThisLabel: "点了赞",
       collabDataTitle: "要保留他们的数据吗？",
       collabDataExplain: "这条笔记里有对方留下的评论、打卡记录或者点赞。要保留这些数据，还是清掉、只留你自己的？",
@@ -2584,6 +2586,8 @@
       deleteTagEverywhere: "從標籤列表和所有筆記裡一起刪除",
       habitCheckedByLabel: (name) => `由 ${name} 打卡`,
       habitLikedThisLabel: "點了讚",
+      youLabel: "你",
+      byYouLabel: "你",
       collabDataTitle: "要保留他們的資料嗎？",
       collabDataExplain: "這則筆記裡有對方留下的評論、打卡記錄或者按讚。要保留這些資料，還是清掉、只留你自己的？",
       collabDataKeepAction: "保留所有人的資料",
@@ -3139,6 +3143,8 @@
       habitCheckedByLabel: (name) => `Checked by ${name}`,
       habitLikedThisLabel: "liked this",
       collabDataTitle: "Keep their data?",
+      youLabel: "You",
+      byYouLabel: "You",
       collabDataExplain: "This note has comments, check-ins, or likes from the people you shared it with. Keep that data, or clear it and keep only your own?",
       collabDataKeepAction: "Keep everyone's data",
       collabDataCleanAction: "Keep only mine",
@@ -6771,7 +6777,7 @@
         const isMine = me && c.authorEmail === me.email;
         const cRow = document.createElement('div');
         cRow.style.cssText = `font-size:12.5px; line-height:1.4; ${isMine ? 'cursor:text;' : ''}`;
-        const displayName = getCachedNickname(c.authorEmail) || c.authorName;
+        const displayName = isMine ? T().youLabel : (getCachedNickname(c.authorEmail) || c.authorName);
         const label = hasMultipleAuthors ? `<span style="font-weight:700; color:var(--ink);">${escapeHtml(displayName)}</span>: ` : '';
         cRow.innerHTML = `${label}<span style="color:var(--ink-soft);">${escapeHtml(c.text)}</span>`;
         if(isMine){
@@ -6889,14 +6895,21 @@
     participants.forEach(p => { if(p.email && p.groupId){ groupMap[p.email] = p.groupId; } });
     const myGroupId = myEmail ? groupMap[myEmail] : null;
 
+    // Legacy compatibility: if NO participant has ever been assigned a group, this shared session predates
+    // the visibility-grouping feature entirely — preserve the old "everyone sees everyone" behavior rather
+    // than suddenly isolating people who were never meant to be isolated.
+    const anyGroupingExists = Object.keys(groupMap).length > 0;
+
     function canSee(authorEmail){
       if(isOwner) return true; // the owner is the hub — sees everyone
-      if(!authorEmail) return true; // no attribution on this data — conservatively show it (avoids hiding legacy data)
+      if(!authorEmail) return true; // no attribution at all on this data (predates the attribution feature) — nothing to hide
       if(authorEmail === myEmail) return true; // always see your own
       if(authorEmail === ownerEmail) return true; // everyone sees the owner's contributions
+      if(!anyGroupingExists) return true; // legacy shared session predating grouping — preserve old behavior
       const authorGroupId = groupMap[authorEmail];
-      if(!authorGroupId) return true; // unknown grouping — conservatively show it
-      return !!(myGroupId && authorGroupId === myGroupId); // only same-group collaborators see each other
+      // Fail safe: once grouping is in play for this session, a missing group for a specific collaborator
+      // defaults to NOT visible rather than accidentally leaking them.
+      return !!(myGroupId && authorGroupId && authorGroupId === myGroupId);
     }
 
     return { canSee, ownerEmail, myGroupId, isOwner, groupMap, participants };
@@ -7492,7 +7505,9 @@
     let likers = (tracker.likes && tracker.likes[likeKey]) || [];
     if(visibilityChecker){ likers = likers.filter(l => visibilityChecker.canSee(l.email)); }
     if(likers.length === 0) return;
-    showToast(likers.map(l => getCachedNickname(l.email) || l.name).join('、') + ' ' + T().habitLikedThisLabel);
+    const me = getMyIdentity();
+    const names = likers.map(l => (me && l.email === me.email) ? T().youLabel : (getCachedNickname(l.email) || l.name));
+    showToast(names.join('、') + ' ' + T().habitLikedThisLabel);
   }
 
   function buildHabitManageCell(tracker, personEmail, key, checked, isViewingSelf, rerenderFn){
@@ -7501,7 +7516,7 @@
     const checkedByInfo = tracker.checkedBy && tracker.checkedBy[likeKey];
     const checkedByMe = me && checkedByInfo && checkedByInfo.email === me.email;
     const canSeeChecker = !checkedByInfo || !habitVisibilityChecker || habitVisibilityChecker.canSee(checkedByInfo.email);
-    const checkedByDisplayName = (checkedByInfo && canSeeChecker) ? (getCachedNickname(checkedByInfo.email) || checkedByInfo.name) : null;
+    const checkedByDisplayName = (checkedByInfo && canSeeChecker) ? (checkedByMe ? T().byYouLabel : (getCachedNickname(checkedByInfo.email) || checkedByInfo.name)) : null;
     const checkColor = (checkedByInfo && canSeeChecker) ? getHabitPersonColor(checkedByInfo.email, habitPeopleList) : 'var(--amber-deep)';
 
     const canToggle = tracker.mode === 'personal' ? isViewingSelf : (!checked || checkedByMe);
@@ -7821,7 +7836,7 @@
     const checkedByInfo = tracker.checkedBy && tracker.checkedBy[likeKey];
     const checkedByMe = me && checkedByInfo && checkedByInfo.email === me.email;
     const canSeeChecker = !checkedByInfo || !visibilityChecker || visibilityChecker.canSee(checkedByInfo.email);
-    const checkedByDisplayName = (checkedByInfo && canSeeChecker) ? (getCachedNickname(checkedByInfo.email) || checkedByInfo.name) : null;
+    const checkedByDisplayName = (checkedByInfo && canSeeChecker) ? (checkedByMe ? T().byYouLabel : (getCachedNickname(checkedByInfo.email) || checkedByInfo.name)) : null;
     const checkColor = (checkedByInfo && canSeeChecker) ? getHabitPersonColor(checkedByInfo.email, peopleList) : 'var(--amber-deep)';
     const visibleLikers = (tracker.likes && tracker.likes[likeKey]) ? tracker.likes[likeKey].filter(l => !visibilityChecker || visibilityChecker.canSee(l.email)) : [];
 
