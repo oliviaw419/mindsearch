@@ -1617,6 +1617,7 @@
   let entries = [];
   let currentDetailId = null;
   let editingId = null;
+  let currentShareEntry = null;
   let formOpenSnapshot = null;
   let recentRandomIds = [];
   let recentForgottenIds = [];
@@ -7011,7 +7012,7 @@
       return !!(myGroupId && authorGroupId && authorGroupId === myGroupId);
     }
 
-    return { canSee, ownerEmail, myGroupId, isOwner, groupMap, participants };
+    return { canSee, ownerEmail, myGroupId, isOwner, groupMap };
   }
 
   let cachedVisibilityChecker = null;
