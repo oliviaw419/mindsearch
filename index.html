@@ -1074,6 +1074,7 @@
     <p style="font-size:13px; color:var(--ink-soft); margin:-8px 0 16px; line-height:1.5;" data-i18n="checklistModeExplain">This checklist is about to be shared. Choose how "done" should work between you and the people you share it with.</p>
     <button class="primary-btn" id="checklistModeSharedBtn" style="margin-top:0;" data-i18n="checklistModeSharedAction">Shared — one check marks it done for everyone</button>
     <button class="text-btn" id="checklistModePersonalBtn" style="margin-top:10px;" data-i18n="checklistModePersonalAction">Personal — everyone tracks their own progress</button>
+    <button class="text-btn" id="checklistModeCancelBtn" style="margin-top:10px; color:var(--ink-soft);" data-i18n="decideLaterAction">I'll decide later</button>
   </div>
 </div>
 
@@ -1092,6 +1093,7 @@
     <p style="font-size:13px; color:var(--ink-soft); margin:-8px 0 16px; line-height:1.5;" data-i18n="habitModeExplain">This habit tracker is about to be shared. Choose how check-ins should work between you and the people you share it with.</p>
     <button class="primary-btn" id="habitModeSharedBtn" style="margin-top:0;" data-i18n="habitModeSharedAction">Shared — anyone checking in counts for everyone</button>
     <button class="text-btn" id="habitModePersonalBtn" style="margin-top:10px;" data-i18n="habitModePersonalAction">Personal — everyone tracks their own check-ins</button>
+    <button class="text-btn" id="habitModeCancelBtn" style="margin-top:10px; color:var(--ink-soft);" data-i18n="decideLaterAction">I'll decide later</button>
   </div>
 </div>
 
@@ -1131,6 +1133,33 @@
     <p style="font-size:13px; color:var(--ink-soft); margin:-8px 0 16px; line-height:1.5;" data-i18n="isolateShareExplain">This note is already shared with someone else. Should the new person see the existing collaboration, or get their own separate copy?</p>
     <button class="primary-btn" id="isolateShareTogetherBtn" style="margin-top:0;" data-i18n="isolateShareTogetherAction">Together — everyone sees the same note</button>
     <button class="text-btn" id="isolateShareSeparateBtn" style="margin-top:10px;" data-i18n="isolateShareSeparateAction">Separate — give them their own copy</button>
+    <button class="text-btn" id="isolateShareCancelBtn" style="margin-top:10px; color:var(--ink-soft);" data-i18n="decideLaterAction">I'll decide later</button>
+  </div>
+</div>
+
+<div class="sheet-overlay" id="cancelShareConfirmOverlay" style="z-index:499;">
+  <div class="sheet" style="max-width:360px;">
+    <h2 data-i18n="cancelShareConfirmTitle">Cancel this share?</h2>
+    <p style="font-size:13px; color:var(--ink-soft); margin:-8px 0 16px; line-height:1.5;" data-i18n="cancelShareConfirmExplain">You haven't finished setting this up. Cancel sending this share for now? You can share again anytime.</p>
+    <button class="primary-btn" id="cancelShareConfirmYesBtn" style="margin-top:0; background:var(--danger);" data-i18n="cancelShareConfirmYesAction">Yes, cancel the share</button>
+    <button class="text-btn" id="cancelShareConfirmNoBtn" style="margin-top:10px;" data-i18n="cancelShareConfirmNoAction">No, keep deciding</button>
+  </div>
+</div>
+
+<div class="sheet-overlay" id="manageCollaboratorsOverlay" style="z-index:496;">
+  <div class="sheet" style="max-width:380px;">
+    <h2 data-i18n="manageCollaboratorsTitle">Manage collaborators</h2>
+    <div id="collaboratorsList" style="display:flex; flex-direction:column; gap:8px; margin-top:8px;"></div>
+    <button class="text-btn" id="endShareForEveryoneBtn" style="margin-top:16px; color:var(--danger);" data-i18n="endShareForEveryoneAction">End sharing for everyone</button>
+    <button class="text-btn" id="closeManageCollaboratorsBtn" style="margin-top:10px;" data-i18n="close">Close</button>
+  </div>
+</div>
+
+<div class="sheet-overlay" id="confirmRemoveCollaboratorOverlay" style="z-index:497;">
+  <div class="sheet" style="max-width:340px;">
+    <h2 id="confirmRemoveCollaboratorTitle"></h2>
+    <button class="primary-btn" id="confirmRemoveCollaboratorYesBtn" style="margin-top:0; background:var(--danger);" data-i18n="removeAction">Remove</button>
+    <button class="text-btn" id="confirmRemoveCollaboratorNoBtn" style="margin-top:10px;" data-i18n="cancel">Cancel</button>
   </div>
 </div>
 
@@ -2041,6 +2070,20 @@
       isolateShareExplain: "这是「谁能看到谁」的设置，跟清单/习惯打卡里「共享完成」还是「各自记录」是两回事，互不影响。",
       isolateShareTogetherAction: "互相看得到——能看到彼此的评论、打卡",
       isolateShareSeparateAction: "互相看不到——只能看到你自己的内容",
+      decideLaterAction: "我先不决定，稍后再说",
+      cancelShareConfirmTitle: "要取消这次分享吗？",
+      cancelShareConfirmExplain: "这些设置还没选完。要先取消这次分享吗？之后随时可以重新分享。",
+      cancelShareConfirmYesAction: "取消这次分享",
+      cancelShareConfirmNoAction: "不取消，继续选",
+      shareCancelledToast: "已取消这次分享",
+      manageCollaboratorsTitle: "管理协作者",
+      endShareForEveryoneAction: "结束所有人的共享",
+      removeAction: "移除",
+      noCollaboratorsYet: "还没有其他协作者",
+      unknownPerson: "未知用户",
+      confirmRemoveCollaboratorText: (name) => `确定要把 ${name} 移出这条笔记的共同编辑吗？`,
+      collaboratorRemovedToast: (name) => `已经把 ${name} 移出`,
+      confirmEndShareForEveryone: "确定要结束所有人的共同编辑吗？所有协作者都会失去访问权限。",
       isolatedCopyTitleSuffix: "（独立分享）",
       isolatedCopyCreatedToast: "已经生成一份独立的副本",
       deleteHabitExplain: "可以只删掉这个习惯、保留它的打卡记录，也可以两个都清掉。",
@@ -2608,12 +2651,26 @@
       nicknameOptional: "備註名稱（選填）",
       addFriend: "新增",
       manageAction: "管理",
+      decideLaterAction: "我先不決定，稍後再說",
+      cancelShareConfirmTitle: "要取消這次分享嗎？",
+      cancelShareConfirmExplain: "這些設定還沒選完。要先取消這次分享嗎？之後隨時可以重新分享。",
+      cancelShareConfirmYesAction: "取消這次分享",
+      cancelShareConfirmNoAction: "不取消，繼續選",
+      shareCancelledToast: "已取消這次分享",
       addNewAction: "+ 新增好友",
       inboxTitle: "別人分享給你的",
       inboxEmpty: "還沒有人分享東西給你",
       saveToLibrary: "存進我的庫",
       discardAction: "不要了",
       inboxEmptyCrossLink: "已保存的分享 → 分享標籤頁",
+      manageCollaboratorsTitle: "管理協作者",
+      endShareForEveryoneAction: "結束所有人的共享",
+      removeAction: "移除",
+      noCollaboratorsYet: "還沒有其他協作者",
+      unknownPerson: "未知使用者",
+      confirmRemoveCollaboratorText: (name) => `確定要把 ${name} 移出這條筆記的共同編輯嗎？`,
+      collaboratorRemovedToast: (name) => `已經把 ${name} 移出`,
+      confirmEndShareForEveryone: "確定要結束所有人的共同編輯嗎？所有協作者都會失去存取權限。",
       toastSuggestAddSharedTab: "小提示：可以在 Tab 設定裡把『分享』加到常顯標籤頁",
       sharedWithMeArchiveExplain: "你已保存的、別人分享給你的筆記。",
       pendingInboxCrossLink: (n) => `${n} 條待處理 → 收件匣`,
@@ -3176,6 +3233,20 @@
       emptyForgottenTitle: "Nothing to reinforce yet",
       emptyForgottenBody: "Search for an entry and open it, or tap ☆ on any entry to mark it \"review often\" — it'll show up here.",
       pinnedMeta: "⭐ Review often",
+      decideLaterAction: "I'll decide later",
+      cancelShareConfirmTitle: "Cancel this share?",
+      cancelShareConfirmExplain: "You haven't finished setting this up. Cancel sending this share for now? You can share again anytime.",
+      cancelShareConfirmYesAction: "Yes, cancel the share",
+      cancelShareConfirmNoAction: "No, keep deciding",
+      shareCancelledToast: "Share cancelled",
+      manageCollaboratorsTitle: "Manage collaborators",
+      endShareForEveryoneAction: "End sharing for everyone",
+      removeAction: "Remove",
+      noCollaboratorsYet: "No other collaborators yet.",
+      unknownPerson: "Unknown person",
+      confirmRemoveCollaboratorText: (name) => `Remove ${name} from co-editing this note?`,
+      collaboratorRemovedToast: (name) => `Removed ${name}`,
+      confirmEndShareForEveryone: "End co-editing for everyone? All collaborators will lose access.",
       forgottenMeta: (n) => `Searched ${n} time${n===1?'':'s'}`,
       savedAgo: (t) => `Saved ${t}`,
       deleteSwipeLabel: "Delete",
@@ -9177,6 +9248,12 @@
     }catch(e){ /* best effort */ }
   }
 
+  async function removeSharedParticipant(sharedId, uid){
+    const fb = window.__firebase;
+    try{ await fb.deleteDoc(fb.doc(fb.db, 'sharedEntries', sharedId, 'participants', uid)); }
+    catch(e){ console.error('remove participant failed', e); }
+  }
+
   async function recordMyShare(record){
     const fb = window.__firebase;
     const me = fb.auth.currentUser;
@@ -9192,7 +9269,8 @@
 
   function promptChecklistCompletionMode(){
     return new Promise((resolve)=>{
-      $('checklistModeOverlay').classList.add('open');
+      function openMain(){ $('checklistModeOverlay').classList.add('open'); }
+      openMain();
 
       function showConfirm(mode){
         $('checklistModeOverlay').classList.remove('open');
@@ -9201,7 +9279,7 @@
         $('checklistModeConfirmOverlay').classList.add('open');
 
         const onConfirm = ()=>{ cleanupConfirm(); resolve(mode); };
-        const onBack = ()=>{ cleanupConfirm(); $('checklistModeOverlay').classList.add('open'); };
+        const onBack = ()=>{ cleanupConfirm(); openMain(); };
         function cleanupConfirm(){
           $('checklistModeConfirmOverlay').classList.remove('open');
           $('checklistModeConfirmBtn').removeEventListener('click', onConfirm);
@@ -9213,19 +9291,28 @@
 
       const onShared = ()=>{ cleanup(); showConfirm('shared'); };
       const onPersonal = ()=>{ cleanup(); showConfirm('personal'); };
+      const onCancel = async ()=>{
+        $('checklistModeOverlay').classList.remove('open');
+        const wantsCancel = await promptCancelShareConfirm();
+        if(wantsCancel){ cleanup(); resolve('cancelled'); }
+        else { openMain(); }
+      };
       function cleanup(){
         $('checklistModeOverlay').classList.remove('open');
         $('checklistModeSharedBtn').removeEventListener('click', onShared);
         $('checklistModePersonalBtn').removeEventListener('click', onPersonal);
+        $('checklistModeCancelBtn').removeEventListener('click', onCancel);
       }
       $('checklistModeSharedBtn').addEventListener('click', onShared);
       $('checklistModePersonalBtn').addEventListener('click', onPersonal);
+      $('checklistModeCancelBtn').addEventListener('click', onCancel);
     });
   }
 
   function promptHabitCompletionMode(){
     return new Promise((resolve)=>{
-      $('habitModeOverlay').classList.add('open');
+      function openMain(){ $('habitModeOverlay').classList.add('open'); }
+      openMain();
 
       function showConfirm(mode){
         $('habitModeOverlay').classList.remove('open');
@@ -9234,7 +9321,7 @@
         $('habitModeConfirmOverlay').classList.add('open');
 
         const onConfirm = ()=>{ cleanupConfirm(); resolve(mode); };
-        const onBack = ()=>{ cleanupConfirm(); $('habitModeOverlay').classList.add('open'); };
+        const onBack = ()=>{ cleanupConfirm(); openMain(); };
         function cleanupConfirm(){
           $('habitModeConfirmOverlay').classList.remove('open');
           $('habitModeConfirmBtn').removeEventListener('click', onConfirm);
@@ -9246,13 +9333,21 @@
 
       const onShared = ()=>{ cleanup(); showConfirm('shared'); };
       const onPersonal = ()=>{ cleanup(); showConfirm('personal'); };
+      const onCancel = async ()=>{
+        $('habitModeOverlay').classList.remove('open');
+        const wantsCancel = await promptCancelShareConfirm();
+        if(wantsCancel){ cleanup(); resolve('cancelled'); }
+        else { openMain(); }
+      };
       function cleanup(){
         $('habitModeOverlay').classList.remove('open');
         $('habitModeSharedBtn').removeEventListener('click', onShared);
         $('habitModePersonalBtn').removeEventListener('click', onPersonal);
+        $('habitModeCancelBtn').removeEventListener('click', onCancel);
       }
       $('habitModeSharedBtn').addEventListener('click', onShared);
       $('habitModePersonalBtn').addEventListener('click', onPersonal);
+      $('habitModeCancelBtn').addEventListener('click', onCancel);
     });
   }
 
@@ -9263,15 +9358,20 @@
         groupIdForNewPerson = HABIT_TOGETHER_GROUP; // first invite — nothing to isolate from yet
       } else {
         const choice = await promptIsolateShare();
+        if(choice === 'cancelled'){ showToast(T().shareCancelledToast); return false; }
         groupIdForNewPerson = choice === 'separate' ? cryptoId() : HABIT_TOGETHER_GROUP;
       }
     }
     if(allowEdit && entry.checklist && entry.checklist.length > 0 && !entry.checklistMode){
-      entry.checklistMode = await promptChecklistCompletionMode();
+      const mode = await promptChecklistCompletionMode();
+      if(mode === 'cancelled'){ showToast(T().shareCancelledToast); return false; }
+      entry.checklistMode = mode;
       persistIndex();
     }
     if(allowEdit && entry.habitTracker && entry.habitTracker.habits && entry.habitTracker.habits.length > 0 && !entry.habitTracker.mode){
-      entry.habitTracker.mode = await promptHabitCompletionMode();
+      const mode = await promptHabitCompletionMode();
+      if(mode === 'cancelled'){ showToast(T().shareCancelledToast); return false; }
+      entry.habitTracker.mode = mode;
       persistIndex();
     }
     const fb = window.__firebase;
@@ -9300,9 +9400,18 @@
         persistIndex();
       }
       if(allowEdit && groupIdForNewPerson){
-        const sharedDoc = await fetchSharedEntry(sharedId);
-        const pending = { ...((sharedDoc && sharedDoc.pendingGroupAssignments) || {}), [email]: groupIdForNewPerson };
-        await updateSharedEntry(sharedId, { pendingGroupAssignments: pending });
+        const existingParticipants = await listSharedParticipants(sharedId);
+        const existingParticipant = existingParticipants.find(p => p.email === email);
+        if(existingParticipant){
+          // Already joined previously — joinSharedEntry won't fire again, so update their group directly
+          // rather than writing to pendingGroupAssignments (which is only ever read at join time).
+          await fb.setDoc(fb.doc(fb.db, 'sharedEntries', sharedId, 'participants', existingParticipant.uid), { groupId: groupIdForNewPerson }, { merge: true });
+        } else {
+          const sharedDoc = await fetchSharedEntry(sharedId);
+          const pending = { ...((sharedDoc && sharedDoc.pendingGroupAssignments) || {}), [email]: groupIdForNewPerson };
+          await updateSharedEntry(sharedId, { pendingGroupAssignments: pending });
+        }
+        invalidateVisibilityCache();
       }
       await fb.setDoc(fb.doc(fb.db, 'users', recipientUid, 'inbox', itemId), {
         fromEmail: me.email,
@@ -10650,27 +10759,46 @@
     });
   }
 
+  function promptCancelShareConfirm(){
+    return new Promise((resolve)=>{
+      $('cancelShareConfirmOverlay').classList.add('open');
+      const onYes = ()=>{ cleanup(); resolve(true); };
+      const onNo = ()=>{ cleanup(); resolve(false); };
+      function cleanup(){
+        $('cancelShareConfirmOverlay').classList.remove('open');
+        $('cancelShareConfirmYesBtn').removeEventListener('click', onYes);
+        $('cancelShareConfirmNoBtn').removeEventListener('click', onNo);
+      }
+      $('cancelShareConfirmYesBtn').addEventListener('click', onYes);
+      $('cancelShareConfirmNoBtn').addEventListener('click', onNo);
+    });
+  }
+
   function promptIsolateShare(){
     return new Promise((resolve)=>{
-      $('isolateShareOverlay').classList.add('open');
+      function openMain(){ $('isolateShareOverlay').classList.add('open'); }
+      openMain();
       const onTogether = ()=>{ cleanup(); resolve('together'); };
       const onSeparate = ()=>{ cleanup(); resolve('separate'); };
+      const onCancel = async ()=>{
+        $('isolateShareOverlay').classList.remove('open');
+        const wantsCancel = await promptCancelShareConfirm();
+        if(wantsCancel){ cleanup(); resolve('cancelled'); }
+        else { openMain(); }
+      };
       function cleanup(){
         $('isolateShareOverlay').classList.remove('open');
         $('isolateShareTogetherBtn').removeEventListener('click', onTogether);
         $('isolateShareSeparateBtn').removeEventListener('click', onSeparate);
+        $('isolateShareCancelBtn').removeEventListener('click', onCancel);
       }
       $('isolateShareTogetherBtn').addEventListener('click', onTogether);
       $('isolateShareSeparateBtn').addEventListener('click', onSeparate);
+      $('isolateShareCancelBtn').addEventListener('click', onCancel);
     });
   }
 
-  $('stopCoEditingBtn').addEventListener('click', async ()=>{
-    $('moreMenu').classList.remove('open');
-    const entry = entries.find(e=>e.id === currentDetailId);
-    if(!entry || !entry.sharedId) return;
-    if(!confirm(T().confirmStopCoEditing)) return;
-
+  async function maybeCleanCollaboratorData(entry){
     const me = getMyIdentity();
     const myEmail = me ? me.email : null;
     const hasOtherData = myEmail && (checklistHasOtherPeopleData(entry, myEmail) || habitTrackerHasOtherPeopleData(entry, myEmail));
@@ -10681,6 +10809,99 @@
         if(entry.habitTracker){ entry.habitTracker = cleanHabitTrackerToMyDataOnly(entry.habitTracker, myEmail); }
       }
     }
+  }
+
+  function promptConfirmRemoveCollaborator(displayName){
+    return new Promise((resolve)=>{
+      $('confirmRemoveCollaboratorTitle').textContent = T().confirmRemoveCollaboratorText(displayName);
+      $('confirmRemoveCollaboratorOverlay').classList.add('open');
+      const onYes = ()=>{ cleanup(); resolve(true); };
+      const onNo = ()=>{ cleanup(); resolve(false); };
+      function cleanup(){
+        $('confirmRemoveCollaboratorOverlay').classList.remove('open');
+        $('confirmRemoveCollaboratorYesBtn').removeEventListener('click', onYes);
+        $('confirmRemoveCollaboratorNoBtn').removeEventListener('click', onNo);
+      }
+      $('confirmRemoveCollaboratorYesBtn').addEventListener('click', onYes);
+      $('confirmRemoveCollaboratorNoBtn').addEventListener('click', onNo);
+    });
+  }
+
+  async function openManageCollaboratorsOverlay(entry){
+    const participants = await listSharedParticipants(entry.sharedId);
+    const fb = window.__firebase;
+    const myUid = fb.auth.currentUser.uid;
+    const others = participants.filter(p => p.uid !== myUid);
+
+    const listWrap = $('collaboratorsList');
+    listWrap.innerHTML = '';
+    if(others.length === 0){
+      listWrap.innerHTML = `<div class="empty-note">${T().noCollaboratorsYet}</div>`;
+    } else {
+      for(const p of others){
+        const nickname = p.email ? await getContactNickname(p.email) : null;
+        const displayName = nickname || p.email || T().unknownPerson;
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px 10px; background:var(--paper-raised); border-radius:10px;';
+        const nameSpan = document.createElement('span');
+        nameSpan.style.cssText = 'font-size:13.5px; color:var(--ink); overflow-wrap:break-word;';
+        nameSpan.textContent = displayName;
+        row.appendChild(nameSpan);
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.textContent = T().removeAction;
+        removeBtn.style.cssText = 'background:none; border:none; color:var(--danger); font-size:12.5px; font-weight:600; cursor:pointer; padding:2px 6px; flex-shrink:0;';
+        removeBtn.addEventListener('click', async ()=>{
+          const confirmed = await promptConfirmRemoveCollaborator(displayName);
+          if(!confirmed) return;
+          await removeSharedParticipant(entry.sharedId, p.uid);
+          invalidateVisibilityCache();
+          showToast(T().collaboratorRemovedToast(displayName));
+          openManageCollaboratorsOverlay(entry);
+        });
+        row.appendChild(removeBtn);
+        listWrap.appendChild(row);
+      }
+    }
+
+    $('manageCollaboratorsOverlay').classList.add('open');
+  }
+
+  $('closeManageCollaboratorsBtn').addEventListener('click', ()=> $('manageCollaboratorsOverlay').classList.remove('open'));
+
+  $('endShareForEveryoneBtn').addEventListener('click', async ()=>{
+    const entry = entries.find(e=>e.id === currentDetailId);
+    if(!entry || !entry.sharedId) return;
+    if(!confirm(T().confirmEndShareForEveryone)) return;
+    $('manageCollaboratorsOverlay').classList.remove('open');
+
+    await maybeCleanCollaboratorData(entry);
+
+    const sharedId = entry.sharedId;
+    const fb = window.__firebase;
+    try{ await fb.deleteDoc(fb.doc(fb.db, 'sharedEntries', sharedId)); }catch(e){ console.error('end share failed', e); }
+
+    entry.sharedId = null;
+    entry.isSharedOwner = false;
+    entry.sharedWithEmail = null;
+    persistIndex();
+    $('sharedNoteBadge').style.display = 'none';
+    $('stopCoEditingBtn').style.display = 'none';
+    showToast(T().toastCoEditingStopped);
+  });
+
+  $('stopCoEditingBtn').addEventListener('click', async ()=>{
+    $('moreMenu').classList.remove('open');
+    const entry = entries.find(e=>e.id === currentDetailId);
+    if(!entry || !entry.sharedId) return;
+
+    if(entry.isSharedOwner){
+      await openManageCollaboratorsOverlay(entry);
+      return;
+    }
+
+    if(!confirm(T().confirmStopCoEditing)) return;
+    await maybeCleanCollaboratorData(entry);
 
     const sharedId = entry.sharedId;
     entry.sharedId = null;
