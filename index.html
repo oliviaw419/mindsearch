@@ -1658,6 +1658,13 @@
   let isRecording = false;
 
   const $ = (id) => document.getElementById(id);
+  function freshEl(id){
+    const old = $(id);
+    if(!old) return old;
+    const clone = old.cloneNode(true);
+    old.replaceWith(clone);
+    return clone;
+  }
 
   // Falls back to the browser's own localStorage when this file is opened
   // directly (not inside Claude's artifact viewer) or when signed out.
@@ -9319,34 +9326,29 @@
         $('checklistModeConfirmExplain').textContent = mode === 'shared' ? T().checklistModeSharedConfirmExplain : T().checklistModePersonalConfirmExplain;
         $('checklistModeConfirmOverlay').classList.add('open');
 
-        const onConfirm = ()=>{ cleanupConfirm(); resolve(mode); };
-        const onBack = ()=>{ cleanupConfirm(); promptChecklistCompletionMode().then(resolve); };
-        function cleanupConfirm(){
+        const confirmBtn = freshEl('checklistModeConfirmBtn');
+        const backBtn = freshEl('checklistModeBackBtn');
+        confirmBtn.addEventListener('click', ()=>{
           $('checklistModeConfirmOverlay').classList.remove('open');
-          $('checklistModeConfirmBtn').removeEventListener('click', onConfirm);
-          $('checklistModeBackBtn').removeEventListener('click', onBack);
-        }
-        $('checklistModeConfirmBtn').addEventListener('click', onConfirm);
-        $('checklistModeBackBtn').addEventListener('click', onBack);
+          resolve(mode);
+        }, { once: true });
+        backBtn.addEventListener('click', ()=>{
+          $('checklistModeConfirmOverlay').classList.remove('open');
+          promptChecklistCompletionMode().then(resolve);
+        }, { once: true });
       }
 
-      const onShared = ()=>{ cleanup(); showConfirm('shared'); };
-      const onPersonal = ()=>{ cleanup(); showConfirm('personal'); };
-      const onCancel = async ()=>{
+      const sharedBtn = freshEl('checklistModeSharedBtn');
+      const personalBtn = freshEl('checklistModePersonalBtn');
+      const cancelBtn = freshEl('checklistModeCancelBtn');
+      sharedBtn.addEventListener('click', ()=>{ $('checklistModeOverlay').classList.remove('open'); showConfirm('shared'); }, { once: true });
+      personalBtn.addEventListener('click', ()=>{ $('checklistModeOverlay').classList.remove('open'); showConfirm('personal'); }, { once: true });
+      cancelBtn.addEventListener('click', async ()=>{
         $('checklistModeOverlay').classList.remove('open');
         const wantsCancel = await promptCancelShareConfirm();
-        if(wantsCancel){ cleanup(); resolve('cancelled'); }
-        else { cleanup(); promptChecklistCompletionMode().then(resolve); }
-      };
-      function cleanup(){
-        $('checklistModeOverlay').classList.remove('open');
-        $('checklistModeSharedBtn').removeEventListener('click', onShared);
-        $('checklistModePersonalBtn').removeEventListener('click', onPersonal);
-        $('checklistModeCancelBtn').removeEventListener('click', onCancel);
-      }
-      $('checklistModeSharedBtn').addEventListener('click', onShared);
-      $('checklistModePersonalBtn').addEventListener('click', onPersonal);
-      $('checklistModeCancelBtn').addEventListener('click', onCancel);
+        if(wantsCancel){ resolve('cancelled'); }
+        else { promptChecklistCompletionMode().then(resolve); }
+      }, { once: true });
     });
   }
 
@@ -9360,34 +9362,29 @@
         $('habitModeConfirmExplain').textContent = mode === 'shared' ? T().habitModeSharedConfirmExplain : T().habitModePersonalConfirmExplain;
         $('habitModeConfirmOverlay').classList.add('open');
 
-        const onConfirm = ()=>{ cleanupConfirm(); resolve(mode); };
-        const onBack = ()=>{ cleanupConfirm(); promptHabitCompletionMode().then(resolve); };
-        function cleanupConfirm(){
+        const confirmBtn = freshEl('habitModeConfirmBtn');
+        const backBtn = freshEl('habitModeBackBtn');
+        confirmBtn.addEventListener('click', ()=>{
           $('habitModeConfirmOverlay').classList.remove('open');
-          $('habitModeConfirmBtn').removeEventListener('click', onConfirm);
-          $('habitModeBackBtn').removeEventListener('click', onBack);
-        }
-        $('habitModeConfirmBtn').addEventListener('click', onConfirm);
-        $('habitModeBackBtn').addEventListener('click', onBack);
+          resolve(mode);
+        }, { once: true });
+        backBtn.addEventListener('click', ()=>{
+          $('habitModeConfirmOverlay').classList.remove('open');
+          promptHabitCompletionMode().then(resolve);
+        }, { once: true });
       }
 
-      const onShared = ()=>{ cleanup(); showConfirm('shared'); };
-      const onPersonal = ()=>{ cleanup(); showConfirm('personal'); };
-      const onCancel = async ()=>{
+      const sharedBtn = freshEl('habitModeSharedBtn');
+      const personalBtn = freshEl('habitModePersonalBtn');
+      const cancelBtn = freshEl('habitModeCancelBtn');
+      sharedBtn.addEventListener('click', ()=>{ $('habitModeOverlay').classList.remove('open'); showConfirm('shared'); }, { once: true });
+      personalBtn.addEventListener('click', ()=>{ $('habitModeOverlay').classList.remove('open'); showConfirm('personal'); }, { once: true });
+      cancelBtn.addEventListener('click', async ()=>{
         $('habitModeOverlay').classList.remove('open');
         const wantsCancel = await promptCancelShareConfirm();
-        if(wantsCancel){ cleanup(); resolve('cancelled'); }
-        else { cleanup(); promptHabitCompletionMode().then(resolve); }
-      };
-      function cleanup(){
-        $('habitModeOverlay').classList.remove('open');
-        $('habitModeSharedBtn').removeEventListener('click', onShared);
-        $('habitModePersonalBtn').removeEventListener('click', onPersonal);
-        $('habitModeCancelBtn').removeEventListener('click', onCancel);
-      }
-      $('habitModeSharedBtn').addEventListener('click', onShared);
-      $('habitModePersonalBtn').addEventListener('click', onPersonal);
-      $('habitModeCancelBtn').addEventListener('click', onCancel);
+        if(wantsCancel){ resolve('cancelled'); }
+        else { promptHabitCompletionMode().then(resolve); }
+      }, { once: true });
     });
   }
 
@@ -10888,34 +10885,29 @@
         $('isolateShareConfirmExplain').textContent = choice === 'together' ? T().isolateShareTogetherConfirmExplain : T().isolateShareSeparateConfirmExplain;
         $('isolateShareConfirmOverlay').classList.add('open');
 
-        const onConfirm = ()=>{ cleanupConfirm(); resolve(choice); };
-        const onBack = ()=>{ cleanupConfirm(); promptIsolateShare().then(resolve); };
-        function cleanupConfirm(){
+        const confirmBtn = freshEl('isolateShareConfirmBtn');
+        const backBtn = freshEl('isolateShareBackBtn');
+        confirmBtn.addEventListener('click', ()=>{
           $('isolateShareConfirmOverlay').classList.remove('open');
-          $('isolateShareConfirmBtn').removeEventListener('click', onConfirm);
-          $('isolateShareBackBtn').removeEventListener('click', onBack);
-        }
-        $('isolateShareConfirmBtn').addEventListener('click', onConfirm);
-        $('isolateShareBackBtn').addEventListener('click', onBack);
+          resolve(choice);
+        }, { once: true });
+        backBtn.addEventListener('click', ()=>{
+          $('isolateShareConfirmOverlay').classList.remove('open');
+          promptIsolateShare().then(resolve);
+        }, { once: true });
       }
 
-      const onTogether = ()=>{ cleanup(); showConfirm('together'); };
-      const onSeparate = ()=>{ cleanup(); showConfirm('separate'); };
-      const onCancel = async ()=>{
+      const togetherBtn = freshEl('isolateShareTogetherBtn');
+      const separateBtn = freshEl('isolateShareSeparateBtn');
+      const cancelBtn = freshEl('isolateShareCancelBtn');
+      togetherBtn.addEventListener('click', ()=>{ $('isolateShareOverlay').classList.remove('open'); showConfirm('together'); }, { once: true });
+      separateBtn.addEventListener('click', ()=>{ $('isolateShareOverlay').classList.remove('open'); showConfirm('separate'); }, { once: true });
+      cancelBtn.addEventListener('click', async ()=>{
         $('isolateShareOverlay').classList.remove('open');
         const wantsCancel = await promptCancelShareConfirm();
-        if(wantsCancel){ cleanup(); resolve('cancelled'); }
-        else { cleanup(); promptIsolateShare().then(resolve); }
-      };
-      function cleanup(){
-        $('isolateShareOverlay').classList.remove('open');
-        $('isolateShareTogetherBtn').removeEventListener('click', onTogether);
-        $('isolateShareSeparateBtn').removeEventListener('click', onSeparate);
-        $('isolateShareCancelBtn').removeEventListener('click', onCancel);
-      }
-      $('isolateShareTogetherBtn').addEventListener('click', onTogether);
-      $('isolateShareSeparateBtn').addEventListener('click', onSeparate);
-      $('isolateShareCancelBtn').addEventListener('click', onCancel);
+        if(wantsCancel){ resolve('cancelled'); }
+        else { promptIsolateShare().then(resolve); }
+      }, { once: true });
     });
   }
 
