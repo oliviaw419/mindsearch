@@ -3728,22 +3728,14 @@
     return new Promise((resolve) => {
       $('customConfirmTitle').textContent = title || '';
       $('customConfirmText').textContent = text || '';
-      $('customConfirmYesBtn').textContent = yesLabel;
-      $('customConfirmNoBtn').textContent = noLabel;
       $('customConfirmOverlay').classList.add('open');
 
-      const cleanup = (result) => {
-        $('customConfirmOverlay').classList.remove('open');
-        yesBtn.removeEventListener('click', onYes);
-        noBtn.removeEventListener('click', onNo);
-        resolve(result);
-      };
-      const yesBtn = $('customConfirmYesBtn');
-      const noBtn = $('customConfirmNoBtn');
-      const onYes = () => cleanup(true);
-      const onNo = () => cleanup(false);
-      yesBtn.addEventListener('click', onYes);
-      noBtn.addEventListener('click', onNo);
+      const yesBtn = freshEl('customConfirmYesBtn');
+      const noBtn = freshEl('customConfirmNoBtn');
+      yesBtn.textContent = yesLabel;
+      noBtn.textContent = noLabel;
+      yesBtn.addEventListener('click', () => { $('customConfirmOverlay').classList.remove('open'); resolve(true); }, { once: true });
+      noBtn.addEventListener('click', () => { $('customConfirmOverlay').classList.remove('open'); resolve(false); }, { once: true });
     });
   }
 
@@ -10803,22 +10795,26 @@
       $('collabDataOverlay').classList.add('open');
       $('collabDataOverlay').querySelector('h2').textContent = T().removePersonDataTitle(displayName);
       $('collabDataOverlay').querySelector('p').textContent = T().removePersonDataExplain(displayName);
-      $('collabDataKeepBtn').textContent = T().removePersonDataKeepAction;
-      $('collabDataCleanBtn').textContent = T().removePersonDataCleanAction;
-      const onKeep = ()=>{ cleanup(); resolve('keep'); };
-      const onClean = ()=>{ cleanup(); resolve('clean'); };
-      function cleanup(){
-        $('collabDataOverlay').classList.remove('open');
-        $('collabDataKeepBtn').removeEventListener('click', onKeep);
-        $('collabDataCleanBtn').removeEventListener('click', onClean);
-        // restore original static labels for the next time this overlay is used for its original purpose
+      const keepBtn = freshEl('collabDataKeepBtn');
+      const cleanBtn = freshEl('collabDataCleanBtn');
+      keepBtn.textContent = T().removePersonDataKeepAction;
+      cleanBtn.textContent = T().removePersonDataCleanAction;
+      function restoreStaticLabels(){
         $('collabDataOverlay').querySelector('h2').textContent = T().collabDataTitle;
         $('collabDataOverlay').querySelector('p').textContent = T().collabDataExplain;
         $('collabDataKeepBtn').textContent = T().collabDataKeepAction;
         $('collabDataCleanBtn').textContent = T().collabDataCleanAction;
       }
-      $('collabDataKeepBtn').addEventListener('click', onKeep);
-      $('collabDataCleanBtn').addEventListener('click', onClean);
+      keepBtn.addEventListener('click', ()=>{
+        $('collabDataOverlay').classList.remove('open');
+        restoreStaticLabels();
+        resolve('keep');
+      }, { once: true });
+      cleanBtn.addEventListener('click', ()=>{
+        $('collabDataOverlay').classList.remove('open');
+        restoreStaticLabels();
+        resolve('clean');
+      }, { once: true });
     });
   }
 
@@ -10827,51 +10823,36 @@
       $('confirmShareTitle').textContent = T().confirmSendShare(displayName);
       $('confirmShareAllowEditCheckbox').checked = !!defaultAllowEdit;
       $('confirmShareOverlay').classList.add('open');
-      const onSend = ()=>{
-        cleanup();
-        resolve({ confirmed: true, allowEdit: $('confirmShareAllowEditCheckbox').checked });
-      };
-      const onCancel = ()=>{
-        cleanup();
-        resolve({ confirmed: false, allowEdit: false });
-      };
-      function cleanup(){
+      const sendBtn = freshEl('confirmShareSendBtn');
+      const cancelBtn = freshEl('confirmShareCancelBtn');
+      sendBtn.addEventListener('click', ()=>{
         $('confirmShareOverlay').classList.remove('open');
-        $('confirmShareSendBtn').removeEventListener('click', onSend);
-        $('confirmShareCancelBtn').removeEventListener('click', onCancel);
-      }
-      $('confirmShareSendBtn').addEventListener('click', onSend);
-      $('confirmShareCancelBtn').addEventListener('click', onCancel);
+        resolve({ confirmed: true, allowEdit: $('confirmShareAllowEditCheckbox').checked });
+      }, { once: true });
+      cancelBtn.addEventListener('click', ()=>{
+        $('confirmShareOverlay').classList.remove('open');
+        resolve({ confirmed: false, allowEdit: false });
+      }, { once: true });
     });
   }
 
   function promptKeepOrCleanCollaboratorData(){
     return new Promise((resolve)=>{
       $('collabDataOverlay').classList.add('open');
-      const onKeep = ()=>{ cleanup(); resolve('keep'); };
-      const onClean = ()=>{ cleanup(); resolve('clean'); };
-      function cleanup(){
-        $('collabDataOverlay').classList.remove('open');
-        $('collabDataKeepBtn').removeEventListener('click', onKeep);
-        $('collabDataCleanBtn').removeEventListener('click', onClean);
-      }
-      $('collabDataKeepBtn').addEventListener('click', onKeep);
-      $('collabDataCleanBtn').addEventListener('click', onClean);
+      const keepBtn = freshEl('collabDataKeepBtn');
+      const cleanBtn = freshEl('collabDataCleanBtn');
+      keepBtn.addEventListener('click', ()=>{ $('collabDataOverlay').classList.remove('open'); resolve('keep'); }, { once: true });
+      cleanBtn.addEventListener('click', ()=>{ $('collabDataOverlay').classList.remove('open'); resolve('clean'); }, { once: true });
     });
   }
 
   function promptCancelShareConfirm(){
     return new Promise((resolve)=>{
       $('cancelShareConfirmOverlay').classList.add('open');
-      const onYes = ()=>{ cleanup(); resolve(true); };
-      const onNo = ()=>{ cleanup(); resolve(false); };
-      function cleanup(){
-        $('cancelShareConfirmOverlay').classList.remove('open');
-        $('cancelShareConfirmYesBtn').removeEventListener('click', onYes);
-        $('cancelShareConfirmNoBtn').removeEventListener('click', onNo);
-      }
-      $('cancelShareConfirmYesBtn').addEventListener('click', onYes);
-      $('cancelShareConfirmNoBtn').addEventListener('click', onNo);
+      const yesBtn = freshEl('cancelShareConfirmYesBtn');
+      const noBtn = freshEl('cancelShareConfirmNoBtn');
+      yesBtn.addEventListener('click', ()=>{ $('cancelShareConfirmOverlay').classList.remove('open'); resolve(true); }, { once: true });
+      noBtn.addEventListener('click', ()=>{ $('cancelShareConfirmOverlay').classList.remove('open'); resolve(false); }, { once: true });
     });
   }
 
@@ -10928,15 +10909,10 @@
     return new Promise((resolve)=>{
       $('confirmRemoveCollaboratorTitle').textContent = T().confirmRemoveCollaboratorText(displayName);
       $('confirmRemoveCollaboratorOverlay').classList.add('open');
-      const onYes = ()=>{ cleanup(); resolve(true); };
-      const onNo = ()=>{ cleanup(); resolve(false); };
-      function cleanup(){
-        $('confirmRemoveCollaboratorOverlay').classList.remove('open');
-        $('confirmRemoveCollaboratorYesBtn').removeEventListener('click', onYes);
-        $('confirmRemoveCollaboratorNoBtn').removeEventListener('click', onNo);
-      }
-      $('confirmRemoveCollaboratorYesBtn').addEventListener('click', onYes);
-      $('confirmRemoveCollaboratorNoBtn').addEventListener('click', onNo);
+      const yesBtn = freshEl('confirmRemoveCollaboratorYesBtn');
+      const noBtn = freshEl('confirmRemoveCollaboratorNoBtn');
+      yesBtn.addEventListener('click', ()=>{ $('confirmRemoveCollaboratorOverlay').classList.remove('open'); resolve(true); }, { once: true });
+      noBtn.addEventListener('click', ()=>{ $('confirmRemoveCollaboratorOverlay').classList.remove('open'); resolve(false); }, { once: true });
     });
   }
 
