@@ -2108,6 +2108,10 @@
       removePersonDataKeepAction: "保留这些记录",
       removePersonDataCleanAction: "一起清掉",
       removeCollaboratorFailedToast: "移除失败了，请稍后再试",
+      collaboratorStatusVisible: "目前可以互相看到",
+      collaboratorStatusRemoved: "已移除——看不到彼此",
+      reAddCollaboratorAction: "重新加入",
+      collaboratorReAddedToast: (name) => `已经把 ${name} 重新加入`,
       isolatedCopyTitleSuffix: "（独立分享）",
       isolatedCopyCreatedToast: "已经生成一份独立的副本",
       deleteHabitExplain: "可以只删掉这个习惯、保留它的打卡记录，也可以两个都清掉。",
@@ -2711,6 +2715,10 @@
       inboxIntroExplain: "這裡是處理收到的分享的地方。",
       shareSentToContact: "已分享",
       recentSharesCrossLink: "撤回分享 → 我的最近分享",
+      collaboratorStatusVisible: "目前可以互相看到",
+      collaboratorStatusRemoved: "已移除——看不到彼此",
+      reAddCollaboratorAction: "重新加入",
+      collaboratorReAddedToast: (name) => `已經把 ${name} 重新加入`,
       sharedByMeCrossLink: "瀏覽全部 → 分享標籤頁・我分享的",
       shareRecipientNotFound: "這個電子郵件還沒註冊 Mind Search，試試直接複製連結分享給對方",
       shareOpenedEmail: "已幫你打開郵件 App，寫好邀請連結了，確認傳送就行",
@@ -3285,6 +3293,10 @@
       removePersonDataKeepAction: "Keep this data",
       removePersonDataCleanAction: "Clear it too",
       removeCollaboratorFailedToast: "Couldn't remove them \u2014 please try again",
+      collaboratorStatusVisible: "Currently visible to each other",
+      collaboratorStatusRemoved: "Removed \u2014 not visible to each other",
+      reAddCollaboratorAction: "Re-add",
+      collaboratorReAddedToast: (name) => `Re-added ${name}`,
       forgottenMeta: (n) => `Searched ${n} time${n===1?'':'s'}`,
       savedAgo: (t) => `Saved ${t}`,
       deleteSwipeLabel: "Delete",
@@ -6648,7 +6660,8 @@
     const fb = window.__firebase;
     const me = fb.auth.currentUser;
     if(!me) return null;
-    return { email: me.email, name: me.displayName || (me.email ? me.email.split('@')[0] : 'Me') };
+    const email = me.email ? me.email.toLowerCase() : me.email;
+    return { email, name: me.displayName || (email ? email.split('@')[0] : 'Me') };
   }
 
   function beginEditCommentInline(item, anchorEl, existingComment, getList, setList, rerender){
@@ -9207,16 +9220,17 @@
   async function createSharedEntry(entry){
     const fb = window.__firebase;
     const me = fb.auth.currentUser;
+    const myEmail = me.email ? me.email.toLowerCase() : me.email;
     const sharedId = cryptoId();
     await fb.setDoc(fb.doc(fb.db, 'sharedEntries', sharedId), {
       title: entry.title, content: entry.content,
       images: entry.images || [], audio: entry.audio || null, files: entry.files || [], video: entry.video || null,
       location: entry.location || null, dateLog: entry.dateLog || [], checklist: entry.checklist || [], checklistMode: entry.checklistMode || null, habitTracker: entry.habitTracker || null,
-      createdByEmail: me.email,
+      createdByEmail: myEmail,
       groupAssignments: {},
-      updatedAt: Date.now(), updatedBy: me.email
+      updatedAt: Date.now(), updatedBy: myEmail
     });
-    await fb.setDoc(fb.doc(fb.db, 'sharedEntries', sharedId, 'participants', me.uid), { joinedAt: Date.now(), email: me.email || '' });
+    await fb.setDoc(fb.doc(fb.db, 'sharedEntries', sharedId, 'participants', me.uid), { joinedAt: Date.now(), email: myEmail || '' });
     return sharedId;
   }
 
@@ -9232,9 +9246,10 @@
   async function updateSharedEntry(sharedId, fields){
     const fb = window.__firebase;
     const me = fb.auth.currentUser;
+    const myEmail = me && me.email ? me.email.toLowerCase() : (me ? me.email : null);
     try{
       await fb.setDoc(fb.doc(fb.db, 'sharedEntries', sharedId), {
-        ...fields, updatedAt: Date.now(), updatedBy: me.email
+        ...fields, updatedAt: Date.now(), updatedBy: myEmail
       }, { merge: true });
     }catch(e){ console.error('update shared entry failed', e); showToast(T().toastMediaFail); }
   }
@@ -9242,17 +9257,18 @@
   async function joinSharedEntry(sharedId){
     const fb = window.__firebase;
     const me = fb.auth.currentUser;
+    const myEmail = me.email ? me.email.toLowerCase() : me.email;
     try{
       const sharedDoc = await fetchSharedEntry(sharedId);
-      if(sharedDoc && sharedDoc.createdByEmail !== me.email){
+      if(sharedDoc && sharedDoc.createdByEmail !== myEmail){
         const existingAssignments = sharedDoc.groupAssignments || {};
-        if(!existingAssignments[me.email]){
+        if(!existingAssignments[myEmail]){
           // Owner never explicitly assigned a group for me — default to a fresh isolated group (safer default)
-          const newAssignments = { ...existingAssignments, [me.email]: cryptoId() };
+          const newAssignments = { ...existingAssignments, [myEmail]: cryptoId() };
           await fb.setDoc(fb.doc(fb.db, 'sharedEntries', sharedId), { groupAssignments: newAssignments }, { merge: true });
         }
       }
-      await fb.setDoc(fb.doc(fb.db, 'sharedEntries', sharedId, 'participants', me.uid), { joinedAt: Date.now(), email: me.email || '' });
+      await fb.setDoc(fb.doc(fb.db, 'sharedEntries', sharedId, 'participants', me.uid), { joinedAt: Date.now(), email: myEmail || '' });
       return true;
     }
     catch(e){
@@ -9381,6 +9397,7 @@
   }
 
   async function shareEntryToEmail(entry, email, allowEdit){
+    email = (email || '').toLowerCase();
     let groupIdForNewPerson = null;
     if(allowEdit){
       if(!entry.sharedId){
@@ -10932,49 +10949,67 @@
       for(const p of others){
         const nickname = p.email ? await getContactNickname(p.email) : null;
         const displayName = nickname || p.email || T().unknownPerson;
+        const currentGroup = p.email ? groupAssignments[p.email] : null;
+        const isTogether = currentGroup === HABIT_TOGETHER_GROUP;
+
         const row = document.createElement('div');
         row.style.cssText = 'display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px 10px; background:var(--paper-raised); border-radius:10px;';
         const nameSpan = document.createElement('span');
         nameSpan.style.cssText = 'font-size:13.5px; color:var(--ink); overflow-wrap:break-word;';
         nameSpan.textContent = displayName;
-        const debugLine = document.createElement('div');
-        debugLine.style.cssText = 'font-size:9.5px; color:var(--ink-soft); opacity:0.6; margin-top:2px;';
-        debugLine.textContent = `group: ${(p.email && groupAssignments[p.email]) || '(none)'}`;
+        const statusLine = document.createElement('div');
+        statusLine.style.cssText = `font-size:10.5px; margin-top:2px; color:${isTogether ? 'var(--green-deep)' : 'var(--danger)'};`;
+        statusLine.textContent = isTogether ? T().collaboratorStatusVisible : T().collaboratorStatusRemoved;
         const nameCol = document.createElement('div');
         nameCol.style.cssText = 'flex:1; min-width:0;';
         nameCol.appendChild(nameSpan);
-        nameCol.appendChild(debugLine);
+        nameCol.appendChild(statusLine);
         row.appendChild(nameCol);
-        const removeBtn = document.createElement('button');
-        removeBtn.type = 'button';
-        removeBtn.textContent = T().removeAction;
-        removeBtn.style.cssText = 'background:none; border:none; color:var(--danger); font-size:12.5px; font-weight:600; cursor:pointer; padding:2px 6px; flex-shrink:0;';
-        removeBtn.addEventListener('click', async ()=>{
-          if(!p.email){ showToast(T().removeCollaboratorFailedToast); return; }
-          const confirmed = await promptConfirmRemoveCollaborator(displayName);
-          if(!confirmed) return;
 
-          const hasData = checklistHasSpecificPersonData(entry, p.email) || habitTrackerHasSpecificPersonData(entry, p.email);
-          if(hasData){
-            const choice = await promptKeepOrRemovePersonData(displayName);
-            if(choice === 'clean'){
-              if(entry.checklist){ entry.checklist = removePersonDataFromChecklist(entry.checklist, p.email); }
-              if(entry.habitTracker){ entry.habitTracker = removePersonDataFromHabitTracker(entry.habitTracker, p.email); }
-              persistIndex();
-              if(entry.sharedId){ updateSharedEntry(entry.sharedId, { checklist: entry.checklist, habitTracker: entry.habitTracker }); }
+        const actionBtn = document.createElement('button');
+        actionBtn.type = 'button';
+        actionBtn.style.cssText = `background:none; border:none; font-size:12.5px; font-weight:600; cursor:pointer; padding:2px 6px; flex-shrink:0; color:${isTogether ? 'var(--danger)' : 'var(--green-deep)'};`;
+
+        if(isTogether){
+          actionBtn.textContent = T().removeAction;
+          actionBtn.addEventListener('click', async ()=>{
+            if(!p.email){ showToast(T().removeCollaboratorFailedToast); return; }
+            const confirmed = await promptConfirmRemoveCollaborator(displayName);
+            if(!confirmed) return;
+
+            const hasData = checklistHasSpecificPersonData(entry, p.email) || habitTrackerHasSpecificPersonData(entry, p.email);
+            if(hasData){
+              const choice = await promptKeepOrRemovePersonData(displayName);
+              if(choice === 'clean'){
+                if(entry.checklist){ entry.checklist = removePersonDataFromChecklist(entry.checklist, p.email); }
+                if(entry.habitTracker){ entry.habitTracker = removePersonDataFromHabitTracker(entry.habitTracker, p.email); }
+                persistIndex();
+                if(entry.sharedId){ await updateSharedEntry(entry.sharedId, { checklist: entry.checklist, habitTracker: entry.habitTracker }); }
+              }
             }
-          }
 
-          const success = await removeSharedParticipant(entry.sharedId, p.email);
-          if(success){
+            const success = await removeSharedParticipant(entry.sharedId, p.email);
+            if(success){
+              invalidateVisibilityCache();
+              showToast(T().collaboratorRemovedToast(displayName));
+              openManageCollaboratorsOverlay(entry);
+            } else {
+              showToast(T().removeCollaboratorFailedToast);
+            }
+          });
+        } else {
+          actionBtn.textContent = T().reAddCollaboratorAction;
+          actionBtn.addEventListener('click', async ()=>{
+            if(!p.email){ showToast(T().removeCollaboratorFailedToast); return; }
+            const sd = await fetchSharedEntry(entry.sharedId);
+            const newAssignments = { ...((sd && sd.groupAssignments) || {}), [p.email]: HABIT_TOGETHER_GROUP };
+            await updateSharedEntry(entry.sharedId, { groupAssignments: newAssignments });
             invalidateVisibilityCache();
-            showToast(T().collaboratorRemovedToast(displayName));
+            showToast(T().collaboratorReAddedToast(displayName));
             openManageCollaboratorsOverlay(entry);
-          } else {
-            showToast(T().removeCollaboratorFailedToast);
-          }
-        });
-        row.appendChild(removeBtn);
+          });
+        }
+        row.appendChild(actionBtn);
         listWrap.appendChild(row);
       }
     }
@@ -11059,6 +11094,10 @@
     }
     if($('sectionTabsBar').children.length){
       tabRenderFn(getActiveTabId())();
+    }
+    const activeSearchQuery = $('searchInput').value.trim().toLowerCase();
+    if(activeSearchQuery !== ''){
+      runSearch(activeSearchQuery);
     }
     showToast(T().toastDeleted);
     persistIndex();
