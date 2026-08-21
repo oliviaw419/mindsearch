@@ -3312,7 +3312,6 @@
       checklist: e.checklist || [],
       checklistMode: e.checklistMode || null,
       habitTracker: e.habitTracker || null,
-      myLastKnownGroupId: e.myLastKnownGroupId !== undefined ? e.myLastKnownGroupId : null,
       reminderDate: e.reminderDate || null,
       tags: e.tags || [],
       isSample: !!e.isSample,
@@ -8992,23 +8991,6 @@
           namesLabel += T().sharedCollabBadgeMore(others.length - names.length);
         }
         $('sharedNoteBadgeText').textContent = T().sharedCollabBadge(namesLabel);
-
-        // If my own group assignment changed since I last opened this note (e.g. the owner moved me
-        // into an isolated group), I may now have locally-cached data from people I can no longer see.
-        // Offer the same keep/clear choice the owner gets when removing someone.
-        if(!visibility.isOwner && entry.myLastKnownGroupId !== undefined && entry.myLastKnownGroupId !== visibility.myGroupId){
-          const me = getMyIdentity();
-          const myEmail = me ? me.email : null;
-          const hasNowHiddenData = myEmail && (checklistHasOtherPeopleData(entry, myEmail) || habitTrackerHasOtherPeopleData(entry, myEmail));
-          if(hasNowHiddenData){
-            const choice = await promptKeepOrCleanCollaboratorData();
-            if(choice === 'clean'){
-              if(entry.checklist){ entry.checklist = cleanChecklistToMyDataOnly(entry.checklist, myEmail); }
-              if(entry.habitTracker){ entry.habitTracker = cleanHabitTrackerToMyDataOnly(entry.habitTracker, myEmail); }
-            }
-          }
-        }
-        entry.myLastKnownGroupId = visibility.myGroupId || null;
       }
       persistIndex();
     }
